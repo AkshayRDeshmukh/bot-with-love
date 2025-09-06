@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InterviewInteractionMode {
+  AUDIO
+  TEXT_ONLY
+}
+
+model Admin {
+  id                 String   @id @default(uuid())
+  name               String
+  email              String   @unique
+  company            String?
+  passwordHash       String
+  emailVerified      Boolean  @default(false)
+  verificationToken  String?
+  createdAt          DateTime @default(now())
+
+  interviews         Interview[]
+
+  @@map("admins")
+}
+
+model Candidate {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  resumeBlobName     String?
+  resumeOriginalName String?
+  resumeMimeType     String?
+
+  // Extracted profile fields
+  totalExperienceMonths Int?
+  summary               String?
+  domain                String?
+  skills                String[]
+
+  interviews  InterviewCandidate[]
+  transcripts InterviewTranscript[]
+  reports     InterviewReport[]
+
+  @@map("candidates")
+}
+
+enum InterviewProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model InterviewCandidate {
+  interviewId String
+  candidateId String
+  createdAt   DateTime @default(now())
+
+  // Attempts override (null = use interview default)
+  maxAttempts Int?
+
+  // Invite tracking
+  inviteSentAt DateTime?
+  inviteCount  Int      @default(0)
+  inviteToken  String?
+  inviteUrl    String?
+
+  // Progress tracking
+  status      InterviewProgressStatus @default(NOT_STARTED)
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  // Proctoring photo
+  proctorPhotoBlobName   String?
+  proctorPhotoMimeType   String?
+  proctorPhotoCapturedAt DateTime?
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@id([interviewId, candidateId])
+  @@map("interview_candidates")
+}
+
+model Interview {
+  id              String   @id @default(uuid())
+  adminId         String
+  title           String
+  description     String
+  context         String
+  interviewerRole String
+  durationMinutes Int?
+  interactionMode InterviewInteractionMode @default(AUDIO)
+  // Default attempts allowed per candidate (nullable => fallback to 1)
+  maxAttempts     Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  candidates InterviewCandidate[]
+  transcripts InterviewTranscript[]
+  reportTemplate ReportTemplate?
+  reports        InterviewReport[]
+
+  @@map("interviews")
+  @@index([adminId])
+}
+
+model InterviewTranscript {
+  id          String   @id @default(uuid())
+  interviewId String
+  candidateId String
+  attemptNumber Int?
+  content     Json
+  createdAt   DateTime @default(now())
+
+  // Per-attempt proctoring photo
+  proctorPhotoBlobName   String?
+  proctorPhotoMimeType   String?
+  proctorPhotoCapturedAt DateTime?
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, candidateId, attemptNumber])
+  @@index([interviewId])
+  @@index([candidateId])
+  @@map("interview_transcripts")
+}
+
+model ReportTemplate {
+  id          String   @id @default(uuid())
+  interviewId String   @unique
+  structure   Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@map("report_templates")
+}
+
+model InterviewReport {
+  id          String   @id @default(uuid())
+  interviewId String
+  candidateId String
+  attemptNumber Int @default(1)
+  structure   Json // snapshot of template at time of interview
+  scores      Json? // per-parameter scores & computed aggregates
+  summary     String?
+  comments    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, candidateId, attemptNumber])
+  @@index([interviewId])
+  @@index([candidateId])
+  @@map("interview_reports")
+}

@@ -1,0 +1,105 @@
+/** @import must precede all other statements */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+   * Tailwind CSS theme
+   * tailwind.config.ts expects the following color variables to be expressed as HSL values.
+   * A different format will require also updating the theme in tailwind.config.ts.
+  */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+
+    /* Brand: electric violet */
+    --primary: 258 90% 66%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 16% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 220 16% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 258 90% 96%;
+    --accent-foreground: 258 60% 30%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 258 90% 66%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 258 90% 66%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 258 100% 97%;
+    --sidebar-accent-foreground: 258 60% 30%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 258 90% 66%;
+  }
+
+  .dark {
+    --background: 240 11% 6%;
+    --foreground: 210 40% 96%;
+
+    --card: 240 11% 8%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 240 11% 8%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 258 100% 75%;
+    --primary-foreground: 240 5% 10%;
+
+    --secondary: 240 5% 16%;
+    --secondary-foreground: 210 40% 96%;
+
+    --muted: 240 5% 16%;
+    --muted-foreground: 215 20% 65.1%;
+
+    --accent: 258 60% 20%;
+    --accent-foreground: 210 40% 96%;
+
+    --destructive: 0 62.8% 40.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 258 90% 66%;
+
+    --sidebar-background: 240 6% 8%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 258 100% 75%;
+    --sidebar-primary-foreground: 240 5% 10%;
+    --sidebar-accent: 258 35% 20%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 258 90% 66%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
