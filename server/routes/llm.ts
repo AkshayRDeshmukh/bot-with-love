@@ -50,6 +50,16 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
     })();
 
+    // Fetch associated report template (if interviewId provided)
+    let templateStructure: unknown = undefined;
+    if (interviewId) {
+      const tpl = await prisma.reportTemplate.findUnique({
+        where: { interviewId },
+        select: { structure: true },
+      });
+      templateStructure = tpl?.structure;
+    }
+
     const sys = buildInterviewSystemPrompt({
       title: interview?.title,
       description: interview?.description,
@@ -57,6 +67,7 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       interviewerRole: interview?.interviewerRole,
       remainingSeconds,
       totalMinutes,
+      templateStructure,
     });
 
     const messages: ChatMessage[] = [];
