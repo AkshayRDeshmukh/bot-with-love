@@ -5,6 +5,7 @@ export function buildInterviewSystemPrompt(input: {
   interviewerRole?: string;
   remainingSeconds?: number;
   totalMinutes?: number;
+  templateStructure?: unknown;
 }) {
   const {
     title,
@@ -13,6 +14,7 @@ export function buildInterviewSystemPrompt(input: {
     interviewerRole,
     remainingSeconds,
     totalMinutes,
+    templateStructure,
   } = input || {};
   const timeGuidance =
     typeof remainingSeconds === "number" && remainingSeconds >= 0
@@ -22,12 +24,28 @@ export function buildInterviewSystemPrompt(input: {
           `Otherwise: keep questions focused and sized to fit the remaining time.`,
         ]
       : [];
+
+  const templateSection = (() => {
+    if (templateStructure == null) return null;
+    try {
+      const json = JSON.stringify(templateStructure, null, 2);
+      return [
+        `Interview Report Structure (JSON):`,
+        json,
+        `Use this structure to guide your questioning. Ensure questions elicit information needed to populate each field.`,
+      ].join("\n");
+    } catch {
+      return null;
+    }
+  })();
+
   return [
     `You are an expert, friendly interview bot. Keep responses concise (1-3 sentences) and ask one question at a time.`,
     title ? `Interview Title: ${title}` : null,
     description ? `Description: ${description}` : null,
     context ? `Context: ${context}` : null,
     interviewerRole ? `Interviewer Role: ${interviewerRole}` : null,
+    templateSection,
     ...timeGuidance,
     `Guidelines: be supportive, avoid jargon unless asked, stay on topic, and probe for specifics with examples.`,
   ]
