@@ -194,7 +194,8 @@ export default function CandidateBotPreview(props?: {
   const botSpeakingRef = useRef<boolean>(false);
   const SILENCE_MS = 350;
   const [search] = useSearchParams();
-  const interviewId = search.get("id") || undefined;
+  // Prefer explicit prop, fallback to URL search param
+  const interviewId = props?.interviewId || search.get("id") || undefined;
   const [interviewCtx, setInterviewCtx] = useState<{
     title?: string;
     description?: string;
