@@ -24,8 +24,9 @@ export const createInterview: RequestHandler = async (req, res) => {
   if (!title) return res.status(400).json({ error: "Title is required" });
   const adminId = (req as AuthRequest).userId!;
   try {
-    // Generate a concise skill-level context summary to store with the interview
+    // Generate a concise skill-level context summary and domain to store with the interview
     let contextSummary: string | null = null;
+    let contextDomain: string | null = null;
     try {
       if (context && String(context).trim()) {
         const reply = await groqChat([
@@ -33,6 +34,19 @@ export const createInterview: RequestHandler = async (req, res) => {
           { role: "user", content: buildContextSummaryPrompt(context) },
         ]);
         if (reply && String(reply).trim()) contextSummary = String(reply).trim();
+
+        // Also extract domain
+        try {
+          const domainReply = await groqChat([
+            { role: "system", content: "You are a domain classifier. Return a single short label." },
+            { role: "user", content: buildContextDomainPrompt(context) },
+          ]);
+          if (domainReply && String(domainReply).trim()) {
+            contextDomain = String(domainReply).trim().toLowerCase();
+          }
+        } catch (e) {
+          contextDomain = null;
+        }
       }
     } catch (e) {
       contextSummary = null;
@@ -45,6 +59,7 @@ export const createInterview: RequestHandler = async (req, res) => {
         description: description || "",
         context: context || "",
         contextSummary: contextSummary || null,
+        contextDomain: contextDomain || null,
         interviewerRole: interviewerRole || "",
         durationMinutes:
           typeof durationMinutes === "number" ? durationMinutes : null,
