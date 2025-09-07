@@ -127,6 +127,23 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       }
     }
 
+    // If token provided, fetch candidate profile
+    let candidateProfile: { name?: string; years?: number; domain?: string } | undefined = undefined;
+    let candidateRow: any = null;
+    if (typeof token === "string" && token) {
+      const ic = await prisma.interviewCandidate.findFirst({ where: { inviteToken: String(token) } });
+      if (ic) {
+        candidateRow = await prisma.candidate.findUnique({ where: { id: ic.candidateId } });
+        if (candidateRow) {
+          candidateProfile = {
+            name: candidateRow.name || undefined,
+            years: typeof candidateRow.totalExperienceMonths === "number" ? Math.round((candidateRow.totalExperienceMonths || 0) / 12) : undefined,
+            domain: candidateRow.domain || undefined,
+          };
+        }
+      }
+    }
+
     // Determine which skill to focus on, based on number of user messages so far
     const userCount = Array.isArray(history)
       ? history.filter((h) => h.role === "user").length
