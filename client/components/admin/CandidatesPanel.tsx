@@ -676,7 +676,14 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
           </div>
         </SheetContent>
       </Sheet>
-      <Sheet open={reportOpen} onOpenChange={setReportOpen}>
+      <Sheet open={reportOpen} onOpenChange={(open) => {
+        // When closing the report sheet, revoke any created object URL
+        if (!open && reportProctorUrl) {
+          try { URL.revokeObjectURL(reportProctorUrl); } catch {}
+          setReportProctorUrl(null);
+        }
+        setReportOpen(open);
+      }}>
         <SheetContent
           side="right"
           className="w-[96vw] sm:max-w-3xl lg:max-w-4xl"
