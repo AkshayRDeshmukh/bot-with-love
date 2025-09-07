@@ -11,11 +11,13 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
   try {
     const {
       interviewId,
+      token,
       userText,
       history,
       interview: inputInterview,
     } = (req.body || {}) as {
       interviewId?: string;
+      token?: string;
       userText?: string;
       history?: ChatMessage[];
       interview?: {
@@ -25,6 +27,62 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
         interviewerRole?: string;
       };
     };
+
+    // If a candidate token and history are provided, persist full conversation to DB so reports always have raw transcript
+    if (token && Array.isArray(history)) {
+      try {
+        const ic = await prisma.interviewCandidate.findFirst({ where: { inviteToken: String(token) } });
+        if (ic) {
+          const interviewRow = await prisma.interview.findUnique({ where: { id: ic.interviewId } });
+          const icRow = await prisma.interviewCandidate.findFirst({ where: { interviewId: ic.interviewId, candidateId: ic.candidateId } });
+          const allowed = Math.max(
+            1,
+            Number.isFinite((icRow as any)?.maxAttempts as any) && (icRow as any)?.maxAttempts != null
+              ? ((icRow as any)?.maxAttempts as any)
+              : Number.isFinite((interviewRow as any)?.maxAttempts as any) && (interviewRow as any)?.maxAttempts != null
+                ? ((interviewRow as any)?.maxAttempts as any)
+                : 1,
+          );
+
+          const latest = await prisma.interviewTranscript.findFirst({
+            where: { interviewId: ic.interviewId, candidateId: ic.candidateId },
+            orderBy: { attemptNumber: "desc" },
+            select: { attemptNumber: true, content: true },
+          });
+
+          const all = await prisma.interviewTranscript.findMany({
+            where: { interviewId: ic.interviewId, candidateId: ic.candidateId },
+            select: { id: true, content: true },
+          });
+          const used = all.filter((r: any) => Array.isArray(r.content) && r.content.length > 0).length;
+          const targetAttempt = latest && Array.isArray((latest as any).content) && (latest as any).content.length === 0
+            ? (latest as any).attemptNumber!
+            : used + 1;
+
+          if (targetAttempt <= allowed) {
+            await prisma.interviewTranscript.upsert({
+              where: {
+                interviewId_candidateId_attemptNumber: {
+                  interviewId: ic.interviewId,
+                  candidateId: ic.candidateId,
+                  attemptNumber: targetAttempt,
+                },
+              },
+              update: { content: history as any },
+              create: {
+                interviewId: ic.interviewId,
+                candidateId: ic.candidateId,
+                attemptNumber: targetAttempt,
+                content: history as any,
+              },
+            });
+          }
+        }
+      } catch (e) {
+        // Do not fail the LLM call if persistence fails
+        console.error("Failed to persist transcript in chatWithLLM:", e?.message || e);
+      }
+    }
 
     if (!userText || !userText.trim()) {
       return res.status(400).json({ error: "userText is required" });
