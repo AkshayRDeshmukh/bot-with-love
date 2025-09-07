@@ -77,10 +77,33 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       remainingForSkill = 5 - (userCount % 5);
     }
 
+    // Summarize long interview context to avoid repeating large context blocks in every prompt
+    let contextSummary: string | undefined = undefined;
+    const rawContext = interview?.context;
+    if (typeof rawContext === "string" && rawContext.trim()) {
+      const trimmed = rawContext.trim();
+      if (trimmed.length <= 300) {
+        contextSummary = trimmed;
+      } else {
+        try {
+          const ctxSummary = await groqChat([
+            { role: "system", content: "You are a concise summarizer. Return 1-2 short sentences." },
+            { role: "user", content: `Summarize the following interview context into 1-2 short sentences suitable for an interviewer LLM:\n\n${trimmed}` },
+          ]);
+          if (ctxSummary && String(ctxSummary).trim()) {
+            contextSummary = String(ctxSummary).trim();
+          } else {
+            contextSummary = trimmed.slice(0, 300) + "...";
+          }
+        } catch (e) {
+          contextSummary = trimmed.slice(0, 300) + "...";
+        }
+      }
+    }
+
     const sys = buildInterviewSystemPrompt({
       title: interview?.title,
-      description: interview?.description,
-      context: interview?.context,
+      context: contextSummary,
       interviewerRole: interview?.interviewerRole,
       remainingSeconds,
       totalMinutes,
