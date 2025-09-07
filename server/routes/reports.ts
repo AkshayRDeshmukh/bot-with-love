@@ -198,14 +198,22 @@ export const generateReportTemplate: RequestHandler = async (req, res) => {
     structure = buildFallback();
   }
 
-  // Generate a concise template summary (3-6 bullets) to store in DB
-  let templateSummary: string | null = null;
+  // Generate a concise template summary (JSON array of skill area strings) to store in DB
+  let templateSummary: any[] | null = null;
   try {
     const summaryReply = await groqChat([
-      { role: "system", content: "Return ONLY concise bullet points, no prose." },
+      { role: "system", content: "Return ONLY a JSON array of short skill area strings, no prose." },
       { role: "user", content: buildTemplateSummaryPrompt(structure) },
     ]);
-    templateSummary = summaryReply.trim();
+    // Try parsing as JSON array
+    let parsedArray: any[] | null = null;
+    try {
+      parsedArray = JSON.parse(summaryReply);
+      if (!Array.isArray(parsedArray)) parsedArray = null;
+    } catch {
+      parsedArray = extractFirstJsonArray(summaryReply);
+    }
+    templateSummary = parsedArray || null;
   } catch (e) {
     templateSummary = null;
   }
