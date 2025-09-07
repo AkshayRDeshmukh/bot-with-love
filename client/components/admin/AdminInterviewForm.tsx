@@ -10,6 +10,7 @@ const schema = z.object({
   title: z.string().min(3),
   description: z.string().min(10),
   context: z.string().min(3),
+  contextDomain: z.string().optional(),
   interviewerRole: z.string().min(2),
   durationMinutes: z
     .number({ invalid_type_error: "Duration must be a number" })
