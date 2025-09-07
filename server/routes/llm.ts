@@ -198,7 +198,6 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
     messages.push({ role: "system", content: sys });
 
     // If no history, generate a deterministic server-side ice-breaker assistant message using candidate profile if available
-    const hasHistory = Array.isArray(history) && history.length > 0;
     if (!hasHistory) {
       // Decide domain match heuristic
       const interviewDomain = (templateSummary && templateSummary.length > 0 && String(templateSummary[0]).trim()) || (interview?.title || "");
