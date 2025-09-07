@@ -4,6 +4,26 @@ import { AuthRequest } from "../middleware/auth";
 import { groqChat } from "../services/llm";
 import { buildContextSummaryPrompt, buildContextDomainPrompt } from "../prompts/interview";
 
+// Normalize domain labels to canonical set
+function normalizeDomainLabel(label: string | undefined | null) {
+  if (!label) return null;
+  const s = String(label).toLowerCase().trim();
+  if (!s) return null;
+  if (s.includes("front")) return "frontend";
+  if (s.includes("react") || s.includes("angular") || s.includes("vue")) return "frontend";
+  if (s.includes("back")) return "backend";
+  if (s.includes("node") || s.includes("express") || s.includes("java") || s.includes("spring")) return "backend";
+  if (s.includes("data") || s.includes("ml") || s.includes("machine")) return "datascience";
+  if (s.includes("devops") || s.includes("infra") || s.includes("ops")) return "devops";
+  if (s.includes("mobile") || s.includes("android") || s.includes("ios")) return "mobile";
+  if (s.includes("security") || s.includes("sec")) return "security";
+  if (s.includes("product")) return "product";
+  if (s.includes("design") || s.includes("ux")) return "design";
+  // fallback: single word from label
+  const first = s.split(/[^a-z0-9]+/)[0];
+  return first || s;
+}
+
 export const createInterview: RequestHandler = async (req, res) => {
   const {
     title,
