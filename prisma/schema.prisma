@@ -93,6 +93,7 @@ model Interview {
   title           String
   description     String
   context         String
+  contextSummary  String?  @map("context_summary")
   interviewerRole String
   durationMinutes Int?
   interactionMode InterviewInteractionMode @default(AUDIO)
