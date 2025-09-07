@@ -189,8 +189,9 @@ export const updateInterview: RequestHandler = async (req, res) => {
         title: title ?? existing.title,
         description: description ?? existing.description,
         context: newContext,
+        // allow explicit override of contextDomain from request body
         contextSummary: contextSummary,
-        contextDomain: contextDomain,
+        contextDomain: (typeof (req.body as any)?.contextDomain === "string" ? (req.body as any).contextDomain : contextDomain),
         interviewerRole: interviewerRole ?? existing.interviewerRole,
         durationMinutes:
           durationMinutes === null
