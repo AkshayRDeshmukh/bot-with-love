@@ -1,6 +1,5 @@
 export function buildInterviewSystemPrompt(input: {
   title?: string;
-  description?: string;
   context?: string;
   interviewerRole?: string;
   remainingSeconds?: number;
@@ -13,7 +12,6 @@ export function buildInterviewSystemPrompt(input: {
 }) {
   const {
     title,
-    description,
     context,
     interviewerRole,
     remainingSeconds,
