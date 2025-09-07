@@ -118,9 +118,19 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
     const messages: ChatMessage[] = [];
     messages.push({ role: "system", content: sys });
 
+    // If no history, prompt the LLM to start with one brief ice-breaker question (once)
+    const hasHistory = Array.isArray(history) && history.length > 0;
+    if (!hasHistory) {
+      messages.push({
+        role: "system",
+        content:
+          "Start the interview with ONE brief ice-breaker question to build rapport (e.g., 'How are you and what is your current role?'). Do not use this in subsequent prompts.",
+      });
+    }
+
     // If history is long, summarize older parts to keep prompts small while preserving full history in DB
     let recentMessages: ChatMessage[] = [];
-    if (Array.isArray(history) && history.length > 0) {
+    if (hasHistory) {
       const MAX_KEEP = 8; // keep recent 8 messages (approx 4 pairs)
       if (history.length > MAX_KEEP) {
         const older = history.slice(0, Math.max(0, history.length - MAX_KEEP));
