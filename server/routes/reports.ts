@@ -187,15 +187,27 @@ export const generateReportTemplate: RequestHandler = async (req, res) => {
     structure = buildFallback();
   }
 
+  // Generate a concise template summary (3-6 bullets) to store in DB
+  let templateSummary: string | null = null;
+  try {
+    const summaryReply = await groqChat([
+      { role: "system", content: "Return ONLY concise bullet points, no prose." },
+      { role: "user", content: buildTemplateSummaryPrompt(structure) },
+    ]);
+    templateSummary = summaryReply.trim();
+  } catch (e) {
+    templateSummary = null;
+  }
+
   try {
     const saved = await prisma.reportTemplate.upsert({
       where: { interviewId: id },
-      create: { interviewId: id, structure },
-      update: { structure },
+      create: { interviewId: id, structure, templateSummary },
+      update: { structure, templateSummary },
     });
-    return res.json({ structure: saved.structure });
+    return res.json({ structure: saved.structure, templateSummary: saved.templateSummary });
   } catch (e) {
-    return res.json({ structure });
+    return res.json({ structure, templateSummary });
   }
 };
 
