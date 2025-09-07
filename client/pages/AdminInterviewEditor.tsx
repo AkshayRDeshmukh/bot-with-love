@@ -221,6 +221,7 @@ export default function AdminInterviewEditor() {
                       <AdminInterviewForm
                         initial={initial}
                         onSubmit={onSubmit}
+                        submitting={submitting}
                       />
                     ) : (
                       <TooltipProvider>
