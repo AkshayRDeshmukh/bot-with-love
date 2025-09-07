@@ -119,6 +119,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
   const [reportTemplate, setReportTemplate] = useState<any | null>(null);
   const [reportTranscript, setReportTranscript] = useState<any[]>([]);
   const [proctorImgError, setProctorImgError] = useState(false);
+  const [reportProctorUrl, setReportProctorUrl] = useState<string | null>(null);
   const [reportInterview, setReportInterview] = useState<any | null>(null);
   const [reportAttempt, setReportAttempt] = useState<number>(1);
   const [reportAttempts, setReportAttempts] = useState<
@@ -167,6 +168,25 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
       if (data?.report?.attemptNumber)
         setReportAttempt(Number(data.report.attemptNumber));
       if (intr.ok) setReportInterview(await intr.json());
+
+      // Try fetching proctor photo as a blob (so credentials are sent reliably)
+      setReportProctorUrl(null);
+      setProctorImgError(false);
+      try {
+        const photoUrl = data?.proctorPhotoUrl || null;
+        if (photoUrl) {
+          const imgRes = await fetch(photoUrl, { credentials: "include" });
+          if (imgRes.ok) {
+            const b = await imgRes.blob();
+            const obj = URL.createObjectURL(b);
+            setReportProctorUrl(obj);
+          } else {
+            setProctorImgError(true);
+          }
+        }
+      } catch (err) {
+        setProctorImgError(true);
+      }
     } catch (e: any) {
       setReportError(e?.message || "Failed to load report");
     } finally {
@@ -761,7 +781,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                     <div className="h-36 w-28 rounded-md ring-2 ring-primary/30 overflow-hidden bg-muted">
                       {!proctorImgError ? (
                         <img
-                          src={`/api/interviews/${interviewId}/candidates/${(reportData as any)?.candidateId || ""}/proctor-photo?inline=1&attempt=${encodeURIComponent(String(reportAttempt))}`}
+                          src={reportProctorUrl ?? `/api/interviews/${interviewId}/candidates/${(reportData as any)?.candidateId || ""}/proctor-photo?inline=1&attempt=${encodeURIComponent(String(reportAttempt))}`}
                           alt="Profile photo"
                           className="h-full w-full object-cover"
                           onError={() => setProctorImgError(true)}
