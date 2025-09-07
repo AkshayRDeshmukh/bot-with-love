@@ -24,12 +24,27 @@ export const createInterview: RequestHandler = async (req, res) => {
   if (!title) return res.status(400).json({ error: "Title is required" });
   const adminId = (req as AuthRequest).userId!;
   try {
+    // Generate a concise skill-level context summary to store with the interview
+    let contextSummary: string | null = null;
+    try {
+      if (context && String(context).trim()) {
+        const reply = await groqChat([
+          { role: "system", content: "You are a concise summarizer. Return only the summary." },
+          { role: "user", content: buildContextSummaryPrompt(context) },
+        ]);
+        if (reply && String(reply).trim()) contextSummary = String(reply).trim();
+      }
+    } catch (e) {
+      contextSummary = null;
+    }
+
     const interview = await prisma.interview.create({
       data: {
         adminId,
         title,
         description: description || "",
         context: context || "",
+        contextSummary: contextSummary || null,
         interviewerRole: interviewerRole || "",
         durationMinutes:
           typeof durationMinutes === "number" ? durationMinutes : null,
@@ -106,12 +121,29 @@ export const updateInterview: RequestHandler = async (req, res) => {
       where: { id, adminId },
     });
     if (!existing) return res.status(404).json({ error: "Not found" });
+
+    // If context changed, regenerate contextSummary
+    let contextSummary: string | null = (existing as any).contextSummary ?? null;
+    const newContext = context ?? existing.context;
+    if (typeof context === "string" && context !== existing.context) {
+      try {
+        const reply = await groqChat([
+          { role: "system", content: "You are a concise summarizer. Return only the summary." },
+          { role: "user", content: buildContextSummaryPrompt(newContext) },
+        ]);
+        if (reply && String(reply).trim()) contextSummary = String(reply).trim();
+      } catch (e) {
+        // keep existing summary on failure
+      }
+    }
+
     const updated = await prisma.interview.update({
       where: { id },
       data: {
         title: title ?? existing.title,
         description: description ?? existing.description,
-        context: context ?? existing.context,
+        context: newContext,
+        contextSummary: contextSummary,
         interviewerRole: interviewerRole ?? existing.interviewerRole,
         durationMinutes:
           durationMinutes === null
