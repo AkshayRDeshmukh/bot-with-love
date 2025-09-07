@@ -11,8 +11,6 @@ import {
   listInterviews,
   updateInterview,
   deleteInterview,
-  recomputeContextForInterview,
-  backfillContextDomain,
 } from "./routes/interviews";
 import {
   listCandidates,
