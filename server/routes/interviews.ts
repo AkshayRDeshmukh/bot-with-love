@@ -55,7 +55,7 @@ export const createInterview: RequestHandler = async (req, res) => {
         ]);
         if (reply && String(reply).trim()) contextSummary = String(reply).trim();
 
-        // Also extract domain
+        // Also extract domain using LLM; if it fails, fall back to simple heuristic
         try {
           const domainReply = await groqChat([
             { role: "system", content: "You are a domain classifier. Return a single short label." },
@@ -65,7 +65,18 @@ export const createInterview: RequestHandler = async (req, res) => {
             contextDomain = String(domainReply).trim().toLowerCase();
           }
         } catch (e) {
+          console.warn("Domain classifier LLM failed during createInterview:", e?.message || e);
           contextDomain = null;
+        }
+
+        // Fallback: simple keyword-based detection from raw context
+        if (!contextDomain) {
+          try {
+            const inferred = normalizeDomainLabel(context);
+            if (inferred) contextDomain = inferred;
+          } catch (e) {
+            // ignore
+          }
         }
       }
     } catch (e) {
