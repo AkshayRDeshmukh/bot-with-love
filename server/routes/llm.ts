@@ -197,14 +197,90 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
     const messages: ChatMessage[] = [];
     messages.push({ role: "system", content: sys });
 
-    // If no history, prompt the LLM to start with one brief ice-breaker question (once)
+    // If no history, generate a deterministic server-side ice-breaker assistant message using candidate profile if available
     const hasHistory = Array.isArray(history) && history.length > 0;
     if (!hasHistory) {
-      messages.push({
-        role: "system",
-        content:
-          "Start the interview with ONE brief ice-breaker question to build rapport (e.g., 'How are you and what is your current role?'). Do not use this in subsequent prompts.",
-      });
+      // Decide domain match heuristic
+      const interviewDomain = (templateSummary && templateSummary.length > 0 && String(templateSummary[0]).trim()) || (interview?.title || "");
+      const candidateDomain = candidateProfile?.domain;
+      const domainMatches = candidateDomain && interviewDomain && String(interviewDomain).toLowerCase().includes(String(candidateDomain).toLowerCase());
+
+      // If domain mismatch, ask for confirmation before proceeding
+      if (candidateProfile && candidateDomain && interviewDomain && !domainMatches) {
+        const question = `I see your background indicates domain "${candidateDomain}" but this interview focuses on "${interviewDomain}". Do you want to continue with this interview? Please answer yes or no.`;
+        // Persist and return assistant message
+        const assistantMsg = candidateProfile.name
+          ? `Hi ${candidateProfile.name.split(" ")[0]}, ${question}`
+          : question;
+        // Persist to DB as assistant message in transcript if token available
+        try {
+          if (token && candidateRow) {
+            const ic = await prisma.interviewCandidate.findFirst({ where: { inviteToken: String(token) } });
+            if (ic) {
+              // upsert transcript with this assistant message as initial content
+              await prisma.interviewTranscript.upsert({
+                where: {
+                  interviewId_candidateId_attemptNumber: {
+                    interviewId: ic.interviewId,
+                    candidateId: ic.candidateId,
+                    attemptNumber: 1,
+                  },
+                },
+                update: { content: [{ role: "assistant", content: assistantMsg }] as any },
+                create: {
+                  interviewId: ic.interviewId,
+                  candidateId: ic.candidateId,
+                  attemptNumber: 1,
+                  content: [{ role: "assistant", content: assistantMsg }] as any,
+                },
+              });
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+        return res.json({ reply: assistantMsg });
+      }
+
+      // Otherwise, create friendly ice-breaker using name and experience
+      let assistantMsg = "";
+      if (candidateProfile && candidateProfile.name) {
+        const firstName = String(candidateProfile.name).split(" ")[0];
+        assistantMsg += `Hi ${firstName}! `;
+      }
+      if (candidateProfile && typeof candidateProfile.years === "number") {
+        assistantMsg += `I see you have ${candidateProfile.years} years of experience. `;
+      }
+      assistantMsg += "How are you today, and can you briefly describe your current role?";
+
+      // Persist to DB as assistant message if token
+      try {
+        if (token && candidateRow) {
+          const ic = await prisma.interviewCandidate.findFirst({ where: { inviteToken: String(token) } });
+          if (ic) {
+            await prisma.interviewTranscript.upsert({
+              where: {
+                interviewId_candidateId_attemptNumber: {
+                  interviewId: ic.interviewId,
+                  candidateId: ic.candidateId,
+                  attemptNumber: 1,
+                },
+              },
+              update: { content: [{ role: "assistant", content: assistantMsg }] as any },
+              create: {
+                interviewId: ic.interviewId,
+                candidateId: ic.candidateId,
+                attemptNumber: 1,
+                content: [{ role: "assistant", content: assistantMsg }] as any,
+              },
+            });
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      return res.json({ reply: assistantMsg });
     }
 
     // If history is present, perform scheduled summarization to keep prompts small.
