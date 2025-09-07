@@ -62,24 +62,46 @@ export default function AdminInterviewEditor() {
     })();
   }, [id, isEdit]);
 
+  const [submitting, setSubmitting] = useState(false);
+
   const onSubmit = async (values: InterviewInput) => {
     setError(null);
-    const url = isEdit ? `/api/interviews/${id}` : "/api/interviews";
-    const method = isEdit ? "PUT" : "POST";
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(values),
-    });
-    if (!res.ok) {
-      setError("Failed to save interview");
-      return;
+    setSubmitting(true);
+    try {
+      const url = isEdit ? `/api/interviews/${id}` : "/api/interviews";
+      const method = isEdit ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) {
+        setError("Failed to save interview");
+        return;
+      }
+      // Refetch saved interview from server to get contextSummary/contextDomain populated
+      const freshRes = await fetch(`/api/interviews/${isEdit ? id : (await res.json()).id}`, { credentials: "include" });
+      if (freshRes.ok) {
+        const data = await freshRes.json();
+        setInitial({
+          title: data.title,
+          description: data.description,
+          context: data.context,
+          interviewerRole: data.interviewerRole,
+          durationMinutes: data.durationMinutes ?? undefined,
+          interactionMode: data.interactionMode || "AUDIO",
+        });
+      } else {
+        // fallback to submitted values
+        setInitial(values);
+      }
+      setEditing(false);
+      toast({ title: "Saved", description: "Interview details updated." });
+      if (!isEdit) navigate("/admin", { replace: true });
+    } finally {
+      setSubmitting(false);
     }
-    setInitial(values);
-    setEditing(false);
-    toast({ title: "Saved", description: "Interview details updated." });
-    if (!isEdit) navigate("/admin", { replace: true });
   };
 
   return (
