@@ -82,12 +82,12 @@ export function buildUserMessage(userText: string) {
 export function buildContextSummaryPrompt(context: string) {
   const trimmed = (context || "").trim();
   return [
-    "You are a concise summarizer for interview context.",
-    "Extract skill-level expectations from the context and produce a very short summary that lists what the candidate should be evaluated on and what is expected from them.",
+    "You are an expert interviewer prompt engineer. Read the interview context and produce a concise plain-English summary describing what the interviewer expects from the candidate.",
     "Requirements:",
-    "- Return a single short paragraph (<= 200 characters) or a comma-separated list of 3-6 short skill expectations.",
-    "- Focus on skills and expected outcomes, not prose or background.",
-    "- Avoid repetition and do not include the full context.",
+    "- Return 2-3 short sentences (total <= 300 characters) in plain English.",
+    "- Focus on: the key skill areas to assess, expected outcomes / deliverables from the candidate, and any constraints or priorities.",
+    "- Do NOT list or output the original context verbatim or as JSON. Avoid extraneous background details.",
+    "- Output should be a compact narrative that can be used directly in an LLM system prompt.",
     "Context:",
     trimmed,
   ].join("\n\n");
