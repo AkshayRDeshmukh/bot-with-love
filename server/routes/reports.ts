@@ -4,7 +4,6 @@ import { groqChat } from "../services/llm";
 import { buildReportTemplatePrompt } from "../prompts/report";
 import { AuthRequest } from "../middleware/auth";
 import { randomUUID } from "crypto";
-import type { RequestHandler } from "express";
 
 function normalizeTemplate(json: any) {
   try {
