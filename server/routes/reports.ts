@@ -79,6 +79,18 @@ function extractFirstJsonObject(text: string): any | null {
   }
 }
 
+function extractFirstJsonArray(text: string): any[] | null {
+  try {
+    const start = text.indexOf("[");
+    const end = text.lastIndexOf("]");
+    if (start === -1 || end === -1 || end <= start) return null;
+    const slice = text.slice(start, end + 1).trim();
+    return JSON.parse(slice);
+  } catch {
+    return null;
+  }
+}
+
 export const getReportTemplate: RequestHandler = async (req, res) => {
   const adminId = (req as AuthRequest).userId!;
   const { id } = req.params as { id: string };
