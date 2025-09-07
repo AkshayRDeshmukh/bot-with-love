@@ -137,8 +137,9 @@ export const updateInterview: RequestHandler = async (req, res) => {
     });
     if (!existing) return res.status(404).json({ error: "Not found" });
 
-    // If context changed, regenerate contextSummary
+    // If context changed, regenerate contextSummary and domain
     let contextSummary: string | null = (existing as any).contextSummary ?? null;
+    let contextDomain: string | null = (existing as any).contextDomain ?? null;
     const newContext = context ?? existing.context;
     if (typeof context === "string" && context !== existing.context) {
       try {
@@ -150,6 +151,16 @@ export const updateInterview: RequestHandler = async (req, res) => {
       } catch (e) {
         // keep existing summary on failure
       }
+
+      try {
+        const domainReply = await groqChat([
+          { role: "system", content: "You are a domain classifier. Return a single short label." },
+          { role: "user", content: buildContextDomainPrompt(newContext) },
+        ]);
+        if (domainReply && String(domainReply).trim()) contextDomain = String(domainReply).trim().toLowerCase();
+      } catch (e) {
+        // keep existing domain on failure
+      }
     }
 
     const updated = await prisma.interview.update({
@@ -159,6 +170,7 @@ export const updateInterview: RequestHandler = async (req, res) => {
         description: description ?? existing.description,
         context: newContext,
         contextSummary: contextSummary,
+        contextDomain: contextDomain,
         interviewerRole: interviewerRole ?? existing.interviewerRole,
         durationMinutes:
           durationMinutes === null
