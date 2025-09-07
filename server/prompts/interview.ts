@@ -45,8 +45,8 @@ export function buildInterviewSystemPrompt(input: {
         `Interview Report Skill Areas (priority order):`,
         list,
         focusLine,
-        `The system (not the LLM) will decide when to move to the next skill. Do NOT switch skills unless the system indicates the next skill index.`,
-        `Important: Never end or conclude the interview unless explicitly instructed by the system with the exact token: END_INTERVIEW. Do not produce concluding statements or sign-offs.`,
+        `The system will decide when to move to the next skill. Do NOT switch skills unless the system indicates the next skill index.`,
+        `CRITICAL: Never end, conclude, or announce completion of the interview unless the system sends an EXACT single token message: END_INTERVIEW (system role). Under no circumstances should you produce or fabricate this token or claim the system instructed you to end. Continue asking focused questions until you receive that exact system token.`,
       ].join("\n");
     }
     if (templateStructure == null) return null;
