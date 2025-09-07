@@ -235,7 +235,28 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
 
     messages.push({ role: "user", content: buildUserMessage(userText) });
 
-    const reply = await groqChat(messages);
+    const rawReply = await groqChat(messages);
+
+    // Sanitize reply: remove any fabricated END_INTERVIEW tokens and sentences that claim the system ended the interview
+    function sanitizeReply(text: string) {
+      if (!text) return text;
+      // Remove explicit END_INTERVIEW token occurrences
+      let t = text.replace(/\bEND_INTERVIEW\b\.?/gi, "");
+      // Split into sentences and remove sentences that mention system-ending or system instructions
+      const sentences = t.match(/[^.!?\n]+[.!?\n]?/g) || [t];
+      const filtered = sentences.filter((s) => {
+        const low = s.toLowerCase();
+        if (low.includes("end the interview") || low.includes("conclude the interview") || low.includes("concluded the") || low.includes("finish the interview") || low.includes("wrap up the interview") ) return false;
+        if (low.includes("the system") && (low.includes("end") || low.includes("conclude") || low.includes("finish") || low.includes("instruct"))) return false;
+        if (low.includes("system instructs") || low.includes("system instruct") || low.includes("system confirms")) return false;
+        return true;
+      });
+      const out = filtered.join(" ").trim();
+      // Collapse multiple spaces
+      return out.replace(/\s+/g, " ").trim();
+    }
+
+    const reply = sanitizeReply(String(rawReply || "")).trim();
     res.json({ reply });
   } catch (err: any) {
     res.status(500).json({ error: err?.message || "LLM error" });
