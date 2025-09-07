@@ -219,12 +219,25 @@ export const saveReportTemplate: RequestHandler = async (req, res) => {
   });
   if (!interview) return res.status(404).json({ error: "Interview not found" });
   const structure = normalizeTemplate((req.body as any)?.structure || {});
+
+  // Generate concise summary for the provided structure
+  let templateSummary: string | null = null;
+  try {
+    const summaryReply = await groqChat([
+      { role: "system", content: "Return ONLY concise bullet points, no prose." },
+      { role: "user", content: buildTemplateSummaryPrompt(structure) },
+    ]);
+    templateSummary = summaryReply.trim();
+  } catch (e) {
+    templateSummary = null;
+  }
+
   const saved = await prisma.reportTemplate.upsert({
     where: { interviewId: id },
-    create: { interviewId: id, structure },
-    update: { structure },
+    create: { interviewId: id, structure, templateSummary },
+    update: { structure, templateSummary },
   });
-  res.json({ structure: saved.structure });
+  res.json({ structure: saved.structure, templateSummary: saved.templateSummary });
 };
 
 function buildCandidateReportPrompt(args: {
