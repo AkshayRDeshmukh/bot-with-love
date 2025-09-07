@@ -29,3 +29,19 @@ export function buildReportTemplatePrompt(input: {
   if (description) parts.push("Description: " + description);
   return parts.join("\n");
 }
+
+export function buildTemplateSummaryPrompt(structure: any) {
+  // structure is expected to be a normalized template object with parameters array
+  const json = JSON.stringify(structure || {}, null, 2);
+  return [
+    "You are a concise summarizer for interview report templates.",
+    "Given the JSON structure of an interview report template, produce a VERY concise summary suitable for LLM prompts.",
+    "Requirements:",
+    "- Return ONLY 3-6 bullet points, each starting with '-' and no extra explanation.",
+    "- Each bullet must be short (preferably <= 100 characters) and focused on what information the template captures and how it should guide questioning.",
+    "- Mention key parameters or categories and any notable scales or weights if relevant.",
+    "- Avoid including the full JSON or long descriptions.",
+    "Template JSON:",
+    json,
+  ].join("\n\n");
+}
