@@ -38,11 +38,16 @@ export function buildInterviewSystemPrompt(input: {
   })();
 
   const templateSection = (() => {
-    if (templateSummary) {
+    if (Array.isArray(templateSummary) && templateSummary.length > 0) {
+      const list = templateSummary.map((s, i) => `${i + 1}. ${s}`).join("\n");
+      const focusLine = currentSkill
+        ? `Focus now on: ${currentSkill} (skill ${Number(currentSkillIndex ?? 0) + 1} of ${templateSummary.length}). Ask questions to elicit evidence for this skill. Remaining questions for this skill: ${remainingForSkill ?? 5}.`
+        : "Focus on the listed skill areas, one at a time, in order.";
       return [
-        `Interview Report Summary (concise bullets):`,
-        templateSummary,
-        `Use this summary to guide your questioning and capture information needed for the report.`,
+        `Interview Report Skill Areas (priority order):`,
+        list,
+        focusLine,
+        `Rotate to the next skill after ~4-5 user responses so each skill gets focused attention.`,
       ].join("\n");
     }
     if (templateStructure == null) return null;
