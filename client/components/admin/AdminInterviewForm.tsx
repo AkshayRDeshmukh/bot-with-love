@@ -108,6 +108,19 @@ export function AdminInterviewForm({
         )}
       </div>
       <div className="grid gap-2">
+        <label className="text-sm">Context Domain (optional)</label>
+        <input
+          className="h-10 rounded-md border bg-background px-3"
+          placeholder="e.g., frontend, backend, datascience"
+          {...form.register("contextDomain")}
+        />
+        {form.formState.errors.contextDomain && (
+          <p className="text-xs text-destructive">
+            {form.formState.errors.contextDomain.message}
+          </p>
+        )}
+      </div>
+      <div className="grid gap-2">
         <label className="text-sm">Interviewer Role</label>
         <input
           className="h-10 rounded-md border bg-background px-3"
