@@ -35,12 +35,12 @@ export function buildTemplateSummaryPrompt(structure: any) {
   const json = JSON.stringify(structure || {}, null, 2);
   return [
     "You are a concise summarizer for interview report templates.",
-    "Given the JSON structure of an interview report template, produce a VERY concise summary suitable for LLM prompts.",
+    "Given the JSON structure of an interview report template, produce a VERY concise JSON array of skill area strings suitable for guiding an interview LLM.",
     "Requirements:",
-    "- Return ONLY 3-6 bullet points, each starting with '-' and no extra explanation.",
-    "- Each bullet must be short (preferably <= 100 characters) and focused on what information the template captures and how it should guide questioning.",
-    "- Mention key parameters or categories and any notable scales or weights if relevant.",
-    "- Avoid including the full JSON or long descriptions.",
+    "- Return ONLY valid JSON: an array of strings, e.g. [\"System Design\", \"Algorithms\", \"Communication\"]",
+    "- Return between 3 and 8 skill areas.",
+    "- Each skill area should be short (<= 40 characters) and represent a testable skill or category.",
+    "- Order skills by priority (most important first).",
     "Template JSON:",
     json,
   ].join("\n\n");
