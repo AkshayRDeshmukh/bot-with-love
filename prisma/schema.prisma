@@ -134,11 +134,12 @@ model InterviewTranscript {
 }
 
 model ReportTemplate {
-  id          String   @id @default(uuid())
-  interviewId String   @unique
-  structure   Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(uuid())
+  interviewId     String   @unique
+  structure       Json
+  templateSummary String?  @map("template_summary")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
 
