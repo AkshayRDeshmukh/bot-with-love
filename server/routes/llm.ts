@@ -3,6 +3,7 @@ import { prisma } from "../prisma";
 import {
   buildInterviewSystemPrompt,
   buildUserMessage,
+  buildContextSummaryPrompt,
 } from "../prompts/interview";
 import { groqChat, type ChatMessage } from "../services/llm";
 
