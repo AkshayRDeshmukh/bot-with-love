@@ -188,7 +188,7 @@ export const updateInterview: RequestHandler = async (req, res) => {
           { role: "system", content: "You are a domain classifier. Return a single short label." },
           { role: "user", content: buildContextDomainPrompt(newContext) },
         ]);
-        if (domainReply && String(domainReply).trim()) contextDomain = String(domainReply).trim().toLowerCase();
+        if (domainReply && String(domainReply).trim()) contextDomain = normalizeDomainLabel(String(domainReply).trim());
       } catch (e) {
         console.warn("Domain classifier LLM failed during updateInterview:", e?.message || e);
         // keep existing domain on failure
