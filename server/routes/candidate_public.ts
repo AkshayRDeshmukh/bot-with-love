@@ -40,7 +40,9 @@ export const getCandidateSession: RequestHandler = async (req, res) => {
     interview: {
       title: interview.title,
       description: interview.description,
-      context: interview.context,
+      // Prefer stored concise context summary for candidate flow to reduce prompt size
+      context: interview.contextSummary ?? interview.context,
+      contextSummary: interview.contextSummary ?? null,
       interviewerRole: interview.interviewerRole,
       durationMinutes: interview.durationMinutes ?? undefined,
       interactionMode: (interview as any).interactionMode,
