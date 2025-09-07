@@ -128,32 +128,48 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       });
     }
 
-    // If history is long, summarize older parts to keep prompts small while preserving full history in DB
+    // If history is present, perform scheduled summarization to keep prompts small.
+    // Summarize after every 2 user responses: when userCount is a positive multiple of 2,
+    // compress older messages into a short summary and only pass recent messages.
     let recentMessages: ChatMessage[] = [];
     if (hasHistory) {
-      const MAX_KEEP = 8; // keep recent 8 messages (approx 4 pairs)
-      if (history.length > MAX_KEEP) {
-        const older = history.slice(0, Math.max(0, history.length - MAX_KEEP));
-        recentMessages = history.slice(Math.max(0, history.length - MAX_KEEP));
-        try {
-          const olderText = older
-            .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
-            .join("\n");
-          const summaryPrompt = `Summarize the conversation below into 6-8 concise bullet points that capture the candidate's key answers and facts. Return ONLY the summary as plain text without additional commentary.\n\n${olderText}`;
-          const summary = await groqChat([
-            { role: "system", content: "You are a concise summarizer. Return only bullets." },
-            { role: "user", content: summaryPrompt },
-          ]);
-          if (summary && String(summary).trim()) {
-            messages.push({ role: "system", content: `Conversation summary:\n${summary.trim()}` });
+      const MAX_KEEP = 8; // fallback: keep recent 8 messages if nothing to summarize
+
+      // Trigger summarization when we've accumulated 2,4,6... user messages
+      const shouldSummarize = userCount > 0 && userCount % 2 === 0;
+
+      if (shouldSummarize) {
+        // Keep the most recent chunk (recentKeep messages) and summarize the rest
+        const recentKeep = 4; // keep ~last 4 messages (2 pairs)
+        const cut = Math.max(0, history.length - recentKeep);
+        const older = history.slice(0, cut);
+        recentMessages = history.slice(cut);
+        if (older.length > 0) {
+          try {
+            // Summarize only the candidate's (user) responses from the older chunk to a short paragraph
+            const olderUserText = older
+              .filter((m) => m.role === "user")
+              .map((m, i) => `- ${m.content}`)
+              .join("\n");
+            const summaryPrompt = `Summarize the candidate's responses below into 3-6 concise bullet points that capture the essential facts, outcomes, and any evidence useful for evaluation. Output only the bullets, no commentary.\n\n${olderUserText}`;
+            const summary = await groqChat([
+              { role: "system", content: "You are a concise summarizer focused on candidate answers. Return only bullets." },
+              { role: "user", content: summaryPrompt },
+            ]);
+            if (summary && String(summary).trim()) {
+              // Push as a system-level condensed memory. Do NOT include any 'system instructs' phrasing.
+              messages.push({ role: "system", content: `Condensed candidate summary:\n${summary.trim()}` });
+            }
+          } catch (e) {
+            // On error, fall back to keeping more recent messages
+            recentMessages = history.slice(Math.max(0, history.length - MAX_KEEP));
           }
-        } catch (e) {
-          // ignore summarization errors and fall back to including recent messages only
         }
       } else {
-        recentMessages = history;
+        recentMessages = history.slice(Math.max(0, history.length - MAX_KEEP));
       }
 
+      // Append only the recentMessages (either recent window or recentKeep) to messages
       for (const m of recentMessages) {
         if (m?.role && m?.content) messages.push({ role: m.role, content: m.content });
       }
