@@ -314,7 +314,7 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
   const tpl = await prisma.reportTemplate.findUnique({
     where: { interviewId: id },
   });
-  const template = tpl?.structure || { parameters: [] };
+  const template = (tpl?.structure as any) || { parameters: [] };
 
   const latestTranscript = await prisma.interviewTranscript.findFirst({
     where: { interviewId: id, candidateId: cid },
