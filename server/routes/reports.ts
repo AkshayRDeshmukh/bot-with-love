@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
 import { prisma } from "../prisma";
 import { groqChat } from "../services/llm";
-import { buildReportTemplatePrompt } from "../prompts/report";
+import { buildReportTemplatePrompt, buildTemplateSummaryPrompt } from "../prompts/report";
 import { AuthRequest } from "../middleware/auth";
 import { randomUUID } from "crypto";
 
