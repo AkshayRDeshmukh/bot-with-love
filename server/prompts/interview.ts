@@ -6,6 +6,7 @@ export function buildInterviewSystemPrompt(input: {
   remainingSeconds?: number;
   totalMinutes?: number;
   templateStructure?: unknown;
+  templateSummary?: string;
 }) {
   const {
     title,
@@ -15,6 +16,7 @@ export function buildInterviewSystemPrompt(input: {
     remainingSeconds,
     totalMinutes,
     templateStructure,
+    templateSummary,
   } = input || {};
   const timeGuidance =
     typeof remainingSeconds === "number" && remainingSeconds >= 0
@@ -26,6 +28,13 @@ export function buildInterviewSystemPrompt(input: {
       : [];
 
   const templateSection = (() => {
+    if (templateSummary) {
+      return [
+        `Interview Report Summary (concise bullets):`,
+        templateSummary,
+        `Use this summary to guide your questioning and capture information needed for the report.`,
+      ].join("\n");
+    }
     if (templateStructure == null) return null;
     try {
       const json = JSON.stringify(templateStructure, null, 2);
