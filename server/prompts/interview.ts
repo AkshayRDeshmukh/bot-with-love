@@ -45,7 +45,8 @@ export function buildInterviewSystemPrompt(input: {
         `Interview Report Skill Areas (priority order):`,
         list,
         focusLine,
-        `Rotate to the next skill after ~4-5 user responses so each skill gets focused attention.`,
+        `The system (not the LLM) will decide when to move to the next skill. Do NOT switch skills unless the system indicates the next skill index.`,
+        `Important: Never end or conclude the interview unless explicitly instructed by the system with the exact token: END_INTERVIEW. Do not produce concluding statements or sign-offs.`,
       ].join("\n");
     }
     if (templateStructure == null) return null;
