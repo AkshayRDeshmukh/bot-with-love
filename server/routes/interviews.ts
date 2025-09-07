@@ -190,7 +190,14 @@ export const updateInterview: RequestHandler = async (req, res) => {
         ]);
         if (domainReply && String(domainReply).trim()) contextDomain = String(domainReply).trim().toLowerCase();
       } catch (e) {
+        console.warn("Domain classifier LLM failed during updateInterview:", e?.message || e);
         // keep existing domain on failure
+        contextDomain = contextDomain || normalizeDomainLabel(newContext);
+      }
+
+      // Ensure we have at least a heuristic domain
+      if (!contextDomain) {
+        contextDomain = normalizeDomainLabel(newContext);
       }
     }
 
