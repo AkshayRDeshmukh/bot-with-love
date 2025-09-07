@@ -691,7 +691,31 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
           <SheetHeader>
             <div className="flex items-center justify-between px-1">
               <SheetTitle>Candidate Report</SheetTitle>
-              <Button size="sm" onClick={() => window.print()}>
+              <Button size="sm" onClick={async () => {
+                const el = document.getElementById('report-print');
+                if (!el) return;
+                const printWindow = window.open('', '_blank', 'noopener');
+                if (!printWindow) return;
+                const doc = printWindow.document;
+                doc.open();
+                doc.write('<!doctype html><html><head><meta charset="utf-8"/><title>Candidate Report</title>');
+                // Copy current page styles
+                try {
+                  document.querySelectorAll('link[rel="stylesheet"]').forEach((n) => doc.write(n.outerHTML));
+                  document.querySelectorAll('style').forEach((n) => doc.write(n.outerHTML));
+                } catch (e) {}
+                doc.write('</head><body>');
+                doc.write(el.outerHTML);
+                doc.write('</body></html>');
+                doc.close();
+                // Give the new window a moment to render, then print
+                setTimeout(() => {
+                  try {
+                    printWindow.focus();
+                    printWindow.print();
+                  } catch (e) {}
+                }, 500);
+              }}>
                 Download PDF
               </Button>
             </div>
