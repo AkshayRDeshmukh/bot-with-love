@@ -277,6 +277,7 @@ export default function CandidateBotPreview(props?: {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           interviewId,
+          token: props?.candidateToken || undefined,
           userText,
           history,
           interview: interviewCtx || undefined,
