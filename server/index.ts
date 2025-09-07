@@ -77,7 +77,11 @@ export function createServer() {
   app.get("/api/interviews", requireAuth, listInterviews);
   app.get("/api/interviews/:id", requireAuth, getInterview);
   app.put("/api/interviews/:id", requireAuth, updateInterview);
+  app.post("/api/interviews/:id/recompute-context", requireAuth, recomputeContextForInterview);
   app.delete("/api/interviews/:id", requireAuth, deleteInterview);
+
+  // Admin backfill endpoint
+  app.post("/api/admin/backfill-context-domain", requireAuth, backfillContextDomain);
 
   // Report templates
   app.get(
