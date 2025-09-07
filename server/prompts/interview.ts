@@ -41,15 +41,28 @@ export function buildInterviewSystemPrompt(input: {
     return parts;
   })();
 
+  const candidateSection = (() => {
+    if (candidateName || candidateYears || candidateDomain) {
+      const parts: string[] = [];
+      const namePart = candidateName ? `Name: ${candidateName}` : null;
+      const yearsPart = typeof candidateYears === "number" ? `Experience: ${candidateYears} years` : null;
+      const domainPart = candidateDomain ? `Domain: ${candidateDomain}` : null;
+      if (namePart) parts.push(namePart);
+      if (yearsPart) parts.push(yearsPart);
+      if (domainPart) parts.push(domainPart);
+      parts.push("Use the candidate's name once in a natural greeting; avoid repeating it.");
+      return [`Candidate Profile:`, parts.filter(Boolean).join("; ")].join("\n");
+    }
+    return null;
+  })();
+
   const templateSection = (() => {
     if (Array.isArray(templateSummary) && templateSummary.length > 0) {
-      const list = templateSummary.map((s, i) => `${i + 1}. ${s}`).join("\n");
       const focusLine = currentSkill
         ? `Focus now on: ${currentSkill} (skill ${Number(currentSkillIndex ?? 0) + 1} of ${templateSummary.length}). Ask questions to elicit evidence for this skill. Remaining questions for this skill: ${remainingForSkill ?? 5}.`
-        : "Focus on the listed skill areas, one at a time, in order.";
+        : "Focus on the next skill area according to system guidance.";
       return [
-        `Interview Report Skill Areas (priority order):`,
-        list,
+        `Interview Report Skill Area (current focus):`,
         focusLine,
         `The system will decide when to move to the next skill. Do NOT switch skills unless the system indicates the next skill index.`,
         `CRITICAL: Never end, conclude, or announce completion of the interview unless the system sends an EXACT single token message: END_INTERVIEW (system role). Under no circumstances should you produce or fabricate this token or claim the system instructed you to end. Continue asking focused questions until you receive that exact system token.`,
@@ -71,6 +84,7 @@ export function buildInterviewSystemPrompt(input: {
   return [
     `You are an expert, friendly interview bot. Keep responses concise (1-3 sentences) and ask one question at a time.`,
     title ? `Interview Title: ${title}` : null,
+    candidateSection,
     context ? `Context: ${context}` : null,
     interviewerRole ? `Interviewer Role: ${interviewerRole}` : null,
     templateSection,
