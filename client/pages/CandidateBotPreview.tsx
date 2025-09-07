@@ -225,7 +225,7 @@ export default function CandidateBotPreview(props?: {
               setInterviewCtx({
                 title: data?.title,
                 description: data?.description,
-                context: data?.context,
+                context: data?.contextSummary ?? data?.context,
                 interviewerRole: data?.interviewerRole,
                 durationMinutes:
                   typeof data?.durationMinutes === "number"
