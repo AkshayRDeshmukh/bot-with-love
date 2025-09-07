@@ -172,11 +172,19 @@ export const updateInterview: RequestHandler = async (req, res) => {
     let contextSummary: string | null = (existing as any).contextSummary ?? null;
     let contextDomain: string | null = (existing as any).contextDomain ?? null;
     const newContext = context ?? existing.context;
-    if (typeof context === "string" && context !== existing.context) {
+    // Recompute if context or other key fields changed
+    const shouldRecompute =
+      (typeof context === "string" && context !== existing.context) ||
+      (typeof title === "string" && title !== existing.title) ||
+      (typeof description === "string" && description !== existing.description) ||
+      (typeof interviewerRole === "string" && interviewerRole !== existing.interviewerRole);
+
+    if (shouldRecompute) {
+      const combined = `${title ?? existing.title}\n${description ?? existing.description}\n${newContext}`;
       try {
         const reply = await groqChat([
           { role: "system", content: "You are a concise summarizer. Return only the summary." },
-          { role: "user", content: buildContextSummaryPrompt(newContext) },
+          { role: "user", content: buildContextSummaryPrompt(combined) },
         ]);
         if (reply && String(reply).trim()) contextSummary = String(reply).trim();
       } catch (e) {
@@ -186,18 +194,17 @@ export const updateInterview: RequestHandler = async (req, res) => {
       try {
         const domainReply = await groqChat([
           { role: "system", content: "You are a domain classifier. Return a single short label." },
-          { role: "user", content: buildContextDomainPrompt(newContext) },
+          { role: "user", content: buildContextDomainPrompt(combined) },
         ]);
         if (domainReply && String(domainReply).trim()) contextDomain = normalizeDomainLabel(String(domainReply).trim());
       } catch (e) {
         console.warn("Domain classifier LLM failed during updateInterview:", e?.message || e);
-        // keep existing domain on failure
-        contextDomain = contextDomain || normalizeDomainLabel(newContext);
+        contextDomain = contextDomain || normalizeDomainLabel(combined);
       }
 
       // Ensure we have at least a heuristic domain
       if (!contextDomain) {
-        contextDomain = normalizeDomainLabel(newContext);
+        contextDomain = normalizeDomainLabel(combined);
       }
     }
 
