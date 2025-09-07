@@ -9,6 +9,9 @@ export function buildInterviewSystemPrompt(input: {
   currentSkill?: string;
   currentSkillIndex?: number;
   remainingForSkill?: number;
+  candidateName?: string;
+  candidateYears?: number;
+  candidateDomain?: string;
 }) {
   const {
     title,
@@ -21,6 +24,9 @@ export function buildInterviewSystemPrompt(input: {
     currentSkill,
     currentSkillIndex,
     remainingForSkill,
+    candidateName,
+    candidateYears,
+    candidateDomain,
   } = input || {};
   const timeGuidance = (() => {
     if (typeof remainingSeconds !== "number" || remainingSeconds < 0) return [] as string[];
