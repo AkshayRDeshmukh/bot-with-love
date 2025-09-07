@@ -240,13 +240,20 @@ export const saveReportTemplate: RequestHandler = async (req, res) => {
   const structure = normalizeTemplate((req.body as any)?.structure || {});
 
   // Generate concise summary for the provided structure
-  let templateSummary: string | null = null;
+  let templateSummary: any[] | null = null;
   try {
     const summaryReply = await groqChat([
-      { role: "system", content: "Return ONLY concise bullet points, no prose." },
+      { role: "system", content: "Return ONLY a JSON array of short skill area strings, no prose." },
       { role: "user", content: buildTemplateSummaryPrompt(structure) },
     ]);
-    templateSummary = summaryReply.trim();
+    let parsedArray: any[] | null = null;
+    try {
+      parsedArray = JSON.parse(summaryReply);
+      if (!Array.isArray(parsedArray)) parsedArray = null;
+    } catch {
+      parsedArray = extractFirstJsonArray(summaryReply);
+    }
+    templateSummary = parsedArray || null;
   } catch (e) {
     templateSummary = null;
   }
