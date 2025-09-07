@@ -376,11 +376,34 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
       orderBy: [{ attemptNumber: "asc" }, { createdAt: "asc" }],
       select: { attemptNumber: true, createdAt: true, id: true },
     });
+    // Determine proctor photo availability (transcript-level first, then candidate-level)
+    let proctorPhotoUrl: string | null = null;
+    try {
+      const trPhoto = await prisma.interviewTranscript.findFirst({
+        where: { interviewId: id, candidateId: cid, attemptNumber: targetAttempt },
+        select: { proctorPhotoBlobName: true },
+      });
+      if (trPhoto && trPhoto.proctorPhotoBlobName) {
+        proctorPhotoUrl = `/api/interviews/${encodeURIComponent(id)}/candidates/${encodeURIComponent(cid)}/proctor-photo?inline=1&attempt=${encodeURIComponent(String(targetAttempt))}`;
+      } else {
+        const icPhoto = await prisma.interviewCandidate.findUnique({
+          where: { interviewId_candidateId: { interviewId: id, candidateId: cid } },
+          select: { proctorPhotoBlobName: true },
+        });
+        if (icPhoto && (icPhoto as any).proctorPhotoBlobName) {
+          proctorPhotoUrl = `/api/interviews/${encodeURIComponent(id)}/candidates/${encodeURIComponent(cid)}/proctor-photo?inline=1`;
+        }
+      }
+    } catch (e) {
+      proctorPhotoUrl = null;
+    }
+
     return res.json({
       report: existing,
       template,
       transcript: turns,
       attempts,
+      proctorPhotoUrl,
     });
   }
 
@@ -467,5 +490,27 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     select: { attemptNumber: true, createdAt: true, id: true },
   });
 
-  return res.json({ report: saved, template, transcript: turns, attempts });
+  // Determine proctor photo availability for generated report
+  let proctorPhotoUrl: string | null = null;
+  try {
+    const trPhoto = await prisma.interviewTranscript.findFirst({
+      where: { interviewId: id, candidateId: cid, attemptNumber: targetAttempt },
+      select: { proctorPhotoBlobName: true },
+    });
+    if (trPhoto && trPhoto.proctorPhotoBlobName) {
+      proctorPhotoUrl = `/api/interviews/${encodeURIComponent(id)}/candidates/${encodeURIComponent(cid)}/proctor-photo?inline=1&attempt=${encodeURIComponent(String(targetAttempt))}`;
+    } else {
+      const icPhoto = await prisma.interviewCandidate.findUnique({
+        where: { interviewId_candidateId: { interviewId: id, candidateId: cid } },
+        select: { proctorPhotoBlobName: true },
+      });
+      if (icPhoto && (icPhoto as any).proctorPhotoBlobName) {
+        proctorPhotoUrl = `/api/interviews/${encodeURIComponent(id)}/candidates/${encodeURIComponent(cid)}/proctor-photo?inline=1`;
+      }
+    }
+  } catch (e) {
+    proctorPhotoUrl = null;
+  }
+
+  return res.json({ report: saved, template, transcript: turns, attempts, proctorPhotoUrl });
 };
