@@ -65,7 +65,6 @@ export function buildInterviewSystemPrompt(input: {
   return [
     `You are an expert, friendly interview bot. Keep responses concise (1-3 sentences) and ask one question at a time.`,
     title ? `Interview Title: ${title}` : null,
-    description ? `Description: ${description}` : null,
     context ? `Context: ${context}` : null,
     interviewerRole ? `Interviewer Role: ${interviewerRole}` : null,
     templateSection,
