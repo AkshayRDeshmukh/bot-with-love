@@ -49,6 +49,7 @@ export default function AdminInterviewEditor() {
           title: data.title,
           description: data.description,
           context: data.context,
+          contextDomain: (data as any)?.contextDomain ?? undefined,
           interviewerRole: data.interviewerRole,
           durationMinutes: data.durationMinutes ?? undefined,
           interactionMode: data.interactionMode || "AUDIO",
@@ -88,9 +89,11 @@ export default function AdminInterviewEditor() {
           title: data.title,
           description: data.description,
           context: data.context,
+          contextDomain: (data as any)?.contextDomain ?? undefined,
           interviewerRole: data.interviewerRole,
           durationMinutes: data.durationMinutes ?? undefined,
           interactionMode: data.interactionMode || "AUDIO",
+          maxAttempts: (data as any)?.maxAttempts ?? undefined,
         });
       } else {
         // fallback to submitted values
@@ -351,6 +354,14 @@ export default function AdminInterviewEditor() {
                                 {initial?.context || ""}
                               </TooltipContent>
                             </Tooltip>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">
+                              Context Domain
+                            </div>
+                            <div className="mt-1">
+                              {initial?.contextDomain ?? "—"}
+                            </div>
                           </div>
                         </div>
                       </TooltipProvider>
