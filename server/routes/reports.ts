@@ -90,7 +90,7 @@ export const getReportTemplate: RequestHandler = async (req, res) => {
   const tpl = await prisma.reportTemplate.findUnique({
     where: { interviewId: id },
   });
-  res.json({ structure: tpl?.structure || null });
+  res.json({ structure: tpl?.structure || null, templateSummary: tpl?.templateSummary || null });
 };
 
 export const generateReportTemplate: RequestHandler = async (req, res) => {
