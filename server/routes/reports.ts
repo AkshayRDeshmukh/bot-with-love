@@ -399,8 +399,8 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
 
   // Compute overall percentage using template weights and scales
   try {
-    const params = Array.isArray(template?.parameters)
-      ? template.parameters
+    const params = Array.isArray((template as any)?.parameters)
+      ? (template as any).parameters
       : [];
     const map: Record<string, any> = Object.fromEntries(
       params.map((p: any) => [String(p.id), p]),
