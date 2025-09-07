@@ -116,10 +116,11 @@ export function buildContextSummaryPrompt(context: string) {
 export function buildContextDomainPrompt(context: string) {
   const trimmed = (context || "").trim();
   return [
-    "You are a domain classifier. Read the interview context and return a single short domain label that best describes the domain/specialization required (e.g., 'backend', 'frontend', 'datascience', 'devops', 'product', 'mobile', 'security').",
+    "You are a domain classifier. Read the interview context and return a descriptive domain label that combines industry and specialization, for example: 'IT - Backend', 'IT - Frontend', 'BPO - Customer Support', 'Finance - Risk', 'Healthcare - Data'.",
     "Requirements:",
-    "- Return ONLY a single short label (1-3 words) in lowercase, no punctuation, no explanation.",
-    "- If multiple domains apply, choose the primary/most relevant one.",
+    "- Return ONLY a single short label in the form 'Industry - Specialization' (title case), e.g., 'IT - Backend'.",
+    "- If industry is ambiguous, use 'IT' for technical roles. If non-technical (support, ops), use 'BPO' or the best-fit industry.",
+    "- Do NOT return JSON or additional commentary.",
     "Context:",
     trimmed,
   ].join("\n\n");
