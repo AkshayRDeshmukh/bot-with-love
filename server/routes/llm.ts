@@ -84,7 +84,11 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       }
     }
 
-    if (!userText || !userText.trim()) {
+    // Determine if we have prior history
+    const hasHistory = Array.isArray(history) && history.length > 0;
+
+    // Allow empty userText when no history (to trigger ice-breaker); otherwise require userText
+    if ((userText === undefined || userText === null || !String(userText).trim()) && hasHistory) {
       return res.status(400).json({ error: "userText is required" });
     }
 
