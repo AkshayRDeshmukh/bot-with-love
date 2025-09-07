@@ -94,6 +94,7 @@ model Interview {
   description     String
   context         String
   contextSummary  String?  @map("context_summary")
+  contextDomain   String?  @map("context_domain")
   interviewerRole String
   durationMinutes Int?
   interactionMode InterviewInteractionMode @default(AUDIO)
