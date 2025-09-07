@@ -379,12 +379,29 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     // Determine proctor photo availability (transcript-level first, then candidate-level)
     let proctorPhotoUrl: string | null = null;
     try {
-      const trPhoto = await prisma.interviewTranscript.findFirst({
-        where: { interviewId: id, candidateId: cid, attemptNumber: targetAttempt },
-        select: { proctorPhotoBlobName: true },
-      });
+      // Prefer transcript-level photo for the requested attempt
+      let chosenAttempt: number | null = null;
+      let trPhoto = null as any;
+      if (targetAttempt != null) {
+        trPhoto = await prisma.interviewTranscript.findFirst({
+          where: { interviewId: id, candidateId: cid, attemptNumber: targetAttempt, proctorPhotoBlobName: { not: null } },
+          orderBy: { createdAt: "desc" },
+          select: { proctorPhotoBlobName: true, attemptNumber: true },
+        });
+        if (trPhoto) chosenAttempt = trPhoto.attemptNumber || targetAttempt;
+      }
+      // If none for the specific attempt, find the latest transcript-level photo available
+      if (!trPhoto) {
+        trPhoto = await prisma.interviewTranscript.findFirst({
+          where: { interviewId: id, candidateId: cid, proctorPhotoBlobName: { not: null } },
+          orderBy: [{ attemptNumber: "desc" }, { createdAt: "desc" }],
+          select: { proctorPhotoBlobName: true, attemptNumber: true },
+        });
+        if (trPhoto) chosenAttempt = trPhoto.attemptNumber || null;
+      }
       if (trPhoto && trPhoto.proctorPhotoBlobName) {
-        proctorPhotoUrl = `/api/interviews/${encodeURIComponent(id)}/candidates/${encodeURIComponent(cid)}/proctor-photo?inline=1&attempt=${encodeURIComponent(String(targetAttempt))}`;
+        const attemptQuery = chosenAttempt ? `&attempt=${encodeURIComponent(String(chosenAttempt))}` : "";
+        proctorPhotoUrl = `/api/interviews/${encodeURIComponent(id)}/candidates/${encodeURIComponent(cid)}/proctor-photo?inline=1${attemptQuery}`;
       } else {
         const icPhoto = await prisma.interviewCandidate.findUnique({
           where: { interviewId_candidateId: { interviewId: id, candidateId: cid } },
