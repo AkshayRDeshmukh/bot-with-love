@@ -233,3 +233,71 @@ export const deleteInterview: RequestHandler = async (req, res) => {
     res.status(500).json({ error: "Failed to delete interview" });
   }
 };
+
+// Recompute contextSummary and contextDomain for a single interview (admin)
+export const recomputeContextForInterview: RequestHandler = async (req, res) => {
+  const adminId = (req as AuthRequest).userId!;
+  const { id } = req.params as { id: string };
+  try {
+    const interview = await prisma.interview.findFirst({ where: { id, adminId } });
+    if (!interview) return res.status(404).json({ error: "Not found" });
+    const raw = interview.context || "";
+    let contextSummary: string | null = null;
+    let contextDomain: string | null = null;
+    if (raw.trim()) {
+      try {
+        const reply = await groqChat([
+          { role: "system", content: "You are a concise summarizer. Return only the summary." },
+          { role: "user", content: buildContextSummaryPrompt(raw) },
+        ]);
+        if (reply && String(reply).trim()) contextSummary = String(reply).trim();
+      } catch (e) {
+        contextSummary = null;
+      }
+      try {
+        const domainReply = await groqChat([
+          { role: "system", content: "You are a domain classifier. Return a single short label." },
+          { role: "user", content: buildContextDomainPrompt(raw) },
+        ]);
+        if (domainReply && String(domainReply).trim()) {
+          contextDomain = normalizeDomainLabel(String(domainReply).trim());
+        }
+      } catch (e) {
+        contextDomain = null;
+      }
+    }
+    const updated = await prisma.interview.update({ where: { id }, data: { contextSummary, contextDomain } as any });
+    res.json({ ok: true, interview: updated });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to recompute" });
+  }
+};
+
+// Backfill contextDomain for all interviews missing it (admin)
+export const backfillContextDomain: RequestHandler = async (req, res) => {
+  try {
+    const interviews = await prisma.interview.findMany({ where: { context: { not: "" }, contextDomain: null } });
+    let updated = 0;
+    for (const iv of interviews) {
+      const raw = iv.context || "";
+      try {
+        const domainReply = await groqChat([
+          { role: "system", content: "You are a domain classifier. Return a single short label." },
+          { role: "user", content: buildContextDomainPrompt(raw) },
+        ]);
+        const domain = domainReply && String(domainReply).trim() ? normalizeDomainLabel(String(domainReply).trim()) : null;
+        if (domain) {
+          await prisma.interview.update({ where: { id: iv.id }, data: { contextDomain: domain } as any });
+          updated++;
+        }
+      } catch (e) {
+        // continue
+      }
+    }
+    res.json({ ok: true, total: interviews.length, updated });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Backfill failed" });
+  }
+};
