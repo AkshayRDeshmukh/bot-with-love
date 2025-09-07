@@ -137,7 +137,7 @@ model ReportTemplate {
   id              String   @id @default(uuid())
   interviewId     String   @unique
   structure       Json
-  templateSummary String?  @map("template_summary")
+  templateSummary Json?    @map("template_summary")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
