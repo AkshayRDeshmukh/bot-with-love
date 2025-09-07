@@ -62,7 +62,7 @@ export const createInterview: RequestHandler = async (req, res) => {
             { role: "user", content: buildContextDomainPrompt(context) },
           ]);
           if (domainReply && String(domainReply).trim()) {
-            contextDomain = String(domainReply).trim().toLowerCase();
+            contextDomain = normalizeDomainLabel(String(domainReply).trim());
           }
         } catch (e) {
           console.warn("Domain classifier LLM failed during createInterview:", e?.message || e);
