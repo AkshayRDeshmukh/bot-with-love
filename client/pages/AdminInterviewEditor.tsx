@@ -148,6 +148,67 @@ export default function AdminInterviewEditor() {
                 </Button>
               </Link>
             )}
+            {isEdit && id && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    const res = await fetch(`/api/interviews/${id}/recompute-context`, {
+                      method: "POST",
+                      credentials: "include",
+                    });
+                    if (!res.ok) throw new Error("Failed to recompute");
+                    const data = await res.json();
+                    // refresh initial
+                    const fresh = await fetch(`/api/interviews/${id}`, { credentials: "include" });
+                    if (fresh.ok) {
+                      const f = await fresh.json();
+                      setInitial({
+                        title: f.title,
+                        description: f.description,
+                        context: f.context,
+                        interviewerRole: f.interviewerRole,
+                        durationMinutes: f.durationMinutes ?? undefined,
+                        interactionMode: f.interactionMode || "AUDIO",
+                      });
+                      toast({ title: "Recomputed", description: "Context summary and domain updated." });
+                    }
+                  } catch (e) {
+                    toast({ title: "Error", description: "Failed to recompute context" });
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Recompute Context
+              </Button>
+            )}
+            {isEdit && id && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    const res = await fetch(`/api/admin/backfill-context-domain`, {
+                      method: "POST",
+                      credentials: "include",
+                    });
+                    if (!res.ok) throw new Error("Backfill failed");
+                    const data = await res.json();
+                    toast({ title: "Backfill started", description: `Updated ${data.updated} of ${data.total} interviews.` });
+                  } catch (e) {
+                    toast({ title: "Error", description: "Backfill failed" });
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Backfill Domains
+              </Button>
+            )}
             {(() => {
               const canPreview = Boolean(
                 isEdit &&
