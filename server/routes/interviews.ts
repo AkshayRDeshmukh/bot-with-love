@@ -2,7 +2,7 @@ import { RequestHandler } from "express";
 import { prisma } from "../prisma";
 import { AuthRequest } from "../middleware/auth";
 import { groqChat } from "../services/llm";
-import { buildContextSummaryPrompt } from "../prompts/interview";
+import { buildContextSummaryPrompt, buildContextDomainPrompt } from "../prompts/interview";
 
 export const createInterview: RequestHandler = async (req, res) => {
   const {
