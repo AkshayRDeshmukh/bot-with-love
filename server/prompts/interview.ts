@@ -18,14 +18,18 @@ export function buildInterviewSystemPrompt(input: {
     templateStructure,
     templateSummary,
   } = input || {};
-  const timeGuidance =
-    typeof remainingSeconds === "number" && remainingSeconds >= 0
-      ? [
-          `Time: ${Math.floor(remainingSeconds / 60)}m ${remainingSeconds % 60}s remaining${totalMinutes ? ` (total: ${totalMinutes}m)` : ""}.`,
-          `If remaining time <= 60s: ask ONE concise closing question, summarize a key takeaway, and conclude.`,
-          `Otherwise: keep questions focused and sized to fit the remaining time.`,
-        ]
-      : [];
+  const timeGuidance = (() => {
+    if (typeof remainingSeconds !== "number" || remainingSeconds < 0) return [] as string[];
+    const parts: string[] = [];
+    parts.push(`Time: ${Math.floor(remainingSeconds / 60)}m ${remainingSeconds % 60}s remaining${totalMinutes ? ` (total: ${totalMinutes}m)` : ""}.`);
+    const isEndingSoon = remainingSeconds <= 60;
+    if (isEndingSoon) {
+      parts.push(`Remaining time is <= 60s: ask ONE concise closing question, summarize a key takeaway, and conclude.`);
+    } else {
+      parts.push(`Keep questions focused and sized to fit the remaining time.`);
+    }
+    return parts;
+  })();
 
   const templateSection = (() => {
     if (templateSummary) {
