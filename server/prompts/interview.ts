@@ -78,3 +78,17 @@ export function buildInterviewSystemPrompt(input: {
 export function buildUserMessage(userText: string) {
   return userText?.trim() || "";
 }
+
+export function buildContextSummaryPrompt(context: string) {
+  const trimmed = (context || "").trim();
+  return [
+    "You are a concise summarizer for interview context.",
+    "Extract skill-level expectations from the context and produce a very short summary that lists what the candidate should be evaluated on and what is expected from them.",
+    "Requirements:",
+    "- Return a single short paragraph (<= 200 characters) or a comma-separated list of 3-6 short skill expectations.",
+    "- Focus on skills and expected outcomes, not prose or background.",
+    "- Avoid repetition and do not include the full context.",
+    "Context:",
+    trimmed,
+  ].join("\n\n");
+}
