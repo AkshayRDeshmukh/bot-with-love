@@ -50,14 +50,17 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
             select: { attemptNumber: true, content: true },
           });
 
-          const all = await prisma.interviewTranscript.findMany({
-            where: { interviewId: ic.interviewId, candidateId: ic.candidateId },
-            select: { id: true, content: true },
-          });
-          const used = all.filter((r: any) => Array.isArray(r.content) && r.content.length > 0).length;
-          const targetAttempt = latest && Array.isArray((latest as any).content) && (latest as any).content.length === 0
-            ? (latest as any).attemptNumber!
-            : used + 1;
+          // Decide targetAttempt: reuse latest attempt by default unless it's an empty placeholder
+          let targetAttempt: number;
+          if (!latest) {
+            targetAttempt = 1;
+          } else if (Array.isArray((latest as any).content) && (latest as any).content.length === 0) {
+            // reuse placeholder attempt (maybe created by photo upload)
+            targetAttempt = (latest as any).attemptNumber as number;
+          } else {
+            // reuse the latest populated attempt by default
+            targetAttempt = (latest as any).attemptNumber as number;
+          }
 
           if (targetAttempt <= allowed) {
             await prisma.interviewTranscript.upsert({
