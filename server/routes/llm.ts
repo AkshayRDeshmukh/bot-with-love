@@ -51,6 +51,7 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
           });
 
           // Decide targetAttempt: reuse latest attempt by default unless it's an empty placeholder
+          const forceNew = Boolean((req.body as any)?.forceNewAttempt);
           let targetAttempt: number;
           if (!latest) {
             targetAttempt = 1;
@@ -58,8 +59,8 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
             // reuse placeholder attempt (maybe created by photo upload)
             targetAttempt = (latest as any).attemptNumber as number;
           } else {
-            // reuse the latest populated attempt by default
-            targetAttempt = (latest as any).attemptNumber as number;
+            // reuse the latest populated attempt by default; allow forcing a new attempt
+            targetAttempt = forceNew ? ((latest as any).attemptNumber as number) + 1 : ((latest as any).attemptNumber as number);
           }
 
           if (targetAttempt <= allowed) {
