@@ -48,6 +48,7 @@ export const registerAdmin: RequestHandler = async (req, res) => {
     const base = APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
     const verifyUrl = `${base}/api/admin/verify?token=${verificationToken}`;
     
+    let sendgridError: any = null;
     if (SENDGRID_API_KEY && SENDGRID_FROM) {
       try {
         await sgMail.send({
@@ -57,18 +58,18 @@ export const registerAdmin: RequestHandler = async (req, res) => {
           html: `<p>Hi ${name},</p><p>Thanks for registering. Please verify your email to activate your admin account.</p><p><a href="${verifyUrl}">Verify your email</a></p>`,
         });
       } catch (e: any) {
-        // Log detailed SendGrid error without failing registration
+        // Capture and log SendGrid error but do not fail registration
+        sendgridError = e?.response?.body || e?.message || String(e);
         try {
-          console.error("SendGrid error while sending verification email:", e?.response?.body || e?.message || e);
+          console.error("SendGrid error while sending verification email:", sendgridError);
         } catch (logErr) {
           console.error("SendGrid error (and failed to stringify error):", e);
         }
       }
     }
 
-    res
-      .status(201)
-      .json({ message: "Registered. Check your email to verify.", verifyUrl });
+    // Return verifyUrl and sendgridError so callers can verify manually if email sending failed
+    res.status(201).json({ message: "Registered. Check your email to verify.", verifyUrl, sendgridError });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Registration failed" });
