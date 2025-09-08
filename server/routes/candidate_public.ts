@@ -147,22 +147,25 @@ export const saveTranscript: RequestHandler = async (req, res) => {
     orderBy: { attemptNumber: "desc" },
     select: { attemptNumber: true, content: true },
   });
-  // Count only attempts that have non-empty content
-  const all = await prisma.interviewTranscript.findMany({
-    where: { interviewId: ic.interviewId, candidateId: ic.candidateId },
-    select: { id: true, content: true },
-  });
-  const used = all.filter(
-    (r: any) => Array.isArray(r.content) && r.content.length > 0,
-  ).length;
 
-  const targetAttempt =
-    latest &&
-    Array.isArray((latest as any).content) &&
-    (latest as any).content.length === 0
-      ? (latest as any).attemptNumber!
-      : used + 1;
+  // Determine target attempt:
+  // - If there's no existing transcript, start at 1
+  // - If the latest transcript exists but has empty content (e.g., created by proctor photo), reuse its attemptNumber
+  // - If the latest transcript has content, by default append to the same attempt (avoid creating a new attempt for every incremental save)
+  // - Callers can force a new attempt by providing { forceNewAttempt: true } in the request body
+  const forceNew = Boolean((req.body as any)?.forceNewAttempt);
+  let targetAttempt: number;
+  if (!latest) {
+    targetAttempt = 1;
+  } else if (Array.isArray((latest as any).content) && (latest as any).content.length === 0) {
+    // reuse placeholder attempt created earlier (e.g., photo upload)
+    targetAttempt = (latest as any).attemptNumber as number;
+  } else {
+    // latest has content
+    targetAttempt = forceNew ? ((latest as any).attemptNumber as number) + 1 : ((latest as any).attemptNumber as number);
+  }
 
+  // Ensure attempts limit not exceeded
   if (targetAttempt > allowed) {
     return res.status(403).json({ error: "Attempts exhausted" });
   }
