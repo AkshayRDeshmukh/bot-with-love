@@ -49,12 +49,21 @@ export const registerAdmin: RequestHandler = async (req, res) => {
     const verifyUrl = `${base}/api/admin/verify?token=${verificationToken}`;
     
     if (SENDGRID_API_KEY && SENDGRID_FROM) {
-      await sgMail.send({
-        to: email,
-        from: SENDGRID_FROM,
-        subject: "Welcome to AstraHire AI – Verify your email",
-        html: `<p>Hi ${name},</p><p>Thanks for registering. Please verify your email to activate your admin account.</p><p><a href="${verifyUrl}">Verify your email</a></p>`,
-      });
+      try {
+        await sgMail.send({
+          to: email,
+          from: SENDGRID_FROM,
+          subject: "Welcome to AstraHire AI – Verify your email",
+          html: `<p>Hi ${name},</p><p>Thanks for registering. Please verify your email to activate your admin account.</p><p><a href="${verifyUrl}">Verify your email</a></p>`,
+        });
+      } catch (e: any) {
+        // Log detailed SendGrid error without failing registration
+        try {
+          console.error("SendGrid error while sending verification email:", e?.response?.body || e?.message || e);
+        } catch (logErr) {
+          console.error("SendGrid error (and failed to stringify error):", e);
+        }
+      }
     }
 
     res
