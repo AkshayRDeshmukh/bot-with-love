@@ -122,6 +122,178 @@ export default function CandidateBotPreview(props?: {
         });
       }
     }
+
+    // --- Proctoring helpers ---
+    function computeGrayscaleHashFromCanvas(c: HTMLCanvasElement) {
+      const ctx = c.getContext("2d");
+      if (!ctx) return null;
+      const w = c.width;
+      const h = c.height;
+      const image = ctx.getImageData(0, 0, w, h).data;
+      const out: number[] = [];
+      for (let i = 0; i < image.length; i += 4) {
+        // simple luminance
+        const r = image[i];
+        const g = image[i + 1];
+        const b = image[i + 2];
+        const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        out.push(lum);
+      }
+      return out;
+    }
+
+    function meanAbsDiff(a: number[] | null, b: number[] | null) {
+      if (!a || !b || a.length !== b.length) return 1;
+      let sum = 0;
+      for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]);
+      return sum / a.length;
+    }
+
+    async function ensureDetector() {
+      if (detectorRef.current) return detectorRef.current;
+      if ((window as any).FaceDetector) {
+        try {
+          detectorRef.current = new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 4 });
+          return detectorRef.current;
+        } catch (e) {
+          // fallthrough
+        }
+      }
+      // Lazy-load BlazeFace (tensorflow) as fallback
+      if (loadingDetectorRef.current) return null;
+      loadingDetectorRef.current = true;
+      try {
+        // load tfjs and blazeface from CDN
+        if (!(window as any).tf) {
+          await new Promise<void>((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js";
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error("Failed to load tfjs"));
+            document.head.appendChild(s);
+          });
+        }
+        if (!(window as any).blazeface) {
+          await new Promise<void>((resolve, reject) => {
+            const s = document.createElement("script");
+            s.src = "https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js";
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error("Failed to load blazeface"));
+            document.head.appendChild(s);
+          });
+        }
+        const model = await (window as any).blazeface.load();
+        detectorRef.current = { type: "blazeface", model };
+        return detectorRef.current;
+      } catch (e) {
+        console.warn("Proctor: failed to load detector", e);
+        return null;
+      } finally {
+        loadingDetectorRef.current = false;
+      }
+    }
+
+    async function detectFacesOnVideo(video: HTMLVideoElement) {
+      const det = await ensureDetector();
+      if (!det) return [];
+      if ((window as any).FaceDetector && det instanceof (window as any).FaceDetector) {
+        try {
+          const faces = await det.detect(video as any);
+          return faces.map((f: any) => ({ box: f.boundingBox }));
+        } catch (e) {
+          return [];
+        }
+      }
+      if (det && det.type === "blazeface") {
+        try {
+          const preds = await det.model.estimateFaces(video, false);
+          return preds.map((p: any) => ({ box: { x: p.topLeft[0], y: p.topLeft[1], width: p.bottomRight[0] - p.topLeft[0], height: p.bottomRight[1] - p.topLeft[1] } }));
+        } catch (e) {
+          return [];
+        }
+      }
+      return [];
+    }
+
+    function captureFaceHashFromBox(video: HTMLVideoElement, box: { x: number; y: number; width: number; height: number } | null) {
+      const tmp = document.createElement("canvas");
+      const targetW = 32;
+      const targetH = 32;
+      tmp.width = targetW;
+      tmp.height = targetH;
+      const ctx = tmp.getContext("2d");
+      if (!ctx) return null;
+      try {
+        if (box && box.width > 0 && box.height > 0) {
+          ctx.drawImage(video, box.x, box.y, box.width, box.height, 0, 0, targetW, targetH);
+        } else {
+          // use center crop
+          const vw = video.videoWidth;
+          const vh = video.videoHeight;
+          const s = Math.min(vw, vh) * 0.6;
+          const sx = (vw - s) / 2;
+          const sy = (vh - s) / 2;
+          ctx.drawImage(video, sx, sy, s, s, 0, 0, targetW, targetH);
+        }
+        return computeGrayscaleHashFromCanvas(tmp);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function runProctorCheckOnce() {
+      try {
+        const video = videoRef.current;
+        if (!video || !video.videoWidth || !video.videoHeight) return;
+        const faces = await detectFacesOnVideo(video);
+        if (!faces || faces.length === 0) {
+          setProctorStatus("no_face");
+          return;
+        }
+        if (faces.length > 1) {
+          setProctorStatus("multiple_persons");
+          return;
+        }
+        // single face: compute hash and compare
+        const box = faces[0].box;
+        const hash = captureFaceHashFromBox(video, { x: box.x, y: box.y, width: box.width, height: box.height });
+        if (!hash) return;
+        if (!baselineRef.current) {
+          baselineRef.current = hash;
+          setProctorStatus("baseline_captured");
+          return;
+        }
+        const diff = meanAbsDiff(baselineRef.current, hash);
+        // threshold tuned: if diff > 0.25 consider mismatch
+        if (diff > 0.25) {
+          setProctorStatus("face_mismatch");
+        } else {
+          setProctorStatus("ok");
+        }
+      } catch (e) {
+        console.warn("Proctor check failed", e);
+      }
+    }
+
+    function startProctoring() {
+      if (proctorIntervalRef.current) return;
+      // reset baseline so first successful detection set baseline
+      baselineRef.current = null;
+      setProctorStatus("starting");
+      // run immediately then every 10s
+      runProctorCheckOnce();
+      const id = window.setInterval(() => runProctorCheckOnce(), 10000);
+      proctorIntervalRef.current = id as any;
+    }
+
+    function stopProctoring() {
+      if (proctorIntervalRef.current) {
+        window.clearInterval(proctorIntervalRef.current as any);
+        proctorIntervalRef.current = null;
+      }
+      setProctorStatus(null);
+      baselineRef.current = null;
+    }
     function onUp() {
       isDragging.current = false;
       isResizing.current = false;
