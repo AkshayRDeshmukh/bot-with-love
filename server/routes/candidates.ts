@@ -29,8 +29,19 @@ export const listCandidates: RequestHandler = async (req, res) => {
     include: { candidate: true },
     orderBy: { createdAt: "desc" },
   });
-  res.json(
-    rows.map((r) => ({
+
+  const out: any[] = [];
+  for (const r of rows) {
+    const transcripts = await prisma.interviewTranscript.findMany({
+      where: { interviewId: id, candidateId: r.candidateId },
+      select: { attemptNumber: true },
+      orderBy: [{ attemptNumber: "desc" }],
+    });
+    const attemptNumbers = Array.from(new Set(transcripts.map((t) => Number(t.attemptNumber)))).filter(Boolean);
+    const attemptsCount = attemptNumbers.length;
+    const latestAttemptNumber = attemptNumbers.length > 0 ? Math.max(...attemptNumbers) : null;
+
+    out.push({
       id: r.candidateId,
       name: r.candidate.name,
       email: r.candidate.email,
@@ -45,8 +56,13 @@ export const listCandidates: RequestHandler = async (req, res) => {
       summary: (r.candidate as any).summary ?? undefined,
       domain: (r.candidate as any).domain ?? undefined,
       skills: (r.candidate as any).skills ?? undefined,
-    })),
-  );
+      attemptsCount,
+      latestAttemptNumber,
+      hasPreviousAttempts: attemptsCount > 1,
+    });
+  }
+
+  res.json(out);
 };
 
 export const createCandidate = [
