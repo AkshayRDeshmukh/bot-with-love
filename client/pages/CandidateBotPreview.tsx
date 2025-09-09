@@ -227,6 +227,7 @@ export default function CandidateBotPreview(props?: {
                 title: data?.title,
                 description: data?.description,
                 context: data?.contextSummary ?? data?.context,
+                contextDomain: data?.contextDomain || undefined,
                 interviewerRole: data?.interviewerRole,
                 durationMinutes:
                   typeof data?.durationMinutes === "number"
