@@ -409,6 +409,21 @@ export default function CandidateBotPreview(props?: {
   const [remainingSec, setRemainingSec] = useState<number | null>(null);
   const [ended, setEnded] = useState(false);
 
+  // Auto-start proctoring when interview starts (no user toggle)
+  useEffect(() => {
+    if (!startedAt) return;
+    // start proctoring once
+    (async () => {
+      if (!proctoringEnabled) setProctoringEnabled(true);
+      await startProctoring();
+    })();
+    return () => {
+      stopProctoring();
+      setProctoringEnabled(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startedAt]);
+
   useEffect(() => {
     let active = true;
     (async () => {
