@@ -228,7 +228,7 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
     if (!hasHistory) {
       // Decide domain match heuristic
       // Prefer contextDomain stored on interview; fallback to contextSummary or title
-      const interviewDomain = (interview?.contextDomain && String(interview.contextDomain).trim()) || (contextSummary && String(contextSummary).split(/[.,;\n]/)[0]) || (interview?.title || "");
+      const interviewDomain = (contextDomainSanitized && String(contextDomainSanitized).trim()) || (interview?.contextDomain && String(interview.contextDomain).trim()) || (contextSummary && String(contextSummary).split(/[.,;\n]/)[0]) || (interview?.title || "");
       const candidateDomain = candidateProfile?.domain;
       const domainMatches = candidateDomain && interviewDomain && String(interviewDomain).toLowerCase().includes(String(candidateDomain).toLowerCase());
 
