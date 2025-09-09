@@ -227,7 +227,7 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       currentSkill,
       currentSkillIndex,
       remainingForSkill,
-      candidateDomain: undefined,
+      candidateDomain: candidateProfile?.domain,
     });
 
 
