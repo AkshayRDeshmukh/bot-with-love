@@ -198,7 +198,14 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
             { role: "user", content: buildContextDomainPrompt(rawContext) },
           ]);
           if (domainReply && String(domainReply).trim()) {
-            contextDomainSanitized = String(domainReply).trim();
+            try {
+              const { normalizeDomainLabel } = await import("./interviews");
+              const norm = normalizeDomainLabel(String(domainReply).trim());
+              if (norm) contextDomainSanitized = norm;
+            } catch (e) {
+              // fallback to raw reply if import/normalize fails
+              contextDomainSanitized = String(domainReply).trim();
+            }
           }
         } catch (e) {
           // ignore domain derivation failure; we'll fallback later
