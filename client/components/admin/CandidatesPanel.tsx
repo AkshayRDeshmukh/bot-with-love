@@ -485,27 +485,16 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                   if (r.attemptsCount && r.attemptsCount > 0) openReport(r.id, r);
                 }}
               >
-                <div className="relative">
+                <div className="relative inline-flex items-center justify-center">
                   <BarChart3 className="h-4 w-4" />
                   {r.attemptsCount ? (
-                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] leading-none px-1.5 py-0.5">
+                    <span className="absolute -top-1 -right-1 z-10 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] leading-none w-4 h-4">
                       {r.attemptsCount}
                     </span>
                   ) : null}
                 </div>
               </Button>
 
-              {/* Attempt status labels */}
-              <div className="flex flex-col text-xs ml-1">
-                {r.hasPreviousAttempts ? (
-                  <div className="text-amber-600">Not-concluded</div>
-                ) : null}
-                {r.status === "IN_PROGRESS" ? (
-                  <div className="text-sky-600">In progress</div>
-                ) : r.status === "COMPLETED" ? (
-                  <div className="text-emerald-600">Completed</div>
-                ) : null}
-              </div>
               <Button
                 variant="ghost"
                 size="icon"
