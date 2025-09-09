@@ -44,42 +44,55 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
                 : 1,
           );
 
+          // Fetch the latest attempt (if any)
           const latest = await prisma.interviewTranscript.findFirst({
             where: { interviewId: ic.interviewId, candidateId: ic.candidateId },
             orderBy: { attemptNumber: "desc" },
             select: { attemptNumber: true, content: true },
           });
 
-          // Decide targetAttempt: reuse latest attempt by default unless it's an empty placeholder
           const forceNew = Boolean((req.body as any)?.forceNewAttempt);
           let targetAttempt: number;
+
           if (!latest) {
             targetAttempt = 1;
-          } else if (Array.isArray((latest as any).content) && (latest as any).content.length === 0) {
-            // reuse placeholder attempt (maybe created by photo upload)
-            targetAttempt = (latest as any).attemptNumber as number;
+          } else if (forceNew) {
+            targetAttempt = (latest as any).attemptNumber as number + 1;
           } else {
-            // reuse the latest populated attempt by default; allow forcing a new attempt
-            targetAttempt = forceNew ? ((latest as any).attemptNumber as number) + 1 : ((latest as any).attemptNumber as number);
+            // By default, reuse the latest attempt (whether placeholder or populated)
+            targetAttempt = (latest as any).attemptNumber as number;
           }
 
           if (targetAttempt <= allowed) {
-            await prisma.interviewTranscript.upsert({
-              where: {
-                interviewId_candidateId_attemptNumber: {
-                  interviewId: ic.interviewId,
-                  candidateId: ic.candidateId,
-                  attemptNumber: targetAttempt,
-                },
-              },
-              update: { content: history as any },
-              create: {
-                interviewId: ic.interviewId,
-                candidateId: ic.candidateId,
-                attemptNumber: targetAttempt,
-                content: history as any,
-              },
-            });
+            // Avoid creating/updating when incoming history equals stored content (dedupe)
+            const existingContent = latest && Number(latest.attemptNumber) === targetAttempt ? (latest as any).content : null;
+            try {
+              const existingJson = existingContent ? JSON.stringify(existingContent) : null;
+              const incomingJson = JSON.stringify(history);
+              if (existingJson === incomingJson) {
+                // No-op: content identical, skip persistence
+              } else {
+                await prisma.interviewTranscript.upsert({
+                  where: {
+                    interviewId_candidateId_attemptNumber: {
+                      interviewId: ic.interviewId,
+                      candidateId: ic.candidateId,
+                      attemptNumber: targetAttempt,
+                    },
+                  },
+                  update: { content: history as any },
+                  create: {
+                    interviewId: ic.interviewId,
+                    candidateId: ic.candidateId,
+                    attemptNumber: targetAttempt,
+                    content: history as any,
+                  },
+                });
+              }
+            } catch (e) {
+              // If upsert fails, don't break the LLM flow
+              console.error("Failed to upsert transcript in chatWithLLM:", e?.message || e);
+            }
           }
         }
       } catch (e) {
