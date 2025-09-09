@@ -5,10 +5,17 @@ import { groqChat } from "../services/llm";
 import { buildContextSummaryPrompt, buildContextDomainPrompt } from "../prompts/interview";
 
 // Normalize domain labels to canonical set
-function normalizeDomainLabel(label: string | undefined | null) {
+export function normalizeDomainLabel(label: string | undefined | null) {
   if (!label) return null;
   const s = String(label).toLowerCase().trim();
   if (!s) return null;
+
+  // Reject obvious non-domain phrases (assessment/criteria words)
+  const rejectWords = ["assess", "assessment", "assessing", "communication", "evaluate", "evaluation", "skills", "criteria", "test", "interview"];
+  for (const w of rejectWords) {
+    if (s.includes(w)) return null;
+  }
+
   if (s.includes("front")) return "frontend";
   if (s.includes("react") || s.includes("angular") || s.includes("vue")) return "frontend";
   if (s.includes("back")) return "backend";
@@ -19,8 +26,9 @@ function normalizeDomainLabel(label: string | undefined | null) {
   if (s.includes("security") || s.includes("sec")) return "security";
   if (s.includes("product")) return "product";
   if (s.includes("design") || s.includes("ux")) return "design";
-  // fallback: single word from label
+  // fallback: single word from label, but ensure it's not too generic
   const first = s.split(/[^a-z0-9]+/)[0];
+  if (first && first.length <= 2) return null;
   return first || s;
 }
 
