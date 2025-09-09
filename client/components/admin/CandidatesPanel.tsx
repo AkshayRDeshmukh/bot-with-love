@@ -475,20 +475,25 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                   <Copy className="h-4 w-4" />
                 </Button>
               )}
-              {r.status === "COMPLETED" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full"
-                  title="View report"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openReport(r.id, r);
-                  }}
-                >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full"
+                title={r.attemptsCount && r.attemptsCount > 0 ? `View reports (${r.attemptsCount})` : "No reports yet"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (r.attemptsCount && r.attemptsCount > 0) openReport(r.id, r);
+                }}
+              >
+                <div className="relative">
                   <BarChart3 className="h-4 w-4" />
-                </Button>
-              )}
+                  {r.attemptsCount ? (
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] leading-none px-1.5 py-0.5">
+                      {r.attemptsCount}
+                    </span>
+                  ) : null}
+                </div>
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
