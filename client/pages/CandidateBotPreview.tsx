@@ -226,18 +226,37 @@ export default function CandidateBotPreview(props?: {
     }
   }
 
-  function startProctoring() {
+  async function startProctoring() {
     if (proctorIntervalRef.current) return;
+    // ensure detector is ready before starting
+    const det = await ensureDetector();
+    if (!det) {
+      setProctorStatus("detector_failed");
+      return;
+    }
+    // reset baseline so first successful detection set baseline
     baselineRef.current = null;
     setProctorStatus("starting");
-    runProctorCheckOnce();
-    const id = window.setInterval(() => runProctorCheckOnce(), 10000);
-    proctorIntervalRef.current = id as any;
+
+    const scheduleNext = () => {
+      const delay = 2000 + Math.floor(Math.random() * 3000); // 2000..4999 ms
+      const id = window.setTimeout(async () => {
+        await runProctorCheckOnce();
+        scheduleNext();
+      }, delay);
+      proctorIntervalRef.current = id as any;
+    };
+
+    // run immediately then schedule randomized checks
+    await runProctorCheckOnce();
+    scheduleNext();
   }
 
   function stopProctoring() {
     if (proctorIntervalRef.current) {
-      window.clearInterval(proctorIntervalRef.current as any);
+      try {
+        window.clearTimeout(proctorIntervalRef.current as any);
+      } catch {}
       proctorIntervalRef.current = null;
     }
     setProctorStatus(null);
@@ -303,7 +322,9 @@ export default function CandidateBotPreview(props?: {
       }
       // cleanup proctoring interval and detector
       if (proctorIntervalRef.current) {
-        window.clearInterval(proctorIntervalRef.current as any);
+        try {
+          window.clearTimeout(proctorIntervalRef.current as any);
+        } catch {}
         proctorIntervalRef.current = null;
       }
       detectorRef.current = null;
@@ -956,22 +977,7 @@ export default function CandidateBotPreview(props?: {
                     >
                       End Interview
                     </button>
-                    <button
-                      onClick={() => {
-                        const next = !proctoringEnabled;
-                        setProctoringEnabled(next);
-                        if (next) startProctoring(); else stopProctoring();
-                      }}
-                      title="Enable Proctoring"
-                      className={`inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm ${proctoringEnabled ? "bg-emerald-600 text-white" : "bg-white/90 text-black"}`}
-                    >
-                      {/* lightweight eye indicator */}
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
-                        <circle cx="12" cy="12" r="3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      Proctor
-                    </button>
+                    {/* Proctoring starts automatically once interview begins; no user toggle provided. */}
                     <button
                       className="ml-2 inline-flex h-10 items-center gap-2 rounded-full bg-white/90 px-3 text-sm text-black"
                       onClick={() => setChatOpen((v) => !v)}
