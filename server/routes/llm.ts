@@ -206,6 +206,16 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       }
     }
 
+    // Persist derived contextDomain back to DB when possible to avoid recomputing
+    if (!interview?.contextDomain && contextDomainSanitized && interviewId) {
+      try {
+        await prisma.interview.update({ where: { id: interviewId }, data: { contextDomain: contextDomainSanitized } as any });
+      } catch (e) {
+        // ignore persistence errors
+        console.warn("Failed to persist contextDomain in chatWithLLM:", e?.message || e);
+      }
+    }
+
     const sys = buildInterviewSystemPrompt({
       title: interview?.title,
       context: contextSummary,
