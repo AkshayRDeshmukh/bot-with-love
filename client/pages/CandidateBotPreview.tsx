@@ -932,6 +932,22 @@ export default function CandidateBotPreview(props?: {
                       End Interview
                     </button>
                     <button
+                      onClick={() => {
+                        const next = !proctoringEnabled;
+                        setProctoringEnabled(next);
+                        if (next) startProctoring(); else stopProctoring();
+                      }}
+                      title="Enable Proctoring"
+                      className={`inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm ${proctoringEnabled ? "bg-emerald-600 text-white" : "bg-white/90 text-black"}`}
+                    >
+                      {/* lightweight eye indicator */}
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
+                        <circle cx="12" cy="12" r="3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Proctor
+                    </button>
+                    <button
                       className="ml-2 inline-flex h-10 items-center gap-2 rounded-full bg-white/90 px-3 text-sm text-black"
                       onClick={() => setChatOpen((v) => !v)}
                     >
