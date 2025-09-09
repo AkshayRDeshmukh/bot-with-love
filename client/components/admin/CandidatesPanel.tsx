@@ -246,18 +246,29 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
       className: "align-top",
       render: (r: CandidateRow) => {
         const s = r.status || "NOT_STARTED";
-        const label =
-          s === "COMPLETED"
-            ? "Completed"
-            : s === "IN_PROGRESS"
-              ? "In Progress"
-              : "Not Started";
+        let label = "";
         const color =
           s === "COMPLETED"
             ? "bg-green-100 text-green-700 border-green-200"
             : s === "IN_PROGRESS"
               ? "bg-amber-100 text-amber-700 border-amber-200"
               : "bg-slate-100 text-slate-700 border-slate-200";
+        if (typeof r.latestAttemptNumber === "number") {
+          if (s === "IN_PROGRESS") {
+            label = `Attempt ${r.latestAttemptNumber}: In progress`;
+          } else if (s === "COMPLETED") {
+            label = `Attempt ${r.latestAttemptNumber}: Completed`;
+          } else {
+            label = `Attempt ${r.latestAttemptNumber}`;
+          }
+        } else {
+          label =
+            s === "COMPLETED"
+              ? "Completed"
+              : s === "IN_PROGRESS"
+                ? "In Progress"
+                : "Not Started";
+        }
         const started = fmt(r.startedAt);
         const ended = fmt(r.completedAt);
         const expYears =
