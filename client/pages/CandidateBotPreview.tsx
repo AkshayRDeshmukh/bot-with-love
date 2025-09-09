@@ -308,6 +308,12 @@ export default function CandidateBotPreview(props?: {
         streamRef.current.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
       }
+      // cleanup proctoring interval and detector
+      if (proctorIntervalRef.current) {
+        window.clearInterval(proctorIntervalRef.current as any);
+        proctorIntervalRef.current = null;
+      }
+      detectorRef.current = null;
     };
   }, [props?.interview?.interactionMode]);
 
