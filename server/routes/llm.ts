@@ -24,6 +24,7 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
         title?: string;
         description?: string;
         context?: string;
+        contextDomain?: string | null;
         interviewerRole?: string;
       };
     };
