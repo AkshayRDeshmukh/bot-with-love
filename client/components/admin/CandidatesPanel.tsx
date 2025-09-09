@@ -42,6 +42,10 @@ export type CandidateRow = {
   summary?: string | null;
   domain?: string | null;
   skills?: string[] | null;
+  // New fields
+  attemptsCount?: number;
+  latestAttemptNumber?: number | null;
+  hasPreviousAttempts?: boolean;
 };
 
 function useCandidates(interviewId: string | undefined) {
