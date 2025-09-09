@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
+import CandidatesTable from "./CandidatesTable";
 import {
   Dialog,
   DialogContent,
@@ -430,129 +430,39 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
           <div className="text-sm text-muted-foreground">Loading...</div>
         )}
         {error && <div className="text-sm text-destructive">{error}</div>}
-        <DataTable
-          key={`candidates-${rows.length}-${(rows[0] && rows[0].id) || ""}`}
-          columns={columns as any}
-          data={rows.map((r) => ({
-            ...r,
-            name: r.name ?? "(No name)",
-            email: r.email || "(No email)",
-          }))}
-          getRowId={(r) => `${(r as any).id}-${(r as any).email}`}
-          searchKeys={["name", "email", "status"]}
-          filters={
-            [
-              {
-                label: "Status",
-                key: "status",
-                options: [
-                  { label: "Not Started", value: "NOT_STARTED" },
-                  { label: "In Progress", value: "IN_PROGRESS" },
-                  { label: "Completed", value: "COMPLETED" },
-                ],
-              },
-            ] as any
-          }
-          actions={(r: CandidateRow & { inviteUrl?: string | null }) => (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                title="Preview resume"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPreviewUrl(
-                    `/api/interviews/${interviewId}/candidates/${r.id}/resume?inline=1`,
-                  );
-                  setPreviewOpen(true);
-                }}
-              >
-                <FileText className="h-4 w-4" />
-              </Button>
-              {r.inviteUrl && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full"
-                  title="Copy invite link"
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    try {
-                      await navigator.clipboard.writeText(r.inviteUrl!);
-                    } catch {}
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                title={r.attemptsCount && r.attemptsCount > 0 ? `View reports (${r.attemptsCount})` : "No reports yet"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (r.attemptsCount && r.attemptsCount > 0) openReport(r.id, r);
-                }}
-              >
-                <div className="relative inline-flex items-center justify-center">
-                  <BarChart3 className="h-4 w-4" />
-                  {r.attemptsCount ? (
-                    <span className="absolute -top-1 -right-1 z-10 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[10px] leading-none w-4 h-4">
-                      {r.attemptsCount}
-                    </span>
-                  ) : null}
-                </div>
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full"
-                title="Edit profile"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditing(r);
-                  setEditName(r.name || "");
-                  setEditEmail(r.email || "");
-                  setEditExpYears(
-                    typeof r.totalExperienceMonths === "number"
-                      ? (r.totalExperienceMonths / 12).toFixed(1)
-                      : "",
-                  );
-                  setEditDomain(r.domain || "");
-                  setEditSkills(
-                    Array.isArray(r.skills) ? r.skills.join(", ") : "",
-                  );
-                  setEditSummary(r.summary || "");
-                  setEditMaxAttempts("");
-                  setEditOpen(true);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={r.invitedAt ? "secondary" : "default"}
-                size="sm"
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!interviewId) return;
-                  await fetch(
-                    `/api/interviews/${interviewId}/candidates/${r.id}/invite`,
-                    {
-                      method: "POST",
-                      credentials: "include",
-                    },
-                  );
-                  await refresh();
-                }}
-              >
-                {r.invitedAt ? "Resend" : "Send"}
-              </Button>
-            </div>
-          )}
-        />
+        <div className="py-2">
+          <CandidatesTable
+            candidates={rows}
+            onOpenReport={(c) => {
+              if (!interviewId) return;
+              openReport(c.id, c as any);
+            }}
+            onOpenResume={(c) => {
+              setPreviewUrl(`/api/interviews/${interviewId}/candidates/${c.id}/resume?inline=1`);
+              setPreviewOpen(true);
+            }}
+            onCopyInvite={async (c) => {
+              try {
+                if (c.inviteUrl) await navigator.clipboard.writeText(c.inviteUrl);
+                else if (interviewId) await navigator.clipboard.writeText(window.location.origin + `/api/interviews/${interviewId}/candidates/${c.id}/invite`);
+                toast({ title: "Copied", description: "Invite link copied to clipboard." });
+              } catch (e) {
+                toast({ title: "Failed", description: "Unable to copy invite link.", variant: "destructive" });
+              }
+            }}
+            onEdit={(c) => {
+              setEditing(c as any);
+              setEditName((c as any).name || "");
+              setEditEmail((c as any).email || "");
+              setEditExpYears(typeof (c as any).totalExperienceMonths === "number" ? ((c as any).totalExperienceMonths / 12).toFixed(1) : "");
+              setEditDomain((c as any).domain || "");
+              setEditSkills(Array.isArray((c as any).skills) ? (c as any).skills.join(", ") : "");
+              setEditSummary((c as any).summary || "");
+              setEditMaxAttempts("");
+              setEditOpen(true);
+            }}
+          />
+        </div>
       </CardContent>
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
