@@ -494,6 +494,18 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                   ) : null}
                 </div>
               </Button>
+
+              {/* Attempt status labels */}
+              <div className="flex flex-col text-xs ml-1">
+                {r.hasPreviousAttempts ? (
+                  <div className="text-amber-600">Not-concluded</div>
+                ) : null}
+                {r.status === "IN_PROGRESS" ? (
+                  <div className="text-sky-600">In progress</div>
+                ) : r.status === "COMPLETED" ? (
+                  <div className="text-emerald-600">Completed</div>
+                ) : null}
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
