@@ -113,6 +113,16 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
     // Prefer interview context provided by the client (e.g., Admin preview)
     let interview: any = inputInterview || null;
 
+    // If client provided an interview object but omitted contextDomain, try to enrich from DB
+    if (interview && interviewId && (interview.contextDomain === undefined || interview.contextDomain === null)) {
+      try {
+        const dbIv = await prisma.interview.findUnique({ where: { id: interviewId }, select: { contextDomain: true } as any });
+        if (dbIv && dbIv.contextDomain) interview.contextDomain = dbIv.contextDomain;
+      } catch (e) {
+        // ignore enrichment errors
+      }
+    }
+
     // Fallback: fetch from DB by id if no explicit interview context was provided
     if (!interview && interviewId) {
       interview = await prisma.interview.findUnique({
