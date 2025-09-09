@@ -840,13 +840,39 @@ export default function CandidateBotPreview(props?: {
                         {mediaError}
                       </div>
                     ) : (
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="h-full w-full object-cover"
-                      />
+                      <>
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="h-full w-full object-cover"
+                        />
+
+                        {/* Proctor status overlay */}
+                        {proctoringEnabled && proctorStatus && (
+                          <div className="absolute left-2 top-2 z-20 space-y-1">
+                            {proctorStatus === "ok" && (
+                              <div className="inline-flex items-center rounded-full bg-emerald-600/90 px-2 py-1 text-xs text-white">Proctor: OK</div>
+                            )}
+                            {proctorStatus === "starting" && (
+                              <div className="inline-flex items-center rounded-full bg-sky-600/90 px-2 py-1 text-xs text-white">Proctor: starting</div>
+                            )}
+                            {proctorStatus === "baseline_captured" && (
+                              <div className="inline-flex items-center rounded-full bg-sky-600/90 px-2 py-1 text-xs text-white">Baseline captured</div>
+                            )}
+                            {proctorStatus === "no_face" && (
+                              <div className="inline-flex items-center rounded-full bg-red-600/90 px-2 py-1 text-xs text-white">No face detected</div>
+                            )}
+                            {proctorStatus === "multiple_persons" && (
+                              <div className="inline-flex items-center rounded-full bg-amber-500/90 px-2 py-1 text-xs text-white">Multiple persons</div>
+                            )}
+                            {proctorStatus === "face_mismatch" && (
+                              <div className="inline-flex items-center rounded-full bg-red-600/90 px-2 py-1 text-xs text-white">Face mismatch</div>
+                            )}
+                          </div>
+                        )}
+                      </>
                     )}
                     {/* Resize handle */}
                     <div
