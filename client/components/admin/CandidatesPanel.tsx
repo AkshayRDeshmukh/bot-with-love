@@ -443,11 +443,25 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
             }}
             onCopyInvite={async (c) => {
               try {
-                if (c.inviteUrl) await navigator.clipboard.writeText(c.inviteUrl);
-                else if (interviewId) await navigator.clipboard.writeText(window.location.origin + `/api/interviews/${interviewId}/candidates/${c.id}/invite`);
-                toast({ title: "Copied", description: "Invite link copied to clipboard." });
+                if (!interviewId) throw new Error("Missing interview id");
+                // Request server to generate an invite and return the candidate link (with token)
+                const res = await fetch(`/api/interviews/${interviewId}/candidates/${c.id}/invite`, {
+                  method: "POST",
+                  credentials: "include",
+                });
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+                const url = data?.inviteUrl || data?.url || c.inviteUrl;
+                if (url) {
+                  await navigator.clipboard.writeText(url);
+                  toast({ title: "Copied", description: "Invite link copied to clipboard." });
+                } else {
+                  throw new Error("No invite URL returned");
+                }
+                // Refresh list to show invite metadata
+                await refresh();
               } catch (e) {
-                toast({ title: "Failed", description: "Unable to copy invite link.", variant: "destructive" });
+                toast({ title: "Failed", description: "Unable to generate or copy invite link.", variant: "destructive" });
               }
             }}
             onEdit={(c) => {
