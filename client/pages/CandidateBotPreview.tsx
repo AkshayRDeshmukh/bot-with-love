@@ -38,6 +38,7 @@ export default function CandidateBotPreview(props?: {
     title?: string;
     description?: string;
     context?: string;
+    contextDomain?: string;
     interviewerRole?: string;
     durationMinutes?: number;
     interactionMode?: "AUDIO" | "TEXT_ONLY";
