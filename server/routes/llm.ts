@@ -198,43 +198,6 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       }
     }
 
-    // Derive a sanitized contextDomain using the LLM if interview doesn't already include one
-    let contextDomainSanitized: string | undefined = undefined;
-    if (typeof interview?.contextDomain === "string" && interview.contextDomain && String(interview.contextDomain).trim()) {
-      contextDomainSanitized = String(interview.contextDomain).trim();
-    } else {
-      const rawContext = interview?.context || interview?.description || interview?.title || "";
-      if (typeof rawContext === "string" && rawContext.trim()) {
-        try {
-          const domainReply = await groqChat([
-            { role: "system", content: "You are a domain classifier. Return a single short label." },
-            { role: "user", content: buildContextDomainPrompt(rawContext) },
-          ]);
-          if (domainReply && String(domainReply).trim()) {
-            try {
-              const { normalizeDomainLabel } = await import("./interviews");
-              const norm = normalizeDomainLabel(String(domainReply).trim());
-              if (norm) contextDomainSanitized = norm;
-            } catch (e) {
-              // fallback to raw reply if import/normalize fails
-              contextDomainSanitized = String(domainReply).trim();
-            }
-          }
-        } catch (e) {
-          // ignore domain derivation failure; we'll fallback later
-        }
-      }
-    }
-
-    // Persist derived contextDomain back to DB when possible to avoid recomputing
-    if (!interview?.contextDomain && contextDomainSanitized && interviewId) {
-      try {
-        await prisma.interview.update({ where: { id: interviewId }, data: { contextDomain: contextDomainSanitized } as any });
-      } catch (e) {
-        // ignore persistence errors
-        console.warn("Failed to persist contextDomain in chatWithLLM:", e?.message || e);
-      }
-    }
 
     const sys = buildInterviewSystemPrompt({
       title: interview?.title,
