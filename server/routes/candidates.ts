@@ -345,8 +345,9 @@ export const inviteBulk: RequestHandler = async (req, res) => {
     });
     if (!exists) continue;
     const token = crypto.randomUUID();
-    const base = APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
-    const url = `${base}/candidate?token=${token}`;
+    const incomingOrigin = String(req.headers.origin || req.headers.referer || "");
+    const derivedBase = incomingOrigin ? incomingOrigin.replace(/\/$/, "") : APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const url = `${derivedBase}/candidate?token=${token}`;
     const updated = await prisma.interviewCandidate.update({
       where: { interviewId_candidateId: { interviewId: id, candidateId: cid } },
       data: {
