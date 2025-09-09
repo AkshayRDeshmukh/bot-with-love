@@ -45,8 +45,10 @@ export const registerAdmin: RequestHandler = async (req, res) => {
       },
     });
 
-    const base = APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
-    const verifyUrl = `${base}/api/admin/verify?token=${verificationToken}`;
+    // Derive base URL: prefer request Origin or Referer (browser URL) to avoid needing env edits
+    const incomingOrigin = String(req.headers.origin || req.headers.referer || "");
+    const derivedBase = incomingOrigin ? incomingOrigin.replace(/\/$/, "") : APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const verifyUrl = `${derivedBase}/api/admin/verify?token=${verificationToken}`;
     
     let sendgridError: any = null;
     if (SENDGRID_API_KEY && SENDGRID_FROM) {
