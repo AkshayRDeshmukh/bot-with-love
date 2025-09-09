@@ -64,6 +64,14 @@ export default function CandidateBotPreview(props?: {
   const [proctorPromptOpen, setProctorPromptOpen] = useState(true);
   const [proctorUploading, setProctorUploading] = useState(false);
 
+  // Proctoring: enabled toggle, status, baseline hash and interval
+  const [proctoringEnabled, setProctoringEnabled] = useState(false);
+  const [proctorStatus, setProctorStatus] = useState<string | null>(null);
+  const baselineRef = useRef<number[] | null>(null);
+  const proctorIntervalRef = useRef<number | null>(null);
+  const detectorRef = useRef<any>(null);
+  const loadingDetectorRef = useRef(false);
+
   // Draggable/resizable self-view
   const dragRef = useRef<HTMLDivElement | null>(null);
   const [pos, setPos] = useState({ x: 24, y: 24 });
