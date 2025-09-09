@@ -336,6 +336,21 @@ export default function CandidateBotPreview(props?: {
       synthRef.current = window.speechSynthesis;
     }
   }, []);
+
+  // Auto-start proctoring when interview starts (no user toggle)
+  useEffect(() => {
+    if (!startedAt) return;
+    // start proctoring once
+    (async () => {
+      if (!proctoringEnabled) setProctoringEnabled(true);
+      await startProctoring();
+    })();
+    return () => {
+      stopProctoring();
+      setProctoringEnabled(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startedAt]);
   useEffect(() => {
     botSpeakingRef.current = botSpeaking;
   }, [botSpeaking]);
