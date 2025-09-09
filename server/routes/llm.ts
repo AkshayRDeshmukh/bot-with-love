@@ -185,6 +185,27 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       }
     }
 
+    // Derive a sanitized contextDomain using the LLM if interview doesn't already include one
+    let contextDomainSanitized: string | undefined = undefined;
+    if (typeof interview?.contextDomain === "string" && interview.contextDomain && String(interview.contextDomain).trim()) {
+      contextDomainSanitized = String(interview.contextDomain).trim();
+    } else {
+      const rawContext = interview?.context || interview?.description || interview?.title || "";
+      if (typeof rawContext === "string" && rawContext.trim()) {
+        try {
+          const domainReply = await groqChat([
+            { role: "system", content: "You are a domain classifier. Return a single short label." },
+            { role: "user", content: buildContextDomainPrompt(rawContext) },
+          ]);
+          if (domainReply && String(domainReply).trim()) {
+            contextDomainSanitized = String(domainReply).trim();
+          }
+        } catch (e) {
+          // ignore domain derivation failure; we'll fallback later
+        }
+      }
+    }
+
     const sys = buildInterviewSystemPrompt({
       title: interview?.title,
       context: contextSummary,
@@ -196,7 +217,9 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       currentSkill,
       currentSkillIndex,
       remainingForSkill,
+      candidateDomain: undefined,
     });
+
 
     const messages: ChatMessage[] = [];
     messages.push({ role: "system", content: sys });
