@@ -89,7 +89,7 @@ export default function AdminInterviewReports() {
     if (!data) return;
     const headers = ["Candidate", "Email", "Attempt", ...params.map(p => p.name), "Overall %", "Date"];
     const lines = [headers.join(",")];
-    for (const r of rows) {
+    for (const r of filteredRows) {
       const attempts = Array.isArray(r.attempts) && r.attempts.length > 0 ? r.attempts : [{ attemptNumber: null, scores: {}, overall: null, createdAt: null }];
       for (const a of attempts) {
         const cols = [
