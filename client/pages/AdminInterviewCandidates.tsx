@@ -145,6 +145,9 @@ export default function AdminInterviewCandidates() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <Link to={`/admin/interviews/${id}/reports`} className="inline-flex">
+              <Button variant="outline" size="sm" className="bg-white text-foreground shadow-sm hover:shadow ring-1 ring-border">Reports</Button>
+            </Link>
             <Link to={`/admin/interviews/${id}/edit`} className="inline-flex">
               <Button
                 variant="outline"
