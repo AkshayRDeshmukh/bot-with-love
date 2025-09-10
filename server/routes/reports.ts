@@ -266,6 +266,48 @@ export const saveReportTemplate: RequestHandler = async (req, res) => {
   res.json({ structure: saved.structure, templateSummary: saved.templateSummary });
 };
 
+export const listInterviewReportsSummary: RequestHandler = async (req, res) => {
+  const adminId = (req as AuthRequest).userId!;
+  const { id } = req.params as { id: string };
+  const interview = await prisma.interview.findFirst({ where: { id, adminId } });
+  if (!interview) return res.status(404).json({ error: "Interview not found" });
+
+  const tpl = await prisma.reportTemplate.findUnique({ where: { interviewId: id } });
+  const params = Array.isArray((tpl as any)?.structure?.parameters)
+    ? (tpl as any).structure.parameters.map((p: any) => ({ id: String(p.id), name: String(p.name) }))
+    : [];
+
+  const attachments = await prisma.interviewCandidate.findMany({
+    where: { interviewId: id },
+    include: { candidate: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const reports = await prisma.interviewReport.findMany({
+    where: { interviewId: id },
+    orderBy: [{ candidateId: "asc" }, { attemptNumber: "asc" }],
+  });
+
+  const byCandidate: Record<string, any[]> = {};
+  for (const r of reports) {
+    const arr = byCandidate[r.candidateId] || (byCandidate[r.candidateId] = []);
+    const scoresArr: any[] = Array.isArray((r as any).scores) ? (r as any).scores : [];
+    const scoreMap: Record<string, number> = {};
+    for (const s of scoresArr) {
+      if (s && s.id != null) scoreMap[String(s.id)] = Number(s.score);
+    }
+    const overall = Number((r as any).structure?.overall);
+    arr.push({ attemptNumber: r.attemptNumber, scores: scoreMap, overall: Number.isFinite(overall) ? overall : null });
+  }
+
+  const rows = attachments.map((rel) => ({
+    candidate: { id: rel.candidate.id, name: rel.candidate.name || "", email: rel.candidate.email },
+    attempts: (byCandidate[rel.candidateId] || []).sort((a, b) => a.attemptNumber - b.attemptNumber),
+  }));
+
+  res.json({ interview: { id: interview.id, title: interview.title }, parameters: params, rows });
+};
+
 function buildCandidateReportPrompt(args: {
   template: any;
   answers: string[];
