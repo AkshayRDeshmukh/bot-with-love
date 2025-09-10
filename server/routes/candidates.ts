@@ -777,6 +777,23 @@ export const bulkUploadCandidates = [
           continue;
         }
 
+        // Duplicate detection
+        try {
+          const byEmail = await prisma.candidate.findUnique({ where: { email: email.toLowerCase() } as any });
+          if (byEmail) {
+            results.push({ file: item.name, status: "failed", reason: `Duplicate: ${byEmail.name || byEmail.email}` });
+            continue;
+          }
+          const potentials = await findPotentialCandidates(extracted, 30);
+          if (potentials.length) {
+            const decision = await llmDecideDuplicate(extracted, potentials as any);
+            if (decision && decision.duplicate) {
+              results.push({ file: item.name, status: "failed", reason: `Duplicate: ${decision.name}` });
+              continue;
+            }
+          }
+        } catch {}
+
         const { blobName, originalName, mimeType } = await uploadResumeToBlob(id, item.name, item.mimetype, item.buffer);
         const skillsArray: string[] | undefined = Array.isArray(extracted?.skills)
           ? extracted.skills.map((s: any) => String(s)).filter(Boolean)
