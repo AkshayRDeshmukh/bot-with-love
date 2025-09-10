@@ -19,6 +19,7 @@ import {
   inviteCandidate,
   inviteBulk,
   updateCandidateProfile,
+  bulkUploadCandidates,
 } from "./routes/candidates";
 import { chatWithLLM } from "./routes/llm";
 import { downloadProctorPhoto } from "./routes/candidates";
