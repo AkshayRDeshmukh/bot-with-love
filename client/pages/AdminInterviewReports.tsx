@@ -198,13 +198,31 @@ export default function AdminInterviewReports() {
                     </tr>
                     {isExp && attempts.length > 0 && attempts.map((att:any, idx:number) => (
                       <tr key={`${row.candidate.id}-att-${att.attemptNumber}-${idx}`} className={(i % 2 === 0) ? "bg-white" : "bg-slate-50"}>
-                        <td className="px-3 py-2">&nbsp;&nbsp;Attempt {att.attemptNumber}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{att.createdAt ? formatDate(att.createdAt) : '-'}</td>
-                        <td className="px-3 py-2">{/* empty: placeholder for Attempts column */}</td>
-                        {params.map((p) => (
-                          <td key={p.id} className="px-3 py-2">{att.scores && typeof att.scores[p.id] === 'number' ? att.scores[p.id] : "-"}</td>
-                        ))}
-                        <td className="px-3 py-2">{typeof att.overall === 'number' ? `${att.overall}%` : '-'}</td>
+                        <td colSpan={5} className="px-3 py-2">
+                          <div className="grid gap-2">
+                            <div className="text-sm text-muted-foreground">Attempt {att.attemptNumber} — {att.createdAt ? formatDate(att.createdAt) : '-'}</div>
+                            <div className="overflow-auto">
+                              <table className="w-full text-sm border">
+                                <thead className="bg-muted/20">
+                                  <tr>
+                                    {params.map((p) => (
+                                      <th key={p.id} className="px-2 py-1 text-left text-xs">{p.name}</th>
+                                    ))}
+                                    <th className="px-2 py-1 text-left text-xs">Overall %</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    {params.map((p) => (
+                                      <td key={p.id} className="px-2 py-1">{att.scores && typeof att.scores[p.id] === 'number' ? att.scores[p.id] : "-"}</td>
+                                    ))}
+                                    <td className="px-2 py-1">{typeof att.overall === 'number' ? `${att.overall}%` : '-'}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </>
