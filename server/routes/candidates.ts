@@ -104,6 +104,85 @@ async function uploadResumeToBlob(interviewId: string, originalname: string, mim
   }
 }
 
+function summarizeProfile(p: { name?: string | null; email?: string | null; totalExperienceMonths?: number | null; summary?: string | null; domain?: string | null; skills?: string[] | null; }): string {
+  const years = typeof p.totalExperienceMonths === 'number' ? (p.totalExperienceMonths/12).toFixed(1) : 'unknown';
+  const parts = [
+    `name: ${p.name || ''}`,
+    `email: ${p.email || ''}`,
+    `experience_years: ${years}`,
+    `domain: ${p.domain || ''}`,
+    `skills: ${(Array.isArray(p.skills)? p.skills: []).join(', ')}`,
+    `summary: ${(p.summary || '').slice(0, 400)}`,
+  ];
+  return parts.join('\n');
+}
+
+async function findPotentialCandidates(extracted: any, limit = 30) {
+  const email = (extracted?.email || '').toLowerCase();
+  const domain = email.includes('@') ? email.split('@')[1] : null;
+  const months = Number(extracted?.total_experience_months);
+  const minMonths = Number.isFinite(months) ? Math.max(0, Math.floor(months - 36)) : undefined;
+  const maxMonths = Number.isFinite(months) ? Math.floor(months + 36) : undefined;
+  const skills: string[] = Array.isArray(extracted?.skills) ? extracted.skills.map((s: any) => String(s)) : [];
+
+  const filtered = await prisma.candidate.findMany({
+    where: {
+      OR: [
+        domain ? { email: { endsWith: `@${domain}`, mode: 'insensitive' } } : undefined,
+        typeof minMonths === 'number' && typeof maxMonths === 'number' ? { totalExperienceMonths: { gte: minMonths, lte: maxMonths } } : undefined,
+        skills.length ? { skills: { hasSome: skills } } : undefined,
+        extracted?.domain ? { domain: { equals: String(extracted.domain), mode: 'insensitive' } } : undefined,
+      ].filter(Boolean) as any,
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+    select: { id: true, name: true, email: true, totalExperienceMonths: true, summary: true, domain: true, skills: true },
+  });
+  if (filtered.length > 0) return filtered.slice(0, limit);
+
+  const recent = await prisma.candidate.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: { id: true, name: true, email: true, totalExperienceMonths: true, summary: true, domain: true, skills: true },
+  });
+  return recent;
+}
+
+async function llmDecideDuplicate(newProfile: any, candidates: { id: string; name: string | null; email: string; totalExperienceMonths: number | null; summary: string | null; domain: string | null; skills: string[]; }[]): Promise<{ duplicate: boolean; id?: string; name?: string; reason?: string } | null> {
+  try {
+    const items = candidates.map((c, i) => ({
+      idx: i + 1,
+      id: c.id,
+      summary: summarizeProfile(c),
+    }));
+    const listText = items.map(it => `#${it.idx}\n${it.summary}`).join('\n\n');
+    const newText = summarizeProfile({
+      name: newProfile?.name,
+      email: newProfile?.email,
+      totalExperienceMonths: Number(newProfile?.total_experience_months) || null,
+      summary: newProfile?.summary || null,
+      domain: newProfile?.domain || null,
+      skills: Array.isArray(newProfile?.skills) ? newProfile.skills : [],
+    });
+    const prompt = [
+      { role: 'system', content: 'You are a strict deduplication engine for resumes. Decide if the NEW profile refers to the SAME PERSON as one of the EXISTING profiles even if name/email/phone differ. Rely on experience duration, domain, skill mix, and summary details. Return ONLY JSON: {"duplicate": boolean, "match_index"?: number, "confidence": 0..1, "reason"?: string} and set duplicate true only if confidence >= 0.85.' },
+      { role: 'user', content: `NEW PROFILE\n${newText}\n\nEXISTING PROFILES\n${listText}` },
+    ] as any;
+    const reply = await groqChat(prompt);
+    const jsonMatch = reply.match(/\{[\s\S]*\}/);
+    const jsonStr = jsonMatch ? jsonMatch[0] : reply;
+    const data = JSON.parse(jsonStr);
+    if (data && data.duplicate && typeof data.match_index === 'number') {
+      const idx = Math.max(1, Math.min(items.length, data.match_index)) - 1;
+      const chosenFull = candidates[idx];
+      return { duplicate: true, id: chosenFull.id, name: chosenFull.name || chosenFull.email, reason: String(data.reason || '') };
+    }
+    return { duplicate: false };
+  } catch (e) {
+    return null;
+  }
+}
+
 export const listCandidates: RequestHandler = async (req, res) => {
   const adminId = (req as AuthRequest).userId!;
   const { id } = req.params as { id: string };
