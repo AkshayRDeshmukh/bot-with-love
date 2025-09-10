@@ -433,17 +433,19 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
               </div>
               <DialogFooter>
                 <Button
-                  onClick={async () => {
-                    try {
-                      await submit();
-                      toast({
-                        title: "Candidate added",
-                        description: "Resume processed and profile extracted.",
-                      });
-                    } catch {}
-                  }}
-                  disabled={!canSubmit || submitting}
-                >
+                onClick={async () => {
+                  try {
+                    await submit();
+                    toast({
+                      title: "Candidate added",
+                      description: "Resume processed and profile extracted.",
+                    });
+                  } catch (e: any) {
+                    toast({ title: "Failed", description: e?.message || "Unable to add candidate.", variant: "destructive" });
+                  }
+                }}
+                disabled={!canSubmit || submitting}
+              >
                   {submitting ? (
                     <span className="inline-flex items-center">
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
