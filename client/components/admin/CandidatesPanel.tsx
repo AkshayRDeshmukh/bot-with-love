@@ -229,7 +229,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
         setProctorImgError(true);
       }
     } catch (e: any) {
-      setReportError(e?.message || "Failed to load report");
+      setReportError(friendlyReportError(e));
     } finally {
       setReportLoading(false);
     }
@@ -826,7 +826,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                             : [];
                           setReportAttempts(attempts);
                         } catch (e: any) {
-                          setReportError(e?.message || "Failed to load report");
+                          setReportError(friendlyReportError(e));
                         } finally {
                           setReportLoading(false);
                         }
