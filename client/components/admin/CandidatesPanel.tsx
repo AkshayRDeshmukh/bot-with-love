@@ -352,78 +352,88 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
           </CardTitle>
           <CardDescription>Attach candidates to this interview</CardDescription>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-white text-foreground shadow-sm hover:shadow ring-1 ring-border"
-            >
-              Add Candidate
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Candidate</DialogTitle>
-              <DialogDescription>
-                Provide details and upload resume
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-2">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Full Name (required)</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Optional"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email (required)</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="resume">Resume (PDF/DOC) — optional</Label>
-                <Input
-                  id="resume"
-                  type="file"
-                  accept=".pdf,.doc,.docx,.txt"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-white text-foreground shadow-sm hover:shadow ring-1 ring-border"
+            onClick={() => setBulkOpen(true)}
+          >
+            Bulk Add
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
               <Button
-                onClick={async () => {
-                  try {
-                    await submit();
-                    toast({
-                      title: "Candidate added",
-                      description: "Resume processed and profile extracted.",
-                    });
-                  } catch {}
-                }}
-                disabled={!canSubmit || submitting}
+                size="sm"
+                variant="outline"
+                className="bg-white text-foreground shadow-sm hover:shadow ring-1 ring-border"
               >
-                {submitting ? (
-                  <span className="inline-flex items-center">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing…
-                  </span>
-                ) : (
-                  "Add"
-                )}
+                Add Candidate
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Candidate</DialogTitle>
+                <DialogDescription>
+                  Provide details and upload resume
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Full Name (required)</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email (required)</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="resume">Resume (PDF/DOC) — optional</Label>
+                  <Input
+                    id="resume"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={async () => {
+                    try {
+                      await submit();
+                      toast({
+                        title: "Candidate added",
+                        description: "Resume processed and profile extracted.",
+                      });
+                    } catch {}
+                  }}
+                  disabled={!canSubmit || submitting}
+                >
+                  {submitting ? (
+                    <span className="inline-flex items-center">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing…
+                    </span>
+                  ) : (
+                    "Add"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         {loading && (
