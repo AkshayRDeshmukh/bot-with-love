@@ -190,10 +190,9 @@ export default function AdminInterviewReports() {
                       <td className="px-3 py-2">{top != null && top !== -Infinity ? `${top}%` : '-'}</td>
                       <td className="px-3 py-2">
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={() => toggle(row.candidate.id)}>{isExp ? 'Collapse' : 'Expand'}</Button>
-                          <Link to={`/admin/interviews/${id}/candidates/${row.candidate.id}/report`} className="inline-flex">
-                            <Button size="sm" variant="outline">Open Latest</Button>
-                          </Link>
+                          <Button size="sm" onClick={() => toggle(row.candidate.id)} aria-label={isExp ? 'Collapse' : 'Expand'}>
+                            {isExp ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </Button>
                         </div>
                       </td>
                     </tr>
