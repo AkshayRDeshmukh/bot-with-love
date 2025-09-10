@@ -28,6 +28,7 @@ import {
   generateReportTemplate,
   saveReportTemplate,
   getOrGenerateCandidateReport,
+  listInterviewReportsSummary,
 } from "./routes/reports";
 import {
   getCandidateSession,
@@ -124,6 +125,11 @@ export function createServer() {
     "/api/interviews/:id/candidates/:cid/report",
     requireAuth,
     getOrGenerateCandidateReport,
+  );
+  app.get(
+    "/api/interviews/:id/reports/summary",
+    requireAuth,
+    listInterviewReportsSummary,
   );
   app.get(
     "/api/interviews/:id/candidates/:cid/proctor-photo",

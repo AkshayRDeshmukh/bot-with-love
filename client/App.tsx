@@ -17,6 +17,7 @@ import AdminAuth from "./pages/AdminAuth";
 import AdminInterviewEditor from "./pages/AdminInterviewEditor";
 import CandidateBotPreview from "./pages/CandidateBotPreview";
 import AdminInterviewCandidates from "./pages/AdminInterviewCandidates";
+import AdminInterviewReports from "./pages/AdminInterviewReports";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AdminInterviewCandidates />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/interviews/:id/reports"
+                element={
+                  <ProtectedRoute>
+                    <AdminInterviewReports />
                   </ProtectedRoute>
                 }
               />
