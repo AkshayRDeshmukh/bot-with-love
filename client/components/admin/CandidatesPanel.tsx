@@ -382,82 +382,8 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
             className="bg-white text-foreground shadow-sm hover:shadow ring-1 ring-border"
             onClick={() => setBulkOpen(true)}
           >
-            Bulk Add
+            Add Candidate
           </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                className="bg-white text-foreground shadow-sm hover:shadow ring-1 ring-border"
-              >
-                Add Candidate
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Candidate</DialogTitle>
-                <DialogDescription>
-                  Provide details and upload resume
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Full Name (required)</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Optional"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email (required)</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="resume">Resume (PDF/DOC) — optional</Label>
-                  <Input
-                    id="resume"
-                    type="file"
-                    accept=".pdf,.doc,.docx,.txt"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                onClick={async () => {
-                  try {
-                    await submit();
-                    toast({
-                      title: "Candidate added",
-                      description: "Resume processed and profile extracted.",
-                    });
-                  } catch (e: any) {
-                    toast({ title: "Failed", description: e?.message || "Unable to add candidate.", variant: "destructive" });
-                  }
-                }}
-                disabled={!canSubmit || submitting}
-              >
-                  {submitting ? (
-                    <span className="inline-flex items-center">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing…
-                    </span>
-                  ) : (
-                    "Add"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       </CardHeader>
       <CardContent>
@@ -659,7 +585,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
       }}>
         <SheetContent side="right" className="w-[96vw] sm:max-w-3xl lg:max-w-4xl">
           <SheetHeader>
-            <SheetTitle>Bulk Add Candidates</SheetTitle>
+            <SheetTitle>Add Candidates</SheetTitle>
           </SheetHeader>
           <div className="p-4 space-y-4">
             <div
