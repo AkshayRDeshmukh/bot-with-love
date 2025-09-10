@@ -232,9 +232,11 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
         credentials: "include",
         body: fd,
       });
-      if (!res.ok) throw new Error("Failed to add candidate");
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || "Failed to add candidate");
+      }
       const created = (await res.json()) as CandidateRow;
-      // Optimistic update to avoid any cache or timing issues
       await refresh();
       setOpen(false);
       setName("");
