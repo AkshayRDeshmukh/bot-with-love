@@ -297,7 +297,7 @@ export const listInterviewReportsSummary: RequestHandler = async (req, res) => {
       if (s && s.id != null) scoreMap[String(s.id)] = Number(s.score);
     }
     const overall = Number((r as any).structure?.overall);
-    arr.push({ attemptNumber: r.attemptNumber, scores: scoreMap, overall: Number.isFinite(overall) ? overall : null });
+    arr.push({ attemptNumber: r.attemptNumber, scores: scoreMap, overall: Number.isFinite(overall) ? overall : null, createdAt: r.createdAt });
   }
 
   const rows = attachments.map((rel) => ({
