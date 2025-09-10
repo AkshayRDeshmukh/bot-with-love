@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   Link as LinkIcon,
+  Send,
 } from "lucide-react";
 
 export type CandidateRowLite = {
@@ -31,6 +32,8 @@ export type CandidateRowLite = {
   attemptsCount?: number;
   latestAttemptNumber?: number | null;
   inviteUrl?: string | null;
+  invitedAt?: string | null;
+  inviteCount?: number;
 };
 
 function fmt(dt?: string | null) {
@@ -56,12 +59,14 @@ export default function CandidatesTable({
   onOpenReport,
   onOpenResume,
   onCopyInvite,
+  onSendInvite,
   onEdit,
 }: {
   candidates: CandidateRowLite[];
   onOpenReport?: (c: CandidateRowLite) => void;
   onOpenResume?: (c: CandidateRowLite) => void;
   onCopyInvite?: (c: CandidateRowLite) => void;
+  onSendInvite?: (c: CandidateRowLite) => void;
   onEdit?: (c: CandidateRowLite) => void;
 }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -143,6 +148,15 @@ export default function CandidatesTable({
 
                       <Tooltip>
                         <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => onSendInvite?.(r)}>
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">{(r.inviteCount ?? 0) > 0 ? "Resend invite" : "Send invite"}</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
                           <Button variant="ghost" size="icon" onClick={() => onCopyInvite?.(r)}>
                             <LinkIcon className="h-4 w-4" />
                           </Button>
@@ -178,6 +192,7 @@ export default function CandidatesTable({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
+                          <DropdownMenuItem onSelect={() => onSendInvite?.(r)}>{(r.inviteCount ?? 0) > 0 ? "Resend invite" : "Send invite"}</DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => onOpenResume?.(r)}>Resume</DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => onCopyInvite?.(r)}>Copy link</DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => onOpenReport?.(r)}>Reports</DropdownMenuItem>
