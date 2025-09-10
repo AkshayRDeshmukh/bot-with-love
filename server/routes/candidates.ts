@@ -17,6 +17,93 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
+function guessMimeFromName(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".doc")) return "application/msword";
+  if (lower.endsWith(".docx"))
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (lower.endsWith(".txt")) return "text/plain";
+  return "application/octet-stream";
+}
+
+async function normalizeToBuffer(file: Express.Multer.File | undefined): Promise<Buffer | null> {
+  if (!file) return null;
+  const anyFile: any = file as any;
+  if (file.buffer && Buffer.isBuffer(file.buffer)) return file.buffer as Buffer;
+  if (anyFile.path && typeof anyFile.path === "string") {
+    try { return await fs.readFile(anyFile.path); } catch {}
+  }
+  if (anyFile.stream && typeof anyFile.stream.pipe === "function") {
+    const stream: NodeJS.ReadableStream = anyFile.stream;
+    const chunks: Buffer[] = [];
+    await new Promise<void>((resolve, reject) => {
+      stream.on("data", (c: Buffer) => chunks.push(c));
+      stream.on("end", () => resolve());
+      stream.on("error", reject);
+    });
+    return Buffer.concat(chunks);
+  }
+  return null;
+}
+
+async function extractResumeText(originalname: string, mimetype: string, buffer: Buffer): Promise<string> {
+  const require = createRequire(import.meta.url);
+  const ext = originalname.toLowerCase();
+  if (mimetype.includes("pdf") || ext.endsWith(".pdf")) {
+    const pdfParse = require("pdf-parse");
+    const parsed = await pdfParse(Buffer.from(buffer));
+    return String(parsed?.text || "");
+  }
+  if (
+    mimetype.includes("word") ||
+    mimetype.includes("officedocument") ||
+    ext.endsWith(".docx") ||
+    ext.endsWith(".doc")
+  ) {
+    const mammoth = require("mammoth");
+    const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) });
+    return String(result?.value || "");
+  }
+  if (mimetype.startsWith("text/") || ext.endsWith(".txt")) {
+    return Buffer.from(buffer).toString("utf8");
+  }
+  return "";
+}
+
+async function extractProfileFromText(text: string): Promise<any | null> {
+  if (!text || text.trim().length === 0) return null;
+  const prompt = [
+    { role: "system", content: "You extract structured candidate profile from resumes. Return ONLY valid JSON with keys: name, email, total_experience_months (integer), summary (string), domain (string), skills (array of strings). Be accurate." },
+    { role: "user", content: `Resume text:\n\n${text}\n\nReturn JSON now.` },
+  ] as any;
+  const reply = await groqChat(prompt);
+  const jsonMatch = reply.match(/\{[\s\S]*\}/);
+  const jsonStr = jsonMatch ? jsonMatch[0] : reply;
+  try { return JSON.parse(jsonStr); } catch { return null; }
+}
+
+async function uploadResumeToBlob(interviewId: string, originalname: string, mimetype: string, buffer: Buffer) {
+  try {
+    const blobService = getBlobServiceClient();
+    const containerClient = blobService.getContainerClient(getContainerName());
+    try {
+      await containerClient.getProperties();
+    } catch (err: any) {
+      if (err?.statusCode === 404) throw new Error("skip-upload");
+      if (typeof err?.message === "string" && err.message.includes("Public access")) throw new Error("skip-upload");
+      throw err;
+    }
+    const blobName = `interviews/${interviewId}/${crypto.randomUUID()}-${originalname}`;
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    await blockBlobClient.uploadData(buffer, { blobHTTPHeaders: { blobContentType: mimetype } });
+    return { blobName, originalName: originalname, mimeType: mimetype } as const;
+  } catch (e: any) {
+    console.warn("Resume upload skipped:", e?.message || e);
+    return { blobName: undefined, originalName: undefined, mimeType: undefined } as const;
+  }
+}
+
 export const listCandidates: RequestHandler = async (req, res) => {
   const adminId = (req as AuthRequest).userId!;
   const { id } = req.params as { id: string };
@@ -528,6 +615,111 @@ export const downloadProctorPhoto: RequestHandler = async (req, res) => {
   );
   download.readableStreamBody?.pipe(res);
 };
+
+export const bulkUploadCandidates = [
+  upload.fields([
+    { name: "resumes", maxCount: 200 },
+    { name: "zip", maxCount: 1 },
+  ]),
+  (async (req, res) => {
+    const adminId = (req as AuthRequest).userId!;
+    const { id } = req.params as { id: string };
+    const interview = await prisma.interview.findFirst({ where: { id, adminId } });
+    if (!interview) return res.status(404).json({ error: "Interview not found" });
+
+    const files = ((req as any).files?.["resumes"] as Express.Multer.File[]) || [];
+    const zipFile = (((req as any).files?.["zip"] as Express.Multer.File[]) || [])[0];
+
+    const inputs: { name: string; mimetype: string; buffer: Buffer }[] = [];
+
+    // Unpack zip if provided
+    if (zipFile) {
+      try {
+        const zipBuf = await normalizeToBuffer(zipFile);
+        if (zipBuf) {
+          const require = createRequire(import.meta.url);
+          const AdmZip = require("adm-zip");
+          const zip = new AdmZip(zipBuf);
+          const entries = zip.getEntries();
+          for (const e of entries) {
+            if (e.isDirectory) continue;
+            const name = e.entryName || e.name;
+            if (!name) continue;
+            const lower = name.toLowerCase();
+            if (!(lower.endsWith(".pdf") || lower.endsWith(".doc") || lower.endsWith(".docx") || lower.endsWith(".txt"))) continue;
+            const buf = e.getData();
+            inputs.push({ name, mimetype: guessMimeFromName(name), buffer: buf });
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to process zip:", err);
+      }
+    }
+
+    for (const f of files) {
+      const buf = await normalizeToBuffer(f);
+      if (!buf) continue;
+      const lower = (f.originalname || "").toLowerCase();
+      if (!(lower.endsWith(".pdf") || lower.endsWith(".doc") || lower.endsWith(".docx") || lower.endsWith(".txt"))) continue;
+      inputs.push({ name: f.originalname, mimetype: f.mimetype || guessMimeFromName(f.originalname), buffer: buf });
+    }
+
+    if (inputs.length === 0) return res.status(400).json({ error: "No supported files found" });
+
+    const results: any[] = [];
+
+    for (const item of inputs) {
+      try {
+        const text = await extractResumeText(item.name, item.mimetype, item.buffer);
+        const extracted = await extractProfileFromText(text);
+        const email = extracted?.email ? String(extracted.email).trim() : "";
+        if (!email) {
+          results.push({ file: item.name, status: "failed", reason: "Email not found in resume" });
+          continue;
+        }
+
+        const { blobName, originalName, mimeType } = await uploadResumeToBlob(id, item.name, item.mimetype, item.buffer);
+        const skillsArray: string[] | undefined = Array.isArray(extracted?.skills)
+          ? extracted.skills.map((s: any) => String(s)).filter(Boolean)
+          : undefined;
+        const totalMonths = Number(extracted?.total_experience_months);
+
+        const candidate = await prisma.candidate.upsert({
+          where: { email },
+          create: {
+            email,
+            name: extracted?.name ? String(extracted.name) : undefined,
+            ...(blobName ? { resumeBlobName: blobName, resumeOriginalName: originalName, resumeMimeType: mimeType } : {}),
+            totalExperienceMonths: Number.isFinite(totalMonths) ? Math.max(0, Math.floor(totalMonths)) : undefined,
+            summary: extracted?.summary ? String(extracted.summary).slice(0, 5000) : undefined,
+            domain: extracted?.domain ? String(extracted.domain).slice(0, 255) : undefined,
+            skills: skillsArray,
+          } as any,
+          update: {
+            name: extracted?.name ? String(extracted.name) : undefined,
+            ...(blobName ? { resumeBlobName: blobName, resumeOriginalName: originalName, resumeMimeType: mimeType } : {}),
+            totalExperienceMonths: Number.isFinite(totalMonths) ? Math.max(0, Math.floor(totalMonths)) : undefined,
+            summary: extracted?.summary ? String(extracted.summary).slice(0, 5000) : undefined,
+            domain: extracted?.domain ? String(extracted.domain).slice(0, 255) : undefined,
+            skills: skillsArray,
+          } as any,
+        });
+        await prisma.interviewCandidate.upsert({
+          where: {
+            interviewId_candidateId: { interviewId: id, candidateId: candidate.id },
+          },
+          create: { interviewId: id, candidateId: candidate.id },
+          update: {},
+        });
+        results.push({ file: item.name, status: "ok", candidateId: candidate.id, email: candidate.email });
+      } catch (e: any) {
+        results.push({ file: item.name, status: "failed", reason: e?.message || String(e) });
+      }
+    }
+
+    res.json({ ok: true, count: results.length, results });
+  }) as RequestHandler,
+];
 
 export const downloadResume: RequestHandler = async (req, res) => {
   const adminId = (req as AuthRequest).userId!;
