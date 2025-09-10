@@ -362,6 +362,26 @@ export const createCandidate = [
       console.warn("Resume extraction failed", e);
     }
 
+    // Duplicate detection (LLM + heuristics)
+    try {
+      const incomingEmail = (email || extracted?.email || '').trim().toLowerCase();
+      if (incomingEmail) {
+        const byEmail = await prisma.candidate.findUnique({ where: { email: incomingEmail } as any });
+        if (byEmail) {
+          return res.status(409).send(`Looks like this profile already exists: ${byEmail.name || byEmail.email}`);
+        }
+      }
+      const potentials = await findPotentialCandidates(extracted, 30);
+      if (potentials.length) {
+        const decision = await llmDecideDuplicate(extracted, potentials as any);
+        if (decision && decision.duplicate) {
+          return res.status(409).send(`Looks like this profile already exists: ${decision.name}`);
+        }
+      }
+    } catch (e) {
+      // Swallow dedupe errors to avoid blocking
+    }
+
     const skillsArray: string[] | undefined = Array.isArray(extracted?.skills)
       ? extracted.skills.map((s: any) => String(s)).filter(Boolean)
       : undefined;
