@@ -643,6 +643,119 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
         </DialogContent>
       </Dialog>
 
+      {/* Bulk upload sheet */}
+      <Sheet open={bulkOpen} onOpenChange={(o) => {
+        if (!o) {
+          setBulkFiles([]);
+          setBulkResults([]);
+          setBulkError(null);
+          setBulkUploading(false);
+        }
+        setBulkOpen(o);
+      }}>
+        <SheetContent side="right" className="w-[96vw] sm:max-w-3xl lg:max-w-4xl">
+          <SheetHeader>
+            <SheetTitle>Bulk Add Candidates</SheetTitle>
+          </SheetHeader>
+          <div className="p-4 space-y-4">
+            <div
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={(e) => { e.preventDefault(); e.stopPropagation(); addFiles(e.dataTransfer.files); }}
+              className="rounded-lg border-2 border-dashed p-6 text-center bg-background"
+            >
+              <div className="text-sm text-muted-foreground">Drag & drop PDF/DOC/DOCX/TXT files or a ZIP here</div>
+              <div className="mt-3">
+                <Input type="file" multiple accept=".pdf,.doc,.docx,.txt,.zip" onChange={(e) => addFiles(e.target.files)} />
+              </div>
+            </div>
+
+            {bulkFiles.length > 0 && (
+              <div className="rounded-md border bg-card">
+                <div className="px-3 py-2 text-sm font-medium">Selected Files ({bulkFiles.length})</div>
+                <div className="max-h-64 overflow-auto divide-y">
+                  {bulkFiles.map((f, i) => (
+                    <div key={i} className="px-3 py-2 text-sm flex items-center justify-between">
+                      <div className="truncate max-w-[70%]" title={f.name}>{f.name}</div>
+                      <button
+                        className="text-xs text-destructive hover:underline"
+                        onClick={() => setBulkFiles((prev) => prev.filter((_, j) => j !== i))}
+                        disabled={bulkUploading}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={async () => {
+                  if (!interviewId) return;
+                  setBulkUploading(true);
+                  setBulkError(null);
+                  setBulkResults([]);
+                  try {
+                    const fd = new FormData();
+                    // If any zip present, send the first zip as 'zip'
+                    const zips = bulkFiles.filter((f) => /\.zip$/i.test(f.name));
+                    if (zips.length > 0) {
+                      fd.append("zip", zips[0]);
+                    }
+                    // Send all non-zip resumes
+                    for (const f of bulkFiles) {
+                      if (!/\.zip$/i.test(f.name)) fd.append("resumes", f);
+                    }
+                    const res = await fetch(`/api/interviews/${interviewId}/candidates/bulk`, {
+                      method: "POST",
+                      credentials: "include",
+                      body: fd,
+                    });
+                    if (!res.ok) throw new Error(await res.text());
+                    const data = await res.json();
+                    setBulkResults(Array.isArray(data?.results) ? data.results : []);
+                    toast({ title: "Bulk upload completed", description: `${data?.results?.length || 0} files processed.` });
+                    await refresh();
+                  } catch (e: any) {
+                    setBulkError(e?.message || "Bulk upload failed");
+                    toast({ title: "Failed", description: "Bulk upload failed", variant: "destructive" });
+                  } finally {
+                    setBulkUploading(false);
+                  }
+                }}
+                disabled={bulkUploading || bulkFiles.length === 0}
+              >
+                {bulkUploading ? (
+                  <span className="inline-flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Uploading…</span>
+                ) : (
+                  "Start Upload"
+                )}
+              </Button>
+              <Button variant="ghost" onClick={() => { setBulkFiles([]); setBulkResults([]); setBulkError(null); }} disabled={bulkUploading}>Clear</Button>
+            </div>
+
+            {bulkError && <div className="text-sm text-destructive">{bulkError}</div>}
+
+            {bulkResults.length > 0 && (
+              <div className="rounded-md border bg-card">
+                <div className="px-3 py-2 text-sm font-medium">Results</div>
+                <div className="max-h-64 overflow-auto divide-y">
+                  {bulkResults.map((r, i) => (
+                    <div key={i} className="px-3 py-2 text-sm flex items-center justify-between">
+                      <div className="truncate max-w-[60%]" title={r.file}>{r.file}</div>
+                      <div className={`text-xs ${r.status === 'ok' ? 'text-emerald-600' : 'text-destructive'}`}>
+                        {r.status === 'ok' ? 'OK' : r.reason || 'Failed'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
         <SheetContent
           side="right"
