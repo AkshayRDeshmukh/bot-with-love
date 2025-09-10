@@ -441,6 +441,20 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
               setPreviewUrl(`/api/interviews/${interviewId}/candidates/${c.id}/resume?inline=1`);
               setPreviewOpen(true);
             }}
+            onSendInvite={async (c) => {
+              try {
+                if (!interviewId) throw new Error("Missing interview id");
+                const res = await fetch(`/api/interviews/${interviewId}/candidates/${c.id}/invite`, {
+                  method: "POST",
+                  credentials: "include",
+                });
+                if (!res.ok) throw new Error(await res.text());
+                toast({ title: (c.inviteCount ?? 0) > 0 ? "Resent" : "Sent", description: "Invitation has been sent." });
+                await refresh();
+              } catch (e) {
+                toast({ title: "Failed", description: "Unable to send invite.", variant: "destructive" });
+              }
+            }}
             onCopyInvite={async (c) => {
               try {
                 if (!interviewId) throw new Error("Missing interview id");
