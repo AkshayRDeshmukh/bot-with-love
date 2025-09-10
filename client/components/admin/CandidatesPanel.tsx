@@ -143,6 +143,27 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
   const [editSummary, setEditSummary] = useState("");
   const [editMaxAttempts, setEditMaxAttempts] = useState<string>("");
 
+  // Bulk upload state
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkResults, setBulkResults] = useState<any[]>([]);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+
+  const addFiles = (list: FileList | null) => {
+    if (!list) return;
+    const arr = Array.from(list).filter((f) => /\.(pdf|docx?|txt|zip)$/i.test(f.name));
+    setBulkFiles((prev) => {
+      const names = new Set(prev.map((f) => f.name + f.size));
+      const merged = [...prev];
+      for (const f of arr) {
+        const key = f.name + f.size;
+        if (!names.has(key)) merged.push(f);
+      }
+      return merged;
+    });
+  };
+
   async function openReport(cid: string, row?: CandidateRow) {
     if (!interviewId) return;
     setReportOpen(true);
