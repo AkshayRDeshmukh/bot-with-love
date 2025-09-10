@@ -105,6 +105,22 @@ function shortId(id?: string) {
   return id.length > 10 ? `${id.slice(0, 8)}…` : id;
 }
 
+function friendlyReportError(e: any): string {
+  const raw = typeof e === 'string' ? e : (e?.message || '');
+  try {
+    const parsed = JSON.parse(raw);
+    const msg = parsed?.error || parsed?.message || raw;
+    if (String(msg).toLowerCase().includes('transcript not found')) {
+      return 'No attempts yet. Report will be available after the candidate completes an attempt.';
+    }
+    return String(msg);
+  } catch {}
+  if (raw.toLowerCase().includes('transcript not found')) {
+    return 'No attempts yet. Report will be available after the candidate completes an attempt.';
+  }
+  return raw || 'Failed to load report';
+}
+
 export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
   const { rows, loading, error, refresh } = useCandidates(interviewId);
   const [open, setOpen] = useState(false);
