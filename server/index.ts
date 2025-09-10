@@ -106,6 +106,11 @@ export function createServer() {
     inviteBulk,
   );
   app.post(
+    "/api/interviews/:id/candidates/bulk",
+    requireAuth,
+    ...(bulkUploadCandidates as any),
+  );
+  app.post(
     "/api/interviews/:id/candidates/:cid/invite",
     requireAuth,
     inviteCandidate,
