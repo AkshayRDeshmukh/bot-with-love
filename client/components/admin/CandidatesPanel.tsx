@@ -825,6 +825,25 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                             ? data.attempts
                             : [];
                           setReportAttempts(attempts);
+
+                          // Update proctor photo for the selected attempt if provided by the server
+                          setReportProctorUrl(null);
+                          setProctorImgError(false);
+                          try {
+                            const photoUrl = data?.proctorPhotoUrl || null;
+                            if (photoUrl) {
+                              const imgRes = await fetch(photoUrl, { credentials: "include" });
+                              if (imgRes.ok) {
+                                const b = await imgRes.blob();
+                                const obj = URL.createObjectURL(b);
+                                setReportProctorUrl(obj);
+                              } else {
+                                setProctorImgError(true);
+                              }
+                            }
+                          } catch (err) {
+                            setProctorImgError(true);
+                          }
                         } catch (e: any) {
                           setReportError(friendlyReportError(e));
                         } finally {
