@@ -422,7 +422,10 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
       },
     },
   });
-  if (existing) {
+
+  const force = ((req.query as any)?.force === "1" || (req.query as any)?.force === "true");
+
+  if (existing && !force) {
     const transcriptRow = await prisma.interviewTranscript.findFirst({
       where: {
         interviewId: id,
@@ -486,6 +489,21 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
       attempts,
       proctorPhotoUrl,
     });
+  }
+
+  // If forcing regeneration and an existing report exists, remove it so we can create a fresh one
+  if (existing && force) {
+    try {
+      await prisma.interviewReport.deleteMany({
+        where: {
+          interviewId: id,
+          candidateId: cid,
+          attemptNumber: targetAttempt,
+        },
+      });
+    } catch (e) {
+      // ignore deletion errors and continue to regenerate
+    }
   }
 
   const transcriptRow = await prisma.interviewTranscript.findFirst({
