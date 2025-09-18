@@ -65,6 +65,7 @@ export function AdminInterviewForm({
         durationMinutes: (initial as any).durationMinutes ?? undefined,
         interactionMode: (initial as any).interactionMode || "AUDIO",
         maxAttempts: (initial as any).maxAttempts ?? undefined,
+        cefrEvaluation: (initial as any).cefrEvaluation ?? false,
       });
     }
   }, [initial, form]);
