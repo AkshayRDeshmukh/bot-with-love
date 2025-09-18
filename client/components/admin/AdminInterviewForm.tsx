@@ -221,6 +221,21 @@ export function AdminInterviewForm({
           </p>
         )}
       </div>
+
+      <div className="grid gap-2">
+        <label className="text-sm">CEFR Evaluation</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            {...form.register("cefrEvaluation")}
+            id="cefrEvaluation"
+          />
+          <label htmlFor="cefrEvaluation" className="text-sm text-muted-foreground">
+            When enabled, reports use CEFR bands (A1..C2) across parameters for language evaluation.
+          </label>
+        </div>
+      </div>
+
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={submitting}>
           {submitting ? "Saving..." : "Save"}
