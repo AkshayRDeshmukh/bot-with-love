@@ -311,8 +311,9 @@ export const listInterviewReportsSummary: RequestHandler = async (req, res) => {
 function buildCandidateReportPrompt(args: {
   template: any;
   answers: string[];
+  cefrEnabled?: boolean;
 }) {
-  const { template, answers } = args;
+  const { template, answers, cefrEnabled } = args;
   const lines: string[] = [];
   lines.push(
     "You are a strict technical interviewer. Generate a comprehensive interview evaluation as strict JSON only.",
