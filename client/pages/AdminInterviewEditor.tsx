@@ -247,6 +247,12 @@ export default function AdminInterviewEditor() {
                               {initial?.interviewerRole || ""}
                             </div>
                           </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">CEFR Evaluation</div>
+                            <div className="mt-1">
+                              {(initial as any)?.cefrEvaluation ? "Enabled" : "Disabled"}
+                            </div>
+                          </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <div className="text-xs text-muted-foreground">
