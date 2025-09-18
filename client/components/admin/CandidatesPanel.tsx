@@ -882,23 +882,11 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                             : [];
                           setReportAttempts(attempts);
 
-                          // Update proctor photo for the selected attempt if provided by the server
-                          setReportProctorUrl(null);
-                          setProctorImgError(false);
+                          // Load proctor photo for this attempt using abortable loader
                           try {
-                            const photoUrl = data?.proctorPhotoUrl || null;
-                            if (photoUrl) {
-                              const imgRes = await fetch(photoUrl, { credentials: "include" });
-                              if (imgRes.ok) {
-                                const b = await imgRes.blob();
-                                const obj = URL.createObjectURL(b);
-                                setReportProctorUrl(obj);
-                              } else {
-                                setProctorImgError(true);
-                              }
-                            }
+                            await loadProctorPhoto(data?.proctorPhotoUrl || null);
                           } catch (err) {
-                            setProctorImgError(true);
+                            // handled in loader
                           }
                         } catch (e: any) {
                           setReportError(friendlyReportError(e));
