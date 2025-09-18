@@ -98,6 +98,8 @@ model Interview {
   interviewerRole String
   durationMinutes Int?
   interactionMode InterviewInteractionMode @default(AUDIO)
+  // Enable CEFR evaluation mode: when true, report generation uses CEFR bands (A1..C2) across parameters
+  cefrEvaluation  Boolean   @default(false)
   // Default attempts allowed per candidate (nullable => fallback to 1)
   maxAttempts     Int?
   createdAt       DateTime @default(now())
