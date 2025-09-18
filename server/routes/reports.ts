@@ -342,6 +342,15 @@ function buildCandidateReportPrompt(args: {
       `- id=${p.id}; name=${p.name}; weight=${p.weight}; scale=[${min}, ${max}]; description=${desc}`,
     );
   }
+
+  if (cefrEnabled) {
+    lines.push(
+      "Special instruction: This interview is configured for CEFR-based language evaluation. For each evaluation parameter, return an additional field 'cefr' with one of: A1, A2, B1, B2, C1, C2. Also provide a short comment explaining why that CEFR level was chosen based on evidence.",
+    );
+    lines.push(
+      "When CEFR is requested, the primary rating should be the 'cefr' string. Additionally, include 'score' numeric values mapped to the parameter's scale (e.g., 1-5 or percentage) so the system can render numeric charts. Ensure consistency between 'cefr' and numeric 'score'.",
+    );
+  }
   lines.push("Candidate answers (chronological):");
   for (let i = 0; i < answers.length; i++) {
     lines.push(`A${i + 1}: ${answers[i]}`);
