@@ -54,6 +54,7 @@ export default function AdminInterviewEditor() {
           durationMinutes: data.durationMinutes ?? undefined,
           interactionMode: data.interactionMode || "AUDIO",
           maxAttempts: (data as any)?.maxAttempts ?? undefined,
+          cefrEvaluation: (data as any)?.cefrEvaluation ?? false,
         });
       } catch (e) {
         setError("Failed to load interview");
@@ -94,6 +95,7 @@ export default function AdminInterviewEditor() {
           durationMinutes: data.durationMinutes ?? undefined,
           interactionMode: data.interactionMode || "AUDIO",
           maxAttempts: (data as any)?.maxAttempts ?? undefined,
+          cefrEvaluation: (data as any)?.cefrEvaluation ?? false,
         });
       } else {
         // fallback to submitted values
