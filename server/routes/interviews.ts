@@ -238,6 +238,7 @@ export const updateInterview: RequestHandler = async (req, res) => {
             ? "TEXT_ONLY"
             : "AUDIO"
           : (existing as any).interactionMode,
+        cefrEvaluation: typeof (req.body as any)?.cefrEvaluation === "boolean" ? (req.body as any).cefrEvaluation : (existing as any).cefrEvaluation,
         maxAttempts:
           typeof (req.body as any)?.maxAttempts === "number"
             ? Math.max(1, Math.floor((req.body as any).maxAttempts))
