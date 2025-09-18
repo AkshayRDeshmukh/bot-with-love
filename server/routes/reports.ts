@@ -582,6 +582,38 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     // ignore
   }
 
+  // If the LLM didn't include a detailed summary, ask it to generate one using the available parameter evaluations and answers
+  try {
+    if ((!parsed.summary || String(parsed.summary).trim() === "") && Array.isArray(parsed.parameters) && parsed.parameters.length > 0) {
+      const sLines: string[] = [];
+      sLines.push("You are a report writer. Produce a detailed multi-paragraph summary with headings: Overview, Strengths, Weaknesses, Evidence, Suggested next steps.");
+      sLines.push("Use ONLY the parameter evaluations and candidate answers provided. Return only the plain summary text (no JSON or extraneous prose). Keep headings as plain text.");
+      sLines.push("Parameter evaluations:");
+      for (const p of parsed.parameters) {
+        sLines.push(`- id=${p.id}; name=${p.name}; score=${p.score}; comment=${p.comment || ""}`);
+      }
+      sLines.push("Candidate answers:");
+      for (let i = 0; i < answers.length; i++) sLines.push(`A${i + 1}: ${answers[i]}`);
+      const summaryPrompt = sLines.join("\n");
+      try {
+        const reply3 = await groqChat(
+          [
+            { role: "system", content: "You return only the requested content. Do not add JSON wrappers." },
+            { role: "user", content: summaryPrompt },
+          ],
+          { temperature: 0.1 },
+        );
+        if (reply3 && String(reply3).trim()) {
+          parsed.summary = String(reply3).trim();
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
 
   // If LLM failed to return parameter scores, fallback to generating conservative default scores
   try {
