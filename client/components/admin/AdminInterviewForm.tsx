@@ -24,6 +24,7 @@ const schema = z.object({
     .int()
     .min(1, { message: "Minimum 1 attempt" })
     .optional(),
+  cefrEvaluation: z.boolean().optional(),
 });
 
 export type InterviewInput = z.infer<typeof schema>;
