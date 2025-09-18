@@ -736,6 +736,28 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     parsed.overall = totalW > 0 ? Math.round(acc / totalW) : 0;
   } catch {}
 
+  // Replace answer tokens like 'answer A3' or 'A3' in the generated summary with the actual answer text
+  try {
+    if (parsed && typeof parsed.summary === "string" && Array.isArray(answers) && answers.length > 0) {
+      let s = String(parsed.summary);
+      // First replace 'answer A12' or 'answer A1' (case-insensitive)
+      s = s.replace(/answer\s+A(\d{1,3})/gi, (_m, g1) => {
+        const idx = Number(g1) - 1;
+        const txt = answers[idx] ? String(answers[idx]).replace(/\s+/g, " ").trim() : null;
+        return txt ? `"${txt}"` : _m;
+      });
+      // Then replace standalone tokens like 'A12' (word boundary)
+      s = s.replace(/\bA(\d{1,3})\b/g, (_m, g1) => {
+        const idx = Number(g1) - 1;
+        const txt = answers[idx] ? String(answers[idx]).replace(/\s+/g, " ").trim() : null;
+        return txt ? `"${txt}"` : _m;
+      });
+      parsed.summary = s;
+    }
+  } catch (e) {
+    // ignore replacement errors
+  }
+
   const saved = await prisma.interviewReport.create({
     data: {
       interviewId: id,
