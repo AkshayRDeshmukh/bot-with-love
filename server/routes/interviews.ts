@@ -106,6 +106,7 @@ export const createInterview: RequestHandler = async (req, res) => {
           String(interactionMode).toUpperCase() === "TEXT_ONLY"
             ? "TEXT_ONLY"
             : "AUDIO",
+        cefrEvaluation: Boolean((req.body as any)?.cefrEvaluation || false),
         maxAttempts:
           typeof (req.body as any)?.maxAttempts === "number"
             ? Math.max(1, Math.floor((req.body as any).maxAttempts))
