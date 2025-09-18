@@ -524,9 +524,64 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     parsed = null;
   }
 
+  // Ensure parsed is an object with parameters array
   if (!parsed || !Array.isArray(parsed.parameters)) {
     parsed = { summary: "", parameters: [] };
   }
+
+  // If some template parameters are missing from the LLM response, ask the LLM specifically to evaluate only the missing ones using the candidate answers.
+  try {
+    const tplParams = Array.isArray((template as any)?.parameters)
+      ? (template as any).parameters
+      : [];
+    const existingParams = Array.isArray(parsed.parameters) ? parsed.parameters : [];
+    const existingIds = new Set(existingParams.map((p: any) => String(p.id)));
+    const missing = tplParams.filter((p: any) => !existingIds.has(String(p.id)));
+    if (missing.length > 0 && answers.length > 0) {
+      const lines: string[] = [];
+      lines.push("You are an expert evaluator. For each parameter below, produce a JSON array of objects with exact fields: { id, name, score, comment }.");
+      lines.push("Use ONLY the candidate answers provided as evidence. If no evidence exists for a parameter, state that in comment and assign a conservative midpoint score within the parameter's scale.");
+      lines.push("Return ONLY valid JSON (an array of objects). Do not include any prose outside the JSON.");
+      lines.push("Parameters to evaluate:");
+      for (const p of missing) {
+        const min = p?.scale?.min ?? 1;
+        const max = p?.scale?.max ?? 5;
+        const desc = (p?.description || "").replace(/\n+/g, " ").trim();
+        lines.push(`- id=${p.id}; name=${p.name}; scale=[${min},${max}]; description=${desc}`);
+      }
+      lines.push("Candidate answers (chronological):");
+      for (let i = 0; i < answers.length; i++) {
+        lines.push(`A${i + 1}: ${answers[i]}`);
+      }
+
+      const missingPrompt = lines.join("\n");
+      try {
+        const reply2 = await groqChat(
+          [
+            { role: "system", content: "You return only strict JSON, no prose." },
+            { role: "user", content: missingPrompt },
+          ],
+          { temperature: 0.1 },
+        );
+        let parsedMissing: any = null;
+        try {
+          parsedMissing = JSON.parse(reply2);
+        } catch {
+          parsedMissing = extractFirstJsonArray(reply2);
+        }
+        if (Array.isArray(parsedMissing) && parsedMissing.length > 0) {
+          parsed.parameters = Array.isArray(parsed.parameters)
+            ? parsed.parameters.concat(parsedMissing)
+            : parsedMissing;
+        }
+      } catch (e) {
+        // If this secondary LLM call fails, we'll rely on fallback logic below
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
 
   // If LLM failed to return parameter scores, fallback to generating conservative default scores
   try {
