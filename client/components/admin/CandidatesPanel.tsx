@@ -1104,7 +1104,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                               {params.map((p: any, idx: number) => {
                                 const pct = pctFor(p);
                                 const icon =
-                                  pct < 50 ? "❌" : pct < 80 ? "⚠️" : "✔️";
+                                  pct < 50 ? "❌" : pct < 80 ? "⚠️" : "��️";
                                 return (
                                   <div
                                     key={p.id || idx}
@@ -1125,12 +1125,6 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                                           const label = val != null ? (isPct ? `${val}%` : `${val}/${max}`) : "-";
                                           return (
                                             <div className="flex items-center gap-3">
-                                              {p?.cefr || p?.CEFR ? (
-                                                <span className="inline-flex items-center rounded-full bg-violet-100 text-violet-900 px-3 py-1 text-sm font-medium border border-violet-200">
-                                                  CEFR: {String(p?.cefr || p?.CEFR)}
-                                                </span>
-                                              ) : null}
-
                                               <span className="inline-flex items-center rounded-full bg-background px-3 py-1 text-sm border font-medium">
                                                 {label}
                                               </span>
