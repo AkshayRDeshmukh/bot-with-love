@@ -278,23 +278,11 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
         setReportAttempt(Number(data.report.attemptNumber));
       if (intr.ok) setReportInterview(await intr.json());
 
-      // Try fetching proctor photo as a blob (so credentials are sent reliably)
-      setReportProctorUrl(null);
-      setProctorImgError(false);
+      // Load proctor photo for this attempt using abortable loader to avoid stale images
       try {
-        const photoUrl = data?.proctorPhotoUrl || null;
-        if (photoUrl) {
-          const imgRes = await fetch(photoUrl, { credentials: "include" });
-          if (imgRes.ok) {
-            const b = await imgRes.blob();
-            const obj = URL.createObjectURL(b);
-            setReportProctorUrl(obj);
-          } else {
-            setProctorImgError(true);
-          }
-        }
+        await loadProctorPhoto(data?.proctorPhotoUrl || null);
       } catch (err) {
-        setProctorImgError(true);
+        // errors handled inside loader
       }
     } catch (e: any) {
       setReportError(friendlyReportError(e));
