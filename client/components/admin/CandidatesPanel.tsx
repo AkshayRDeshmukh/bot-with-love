@@ -843,6 +843,40 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                     </button>
                   ))}
                 </div>
+                <div className="mt-2">
+                  <button
+                    className="px-3 py-2 text-sm rounded border bg-white hover:bg-muted"
+                    onClick={async () => {
+                      if (!currentCandidate || !interviewId) return;
+                      setReportLoading(true);
+                      setReportError(null);
+                      try {
+                        const url = new URL(
+                          `/api/interviews/${interviewId}/candidates/${currentCandidate.id}/report`,
+                          window.location.origin,
+                        );
+                        url.searchParams.set("attempt", String(reportAttempt));
+                        url.searchParams.set("force", "1");
+                        const rep = await fetch(url.toString(), {
+                          credentials: "include",
+                        });
+                        if (!rep.ok) throw new Error(await rep.text());
+                        const data = await rep.json();
+                        setReportData(data?.report || data);
+                        setReportTemplate(data?.template || null);
+                        setReportTranscript(Array.isArray(data?.transcript) ? data.transcript : []);
+                        const attempts = Array.isArray(data?.attempts) ? data.attempts : [];
+                        setReportAttempts(attempts);
+                      } catch (e: any) {
+                        setReportError(friendlyReportError(e));
+                      } finally {
+                        setReportLoading(false);
+                      }
+                    }}
+                  >
+                    Regenerate report for this attempt
+                  </button>
+                </div>
               </div>
             )}
             {reportLoading && (
