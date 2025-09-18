@@ -320,13 +320,25 @@ function buildCandidateReportPrompt(args: {
   lines.push(
     "Use ONLY the candidate's answers below as evidence. Ignore any interviewer prompts or external context.",
   );
-  lines.push("Evaluation parameters (id, name, weight, scale[min,max]):");
+
+  // Include brief template-level guidance if available (helps the evaluator focus on role priorities)
+  if (template && template.templateSummary) {
+    try {
+      const tplSum = Array.isArray(template.templateSummary)
+        ? template.templateSummary.join(", ")
+        : String(template.templateSummary);
+      lines.push(`Template summary (priority areas): ${tplSum}`);
+    } catch {}
+  }
+
+  lines.push("Evaluation parameters (id, name, weight, scale[min,max], description):");
   const params = Array.isArray(template?.parameters) ? template.parameters : [];
   for (const p of params) {
     const min = p?.scale?.min ?? 1;
     const max = p?.scale?.max ?? 5;
+    const desc = (p?.description || "").replace(/\n+/g, " ").trim();
     lines.push(
-      `- id=${p.id}; name=${p.name}; weight=${p.weight}; scale=[${min}, ${max}]`,
+      `- id=${p.id}; name=${p.name}; weight=${p.weight}; scale=[${min}, ${max}]; description=${desc}`,
     );
   }
   lines.push("Candidate answers (chronological):");
@@ -336,6 +348,16 @@ function buildCandidateReportPrompt(args: {
   lines.push(
     'Return ONLY valid JSON with this exact shape: { "summary": string, "parameters": [ { "id": string, "name": string, "score": number, "comment": string } ], "overall": number }.',
   );
+
+  // Stronger instructions for a detailed, structured summary
+  lines.push("Summary requirements:");
+  lines.push(
+    "- Provide a DETAILED, structured multi-paragraph summary (as the 'summary' string) with the following headings: Overview, Strengths, Weaknesses, Evidence, Suggested next steps.",
+  );
+  lines.push(
+    "- Use clear references to parameter names when describing strengths/weaknesses and include concrete evidence (short quotes or precise paraphrases) from the candidate answers.",
+  );
+
   lines.push("Scoring rules:");
   lines.push(
     "- 1-5 scales: default to 2/5 with limited evidence; 1/5 if weak/missing; 4-5/5 ONLY with multiple, specific, technical evidences.",
