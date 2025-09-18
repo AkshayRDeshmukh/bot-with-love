@@ -504,7 +504,7 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     .map((t) => t.content)
     .slice(-200);
 
-  const prompt = buildCandidateReportPrompt({ template, answers });
+  const prompt = buildCandidateReportPrompt({ template: { ...template, templateSummary: (tpl as any)?.templateSummary || null }, answers });
 
   let parsed: any = null;
   try {
