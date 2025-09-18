@@ -149,6 +149,74 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
     null,
   );
 
+  // Abortable per-attempt photo loader to avoid cache/stale-image races
+  const photoRequestControllerRef = useRef<AbortController | null>(null);
+  const photoRequestIdRef = useRef(0);
+  const prevObjectUrlRef = useRef<string | null>(null);
+
+  const loadProctorPhoto = async (photoUrl: string | null) => {
+    try {
+      // Cancel previous in-flight request
+      if (photoRequestControllerRef.current) {
+        try {
+          photoRequestControllerRef.current.abort();
+        } catch {}
+      }
+      photoRequestControllerRef.current = new AbortController();
+      const localId = ++photoRequestIdRef.current;
+
+      // Clear current UI image while loading
+      if (prevObjectUrlRef.current) {
+        try {
+          URL.revokeObjectURL(prevObjectUrlRef.current);
+        } catch {}
+        prevObjectUrlRef.current = null;
+      }
+      setReportProctorUrl(null);
+      setProctorImgError(false);
+
+      if (!photoUrl) {
+        setProctorImgError(true);
+        return;
+      }
+
+      const res = await fetch(photoUrl, {
+        credentials: "include",
+        cache: "no-store",
+        signal: photoRequestControllerRef.current.signal,
+      });
+
+      if (!res.ok) {
+        if (photoRequestIdRef.current === localId) setProctorImgError(true);
+        return;
+      }
+
+      const b = await res.blob();
+
+      // If another request started after this one, discard this result
+      if (photoRequestIdRef.current !== localId) {
+        try {
+          URL.revokeObjectURL(URL.createObjectURL(b));
+        } catch {}
+        return;
+      }
+
+      const obj = URL.createObjectURL(b);
+
+      // Revoke previous and set new
+      if (prevObjectUrlRef.current) {
+        try {
+          URL.revokeObjectURL(prevObjectUrlRef.current);
+        } catch {}
+      }
+      prevObjectUrlRef.current = obj;
+      setReportProctorUrl(obj);
+    } catch (e: any) {
+      if (e?.name === "AbortError") return;
+      setProctorImgError(true);
+    }
+  };
+
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<CandidateRow | null>(null);
   const [editName, setEditName] = useState("");
