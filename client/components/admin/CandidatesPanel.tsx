@@ -1114,41 +1114,29 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                                       <div className="font-semibold text-base flex items-center gap-2">
                                         <span>{icon}</span>
                                         <span>{p.name || p.id}</span>
-                                        {p?.cefr || p?.CEFR ? (
-                                          <span className="ml-2 inline-flex items-center rounded-full bg-violet-100 text-violet-800 px-2 py-0.5 text-xs border border-violet-200">
-                                            CEFR: {String(p?.cefr || p?.CEFR)}
-                                          </span>
-                                        ) : null}
                                       </div>
                                       <div className="text-sm tabular-nums">
                                         {(() => {
                                           const t = byId[String(p.id)] || {};
-                                          const min = Number(
-                                            t?.scale?.min ?? 1,
-                                          );
-                                          const max = Number(
-                                            t?.scale?.max ?? 5,
-                                          );
-                                          const val =
-                                            typeof p.score === "number"
-                                              ? p.score
-                                              : null;
-                                          const isPct =
-                                            t?.scale?.type === "percentage" ||
-                                            (min === 0 && max === 100);
-                                          const label =
-                                            val != null
-                                              ? isPct
-                                                ? `${val}%`
-                                                : `${val}/${max}`
-                                              : "-";
+                                          const min = Number(t?.scale?.min ?? 1);
+                                          const max = Number(t?.scale?.max ?? 5);
+                                          const val = typeof p.score === "number" ? p.score : null;
+                                          const isPct = t?.scale?.type === "percentage" || (min === 0 && max === 100);
+                                          const label = val != null ? (isPct ? `${val}%` : `${val}/${max}`) : "-";
                                           return (
-                                            <div className="flex items-center gap-2">
-                                              <span className="inline-flex items-center rounded-full bg-background px-2 py-0.5 text-xs border">
+                                            <div className="flex items-center gap-3">
+                                              {p?.cefr || p?.CEFR ? (
+                                                <span className="inline-flex items-center rounded-full bg-violet-100 text-violet-900 px-3 py-1 text-sm font-medium border border-violet-200">
+                                                  CEFR: {String(p?.cefr || p?.CEFR)}
+                                                </span>
+                                              ) : null}
+
+                                              <span className="inline-flex items-center rounded-full bg-background px-3 py-1 text-sm border font-medium">
                                                 {label}
                                               </span>
+
                                               {p?.cefr || p?.CEFR ? (
-                                                <span className="inline-flex items-center rounded-full bg-violet-50 text-violet-700 px-2 py-0.5 text-xs border border-violet-100">
+                                                <span className="inline-flex items-center rounded-full bg-violet-700 text-white px-2 py-1 text-sm font-semibold">
                                                   {String(p?.cefr || p?.CEFR)}
                                                 </span>
                                               ) : null}
