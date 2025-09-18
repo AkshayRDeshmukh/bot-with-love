@@ -1114,6 +1114,11 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                                       <div className="font-semibold text-base flex items-center gap-2">
                                         <span>{icon}</span>
                                         <span>{p.name || p.id}</span>
+                                        {p?.cefr || p?.CEFR ? (
+                                          <span className="ml-2 inline-flex items-center rounded-full bg-violet-100 text-violet-800 px-2 py-0.5 text-xs border border-violet-200">
+                                            CEFR: {String(p?.cefr || p?.CEFR)}
+                                          </span>
+                                        ) : null}
                                       </div>
                                       <div className="text-sm tabular-nums">
                                         {(() => {
@@ -1138,9 +1143,16 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                                                 : `${val}/${max}`
                                               : "-";
                                           return (
-                                            <span className="inline-flex items-center rounded-full bg-background px-2 py-0.5 text-xs border">
-                                              {label}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                              <span className="inline-flex items-center rounded-full bg-background px-2 py-0.5 text-xs border">
+                                                {label}
+                                              </span>
+                                              {p?.cefr || p?.CEFR ? (
+                                                <span className="inline-flex items-center rounded-full bg-violet-50 text-violet-700 px-2 py-0.5 text-xs border border-violet-100">
+                                                  {String(p?.cefr || p?.CEFR)}
+                                                </span>
+                                              ) : null}
+                                            </div>
                                           );
                                         })()}
                                       </div>
