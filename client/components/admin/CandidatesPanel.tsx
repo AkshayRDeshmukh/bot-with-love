@@ -150,6 +150,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
   const reportSheetRef = useRef<HTMLElement | null>(null);
   const printCloneContainerId = 'report-print-clone-container';
 
+  const prevSheetVisibilityRef = useRef<string | null>(null);
   useEffect(() => {
     // beforeprint: clone the right-panel sheet content into a top-level container for printing
     const onBeforePrint = () => {
@@ -158,17 +159,35 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
         if (!el) return;
         // avoid duplicating clone
         if (document.getElementById(printCloneContainerId)) return;
+
+        // hide original to prevent overlap
+        try {
+          prevSheetVisibilityRef.current = (el as HTMLElement).style.visibility || null;
+          (el as HTMLElement).style.visibility = 'hidden';
+        } catch (e) {}
+
         const clone = el.cloneNode(true) as HTMLElement;
-        // strip fixed positioning and force visible
+        // strip fixed positioning and force visible; remove interactive/overlay elements
         const nodes = clone.querySelectorAll('*');
         nodes.forEach((n) => {
           try {
-            (n as HTMLElement).style.position = 'static';
-            (n as HTMLElement).style.transform = 'none';
-            (n as HTMLElement).style.height = 'auto';
-            (n as HTMLElement).style.maxHeight = 'none';
-            (n as HTMLElement).style.overflow = 'visible';
-            (n as HTMLElement).style.visibility = 'visible';
+            const hn = n as HTMLElement;
+            // remove elements that are strictly interactive or overlays
+            const cls = (hn.className || '').toString();
+            if (cls.includes('absolute') || cls.includes('fixed') || hn.getAttribute('role') === 'dialog') {
+              // convert to semantic block instead of removing to preserve text
+              hn.style.position = 'static';
+              hn.style.top = 'auto';
+              hn.style.left = 'auto';
+            }
+            hn.style.position = 'static';
+            hn.style.transform = 'none';
+            hn.style.height = 'auto';
+            hn.style.maxHeight = 'none';
+            hn.style.overflow = 'visible';
+            hn.style.visibility = 'visible';
+            hn.style.zIndex = 'auto';
+            hn.style.pointerEvents = 'none';
           } catch (e) {}
         });
         // create container
@@ -179,7 +198,8 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
         container.style.background = 'white';
         container.style.width = '100%';
         container.style.padding = '12mm';
-        // give it an id we allow in print css
+        // ensure page-breaks are respected
+        container.style.boxSizing = 'border-box';
         container.innerHTML = clone.innerHTML;
         document.body.appendChild(container);
       } catch (e) {}
@@ -188,6 +208,10 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
       try {
         const c = document.getElementById(printCloneContainerId);
         if (c) c.remove();
+        const el = reportSheetRef.current;
+        if (el && prevSheetVisibilityRef.current != null) {
+          try { (el as HTMLElement).style.visibility = prevSheetVisibilityRef.current; } catch (e) {}
+        }
       } catch (e) {}
     };
     window.addEventListener('beforeprint', onBeforePrint);
