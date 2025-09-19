@@ -813,25 +813,59 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                 doc.write(el.outerHTML);
                 doc.write('</body></html>');
                 doc.close();
-                // Wait for the new window to finish loading (including images/styles), then print
+                // Wait for the new window to finish loading (including images/styles), then print.
+                // Some environments may fire load before we attach the listener, so handle readyState and a fallback timer.
                 const triggerPrint = () => {
                   try {
                     printWindow.focus();
                     printWindow.print();
                   } catch (e) {}
                 };
-                printWindow.addEventListener("load", () => {
-                  // small delay to ensure fonts/styles applied
-                  setTimeout(() => {
-                    triggerPrint();
-                    // close the window after a short time
+                try {
+                  const winDoc = printWindow.document;
+                  if (winDoc.readyState === "complete") {
+                    // already loaded
                     setTimeout(() => {
+                      triggerPrint();
+                      setTimeout(() => {
+                        try { printWindow.close(); } catch (e) {}
+                      }, 700);
+                    }, 200);
+                  } else {
+                    let fired = false;
+                    const onLoaded = () => {
+                      if (fired) return;
+                      fired = true;
+                      setTimeout(() => {
+                        triggerPrint();
+                        setTimeout(() => {
+                          try { printWindow.close(); } catch (e) {}
+                        }, 700);
+                      }, 250);
+                    };
+                    printWindow.addEventListener("load", onLoaded);
+                    // Fallback: ensure we still print after a timeout if load didn't fire
+                    setTimeout(() => {
+                      if (fired) return;
                       try {
-                        printWindow.close();
+                        triggerPrint();
+                        setTimeout(() => {
+                          try { printWindow.close(); } catch (e) {}
+                        }, 700);
                       } catch (e) {}
-                    }, 500);
-                  }, 250);
-                });
+                    }, 2500);
+                  }
+                } catch (e) {
+                  // If anything goes wrong (security/cross-origin), attempt a timed print
+                  setTimeout(() => {
+                    try {
+                      triggerPrint();
+                      setTimeout(() => {
+                        try { printWindow.close(); } catch (e) {}
+                      }, 700);
+                    } catch (ex) {}
+                  }, 700);
+                }
               }}>
                 Download PDF
               </Button>
