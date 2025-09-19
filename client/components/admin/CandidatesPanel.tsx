@@ -922,115 +922,12 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
           <SheetHeader>
             <div className="flex items-center justify-between px-1">
               <SheetTitle>Candidate Report</SheetTitle>
-              <Button size="sm" onClick={async () => {
-                const el = document.getElementById('report-print');
-                if (!el) return;
-                const printWindow = window.open('', '_blank', 'noopener');
-                if (!printWindow) return;
-                const doc = printWindow.document;
-                doc.open();
-                doc.write('<!doctype html><html><head><meta charset="utf-8"/><title>Candidate Report</title>');
-                // Inject minimal print CSS that hides all page content except the print root to avoid duplication/overlap
+              <Button size="sm" onClick={() => {
+                // Use the browser print API and our beforeprint handler to generate a clean print preview
                 try {
-                  const minimalCss = `
-                    <style>
-                      @page { size: A4; margin: 16mm; }
-                      html,body{height:auto;margin:0;padding:0}
-                      /* hide everything by default */
-                      body *{display:none !important;}
-                      /* show only our print root container and its children */
-                      #print-root{display:block !important; position:static !important; visibility:visible !important; overflow:visible !important; width:100% !important}
-                      #print-root *{display:block !important; position:static !important; visibility:visible !important; overflow:visible !important}
-                      /* ensure images scale to page width */
-                      #print-root img{max-width:100% !important; height:auto !important}
-                      /* avoid shadows/animations */
-                      .shadow, .shadow-sm, .shadow-md, .shadow-lg, .ring, .animate-in { box-shadow:none !important; animation:none !important }
-                      </style>
-                  `;
-                  doc.write(minimalCss);
-                } catch (e) {}
-                doc.write('</head><body>');
-                // Clone the element and expand any scrolling/height constraints so full content is printable
-                try {
-                  const clone = el.cloneNode(true) as HTMLElement;
-                  // Ensure cloned content expands: remove height/overflow constraints and reset positions
-                  const nodes = clone.querySelectorAll('*');
-                  nodes.forEach((n) => {
-                    try {
-                      const hn = n as HTMLElement;
-                      hn.style.height = 'auto';
-                      hn.style.maxHeight = 'none';
-                      hn.style.overflow = 'visible';
-                      hn.style.position = 'static';
-                      hn.style.transform = 'none';
-                      hn.style.visibility = 'visible';
-                      hn.style.zIndex = 'auto';
-                    } catch (e) {}
-                  });
-                  // Wrap clone HTML in a controlled print-root container
-                  const container = document.createElement('div');
-                  container.id = 'print-root';
-                  container.appendChild(clone);
-                  const clonedHtml = container.outerHTML;
-                  doc.write(clonedHtml);
+                  window.print();
                 } catch (e) {
-                  // fallback to original outerHTML wrapped in print-root
-                  doc.write(`<div id="print-root">${el.outerHTML}</div>`);
-                }
-                doc.write('</body></html>');
-                doc.close();
-                // Wait for the new window to finish loading (including images/styles), then print.
-                // Some environments may fire load before we attach the listener, so handle readyState and a fallback timer.
-                const triggerPrint = () => {
-                  try {
-                    printWindow.focus();
-                    printWindow.print();
-                  } catch (e) {}
-                };
-                try {
-                  const winDoc = printWindow.document;
-                  if (winDoc.readyState === "complete") {
-                    // already loaded
-                    setTimeout(() => {
-                      triggerPrint();
-                      setTimeout(() => {
-                        try { printWindow.close(); } catch (e) {}
-                      }, 700);
-                    }, 200);
-                  } else {
-                    let fired = false;
-                    const onLoaded = () => {
-                      if (fired) return;
-                      fired = true;
-                      setTimeout(() => {
-                        triggerPrint();
-                        setTimeout(() => {
-                          try { printWindow.close(); } catch (e) {}
-                        }, 700);
-                      }, 250);
-                    };
-                    printWindow.addEventListener("load", onLoaded);
-                    // Fallback: ensure we still print after a timeout if load didn't fire
-                    setTimeout(() => {
-                      if (fired) return;
-                      try {
-                        triggerPrint();
-                        setTimeout(() => {
-                          try { printWindow.close(); } catch (e) {}
-                        }, 700);
-                      } catch (e) {}
-                    }, 2500);
-                  }
-                } catch (e) {
-                  // If anything goes wrong (security/cross-origin), attempt a timed print
-                  setTimeout(() => {
-                    try {
-                      triggerPrint();
-                      setTimeout(() => {
-                        try { printWindow.close(); } catch (e) {}
-                      }, 700);
-                    } catch (ex) {}
-                  }, 700);
+                  // ignore
                 }
               }}>
                 Download PDF
