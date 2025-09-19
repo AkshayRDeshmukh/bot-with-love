@@ -152,45 +152,60 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
 
   const prevSheetVisibilityRef = useRef<string | null>(null);
   useEffect(() => {
-    // beforeprint: clone the right-panel sheet content into a top-level container for printing
+    // Improved beforeprint/afterprint handlers that:
+    // - clone the right-panel sheet into a top-level container
+    // - hide all other top-level body children while printing (avoids duplication and multiple <body> previews)
+    // - restore original DOM state after printing
+    const prevBodyDisplayRef = {
+      current: null as null | Map<Element, string | null>,
+    };
+    let isPrinting = false;
+
+    const sanitizeClone = (root: HTMLElement) => {
+      const nodes = root.querySelectorAll('*');
+      nodes.forEach((n) => {
+        try {
+          const hn = n as HTMLElement;
+          // reset positioning and overflow to allow content to flow across pages
+          hn.style.position = 'static';
+          hn.style.top = 'auto';
+          hn.style.left = 'auto';
+          hn.style.transform = 'none';
+          hn.style.height = 'auto';
+          hn.style.maxHeight = 'none';
+          hn.style.overflow = 'visible';
+          hn.style.visibility = 'visible';
+          hn.style.zIndex = 'auto';
+          hn.style.pointerEvents = 'none';
+        } catch (e) {
+          // ignore
+        }
+      });
+    };
+
     const onBeforePrint = () => {
       try {
+        if (isPrinting) return;
         const el = reportSheetRef.current;
         if (!el) return;
         // avoid duplicating clone
         if (document.getElementById(printCloneContainerId)) return;
 
-        // hide original to prevent overlap
-        try {
-          prevSheetVisibilityRef.current = (el as HTMLElement).style.visibility || null;
-          (el as HTMLElement).style.visibility = 'hidden';
-        } catch (e) {}
+        isPrinting = true;
 
-        const clone = el.cloneNode(true) as HTMLElement;
-        // strip fixed positioning and force visible; remove interactive/overlay elements
-        const nodes = clone.querySelectorAll('*');
-        nodes.forEach((n) => {
+        // Save current display style of all direct body children
+        const bodyChildren = Array.from(document.body.children);
+        const prev = new Map<Element, string | null>();
+        bodyChildren.forEach((c) => {
           try {
-            const hn = n as HTMLElement;
-            // remove elements that are strictly interactive or overlays
-            const cls = (hn.className || '').toString();
-            if (cls.includes('absolute') || cls.includes('fixed') || hn.getAttribute('role') === 'dialog') {
-              // convert to semantic block instead of removing to preserve text
-              hn.style.position = 'static';
-              hn.style.top = 'auto';
-              hn.style.left = 'auto';
-            }
-            hn.style.position = 'static';
-            hn.style.transform = 'none';
-            hn.style.height = 'auto';
-            hn.style.maxHeight = 'none';
-            hn.style.overflow = 'visible';
-            hn.style.visibility = 'visible';
-            hn.style.zIndex = 'auto';
-            hn.style.pointerEvents = 'none';
-          } catch (e) {}
+            prev.set(c, (c as HTMLElement).style.display || null);
+          } catch (e) {
+            prev.set(c, null);
+          }
         });
-        // create container
+        prevBodyDisplayRef.current = prev;
+
+        // Create clone container
         const container = document.createElement('div');
         container.id = printCloneContainerId;
         container.style.position = 'relative';
@@ -198,22 +213,51 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
         container.style.background = 'white';
         container.style.width = '100%';
         container.style.padding = '12mm';
-        // ensure page-breaks are respected
         container.style.boxSizing = 'border-box';
-        container.innerHTML = clone.innerHTML;
+
+        // Deep clone the sheet element
+        const clone = el.cloneNode(true) as HTMLElement;
+        sanitizeClone(clone);
+        container.appendChild(clone);
+
+        // Hide all other top-level body children to ensure only our clone appears in print preview
+        bodyChildren.forEach((c) => {
+          try {
+            if (c === container) return;
+            (c as HTMLElement).style.display = 'none';
+          } catch (e) {}
+        });
+
         document.body.appendChild(container);
-      } catch (e) {}
+
+        // Ensure at top of page
+        try { window.scrollTo(0, 0); } catch (e) {}
+      } catch (e) {
+        // swallow
+      }
     };
+
     const onAfterPrint = () => {
       try {
         const c = document.getElementById(printCloneContainerId);
         if (c) c.remove();
-        const el = reportSheetRef.current;
-        if (el && prevSheetVisibilityRef.current != null) {
-          try { (el as HTMLElement).style.visibility = prevSheetVisibilityRef.current; } catch (e) {}
+        // Restore body children display
+        const prev = prevBodyDisplayRef.current;
+        if (prev) {
+          prev.forEach((val, el) => {
+            try {
+              (el as HTMLElement).style.display = val || '';
+            } catch (e) {}
+          });
         }
-      } catch (e) {}
+        prevBodyDisplayRef.current = null;
+      } catch (e) {
+        // ignore
+      } finally {
+        isPrinting = false;
+      }
     };
+
     window.addEventListener('beforeprint', onBeforePrint);
     window.addEventListener('afterprint', onAfterPrint);
     (window as any).onbeforeprint = onBeforePrint;
