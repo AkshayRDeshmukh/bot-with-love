@@ -140,7 +140,9 @@
 
   /* Ensure the report print root is fully visible */
   #report-print,
-  #report-print * {
+  #report-print *,
+  #report-print-clone-container,
+  #report-print-clone-container * {
     visibility: visible !important;
     position: static !important;
     transform: none !important;
