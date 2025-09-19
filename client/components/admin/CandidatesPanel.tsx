@@ -886,10 +886,24 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                 const doc = printWindow.document;
                 doc.open();
                 doc.write('<!doctype html><html><head><meta charset="utf-8"/><title>Candidate Report</title>');
-                // Copy current page styles
+                // Inject minimal print CSS that hides all page content except the print root to avoid duplication/overlap
                 try {
-                  document.querySelectorAll('link[rel="stylesheet"]').forEach((n) => doc.write(n.outerHTML));
-                  document.querySelectorAll('style').forEach((n) => doc.write(n.outerHTML));
+                  const minimalCss = `
+                    <style>
+                      @page { size: A4; margin: 16mm; }
+                      html,body{height:auto;margin:0;padding:0}
+                      /* hide everything by default */
+                      body *{display:none !important;}
+                      /* show only our print root container and its children */
+                      #print-root{display:block !important; position:static !important; visibility:visible !important; overflow:visible !important; width:100% !important}
+                      #print-root *{display:block !important; position:static !important; visibility:visible !important; overflow:visible !important}
+                      /* ensure images scale to page width */
+                      #print-root img{max-width:100% !important; height:auto !important}
+                      /* avoid shadows/animations */
+                      .shadow, .shadow-sm, .shadow-md, .shadow-lg, .ring, .animate-in { box-shadow:none !important; animation:none !important }
+                      </style>
+                  `;
+                  doc.write(minimalCss);
                 } catch (e) {}
                 doc.write('</head><body>');
                 // Clone the element and expand any scrolling/height constraints so full content is printable
@@ -899,21 +913,25 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                   const nodes = clone.querySelectorAll('*');
                   nodes.forEach((n) => {
                     try {
-                      (n as HTMLElement).style.height = 'auto';
-                      (n as HTMLElement).style.maxHeight = 'none';
-                      (n as HTMLElement).style.overflow = 'visible';
-                      (n as HTMLElement).style.position = 'static';
-                      (n as HTMLElement).style.transform = 'none';
+                      const hn = n as HTMLElement;
+                      hn.style.height = 'auto';
+                      hn.style.maxHeight = 'none';
+                      hn.style.overflow = 'visible';
+                      hn.style.position = 'static';
+                      hn.style.transform = 'none';
+                      hn.style.visibility = 'visible';
+                      hn.style.zIndex = 'auto';
                     } catch (e) {}
                   });
-                  // Wrap clone HTML
+                  // Wrap clone HTML in a controlled print-root container
                   const container = document.createElement('div');
+                  container.id = 'print-root';
                   container.appendChild(clone);
-                  const clonedHtml = container.innerHTML;
+                  const clonedHtml = container.outerHTML;
                   doc.write(clonedHtml);
                 } catch (e) {
-                  // fallback to original outerHTML
-                  doc.write(el.outerHTML);
+                  // fallback to original outerHTML wrapped in print-root
+                  doc.write(`<div id="print-root">${el.outerHTML}</div>`);
                 }
                 doc.write('</body></html>');
                 doc.close();
