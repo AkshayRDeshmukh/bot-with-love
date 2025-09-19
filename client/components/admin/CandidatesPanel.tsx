@@ -813,13 +813,25 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                 doc.write(el.outerHTML);
                 doc.write('</body></html>');
                 doc.close();
-                // Give the new window a moment to render, then print
-                setTimeout(() => {
+                // Wait for the new window to finish loading (including images/styles), then print
+                const triggerPrint = () => {
                   try {
                     printWindow.focus();
                     printWindow.print();
                   } catch (e) {}
-                }, 500);
+                };
+                printWindow.addEventListener("load", () => {
+                  // small delay to ensure fonts/styles applied
+                  setTimeout(() => {
+                    triggerPrint();
+                    // close the window after a short time
+                    setTimeout(() => {
+                      try {
+                        printWindow.close();
+                      } catch (e) {}
+                    }, 500);
+                  }, 250);
+                });
               }}>
                 Download PDF
               </Button>
