@@ -792,6 +792,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
         <SheetContent
           side="right"
           className="w-[96vw] sm:max-w-3xl lg:max-w-4xl"
+          ref={(el: any) => reportSheetRef.current = el}
         >
           <SheetHeader>
             <div className="flex items-center justify-between px-1">
