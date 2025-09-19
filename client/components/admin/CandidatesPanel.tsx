@@ -810,7 +810,29 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                   document.querySelectorAll('style').forEach((n) => doc.write(n.outerHTML));
                 } catch (e) {}
                 doc.write('</head><body>');
-                doc.write(el.outerHTML);
+                // Clone the element and expand any scrolling/height constraints so full content is printable
+                try {
+                  const clone = el.cloneNode(true) as HTMLElement;
+                  // Ensure cloned content expands: remove height/overflow constraints and reset positions
+                  const nodes = clone.querySelectorAll('*');
+                  nodes.forEach((n) => {
+                    try {
+                      (n as HTMLElement).style.height = 'auto';
+                      (n as HTMLElement).style.maxHeight = 'none';
+                      (n as HTMLElement).style.overflow = 'visible';
+                      (n as HTMLElement).style.position = 'static';
+                      (n as HTMLElement).style.transform = 'none';
+                    } catch (e) {}
+                  });
+                  // Wrap clone HTML
+                  const container = document.createElement('div');
+                  container.appendChild(clone);
+                  const clonedHtml = container.innerHTML;
+                  doc.write(clonedHtml);
+                } catch (e) {
+                  // fallback to original outerHTML
+                  doc.write(el.outerHTML);
+                }
                 doc.write('</body></html>');
                 doc.close();
                 // Wait for the new window to finish loading (including images/styles), then print.
