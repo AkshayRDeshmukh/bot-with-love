@@ -145,6 +145,63 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
   const [reportAttempts, setReportAttempts] = useState<
     { attemptNumber: number; createdAt?: string; id?: string }[]
   >([]);
+
+  // Ref to the report sheet content so we can clone it for printing (right side panel)
+  const reportSheetRef = useRef<HTMLElement | null>(null);
+  const printCloneContainerId = 'report-print-clone-container';
+
+  useEffect(() => {
+    // beforeprint: clone the right-panel sheet content into a top-level container for printing
+    const onBeforePrint = () => {
+      try {
+        const el = reportSheetRef.current;
+        if (!el) return;
+        // avoid duplicating clone
+        if (document.getElementById(printCloneContainerId)) return;
+        const clone = el.cloneNode(true) as HTMLElement;
+        // strip fixed positioning and force visible
+        const nodes = clone.querySelectorAll('*');
+        nodes.forEach((n) => {
+          try {
+            (n as HTMLElement).style.position = 'static';
+            (n as HTMLElement).style.transform = 'none';
+            (n as HTMLElement).style.height = 'auto';
+            (n as HTMLElement).style.maxHeight = 'none';
+            (n as HTMLElement).style.overflow = 'visible';
+            (n as HTMLElement).style.visibility = 'visible';
+          } catch (e) {}
+        });
+        // create container
+        const container = document.createElement('div');
+        container.id = printCloneContainerId;
+        container.style.position = 'relative';
+        container.style.zIndex = '99999';
+        container.style.background = 'white';
+        container.style.width = '100%';
+        container.style.padding = '12mm';
+        // give it an id we allow in print css
+        container.innerHTML = clone.innerHTML;
+        document.body.appendChild(container);
+      } catch (e) {}
+    };
+    const onAfterPrint = () => {
+      try {
+        const c = document.getElementById(printCloneContainerId);
+        if (c) c.remove();
+      } catch (e) {}
+    };
+    window.addEventListener('beforeprint', onBeforePrint);
+    window.addEventListener('afterprint', onAfterPrint);
+    (window as any).onbeforeprint = onBeforePrint;
+    (window as any).onafterprint = onAfterPrint;
+    return () => {
+      window.removeEventListener('beforeprint', onBeforePrint);
+      window.removeEventListener('afterprint', onAfterPrint);
+      (window as any).onbeforeprint = null;
+      (window as any).onafterprint = null;
+      try { const c = document.getElementById(printCloneContainerId); if (c) c.remove(); } catch (e) {}
+    };
+  }, []);
   const [currentCandidate, setCurrentCandidate] = useState<CandidateRow | null>(
     null,
   );
