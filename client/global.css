@@ -103,3 +103,90 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+/* Print-friendly overrides for carousels/sliders and dynamic containers */
+@media print {
+  /* Generic slider/carousel containers */
+  .carousel,
+  .slider,
+  .embla,
+  .embla__container,
+  .slick-track,
+  .slick-list,
+  .react-resizable-panels,
+  .resizable-panel,
+  .sheet,
+  .overflow-auto,
+  .no-print-hidden {
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    transform: none !important;
+  }
+
+  .carousel-slide,
+  .embla__slide,
+  .slick-slide,
+  .slide,
+  .resizable-panel__content {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Ensure the report print root is fully visible */
+  #report-print,
+  #report-print * {
+    visibility: visible !important;
+    position: static !important;
+    transform: none !important;
+  }
+
+  /* Avoid hiding content globally */
+  body * { visibility: visible !important; }
+}
+
+/* When printing via onbeforeprint handler we add a class 'printing' to the root; ensure same rules apply */
+.printing .carousel,
+.printing .slider,
+.printing .embla,
+.printing .embla__container,
+.printing .slick-track,
+.printing .slick-list,
+.printing .react-resizable-panels,
+.printing .resizable-panel,
+.printing .sheet,
+.printing .overflow-auto,
+.printing .no-print-hidden {
+  display: block !important;
+  position: static !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  transform: none !important;
+}
+
+.printing .carousel-slide,
+.printing .embla__slide,
+.printing .slick-slide,
+.printing .slide,
+.printing .resizable-panel__content {
+  display: block !important;
+  visibility: visible !important;
+  position: static !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+/* Prefer page breaks between logical sections */
+.printing #report-print > * {
+  page-break-inside: avoid;
+}
+
+@media print {
+  #report-print > * { page-break-inside: avoid; }
+}
