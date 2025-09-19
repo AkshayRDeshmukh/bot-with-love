@@ -148,8 +148,7 @@
     transform: none !important;
   }
 
-  /* Avoid hiding content globally */
-  body * { visibility: visible !important; }
+  /* Avoid hiding content globally - removed broad visibility override to prevent printed duplication of original sheet */
 }
 
 /* When printing via onbeforeprint handler we add a class 'printing' to the root; ensure same rules apply */
