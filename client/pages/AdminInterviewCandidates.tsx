@@ -101,6 +101,17 @@ export default function AdminInterviewCandidates() {
   const { rows } = useInterviewCandidates(id);
   const { title } = useInterviewDetails(id);
 
+  usePageHelp(
+    <div>
+      <p className="mb-2">This page lists candidates for the selected interview. You can open candidate reports, preview resumes, invite candidates, and manage profiles.</p>
+      <ul className="list-disc ml-5 text-sm">
+        <li>Click "Reports" to view candidate reports and generate PDFs.</li>
+        <li>Use the "Add Candidate" button to bulk upload or add individual resumes.</li>
+        <li>Click a row to edit candidate details or open the report side panel.</li>
+      </ul>
+    </div>
+  );
+
   const { total, notStarted, inProgress, completed } = useMemo(() => {
     const total = rows.length;
     let ns = 0,
