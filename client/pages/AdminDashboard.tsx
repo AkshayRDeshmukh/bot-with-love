@@ -11,6 +11,17 @@ import { useNavigate } from "react-router-dom";
 import usePageHelp from "@/hooks/usePageHelp";
 
 export default function AdminDashboard() {
+  usePageHelp(
+    <div>
+      <p className="mb-2">Admin Dashboard provides an overview of your interviews and quick actions.</p>
+      <ul className="list-disc ml-5 text-sm">
+        <li>Create a new interview using the "New Interview" button.</li>
+        <li>Click an interview row to edit details or manage candidates.</li>
+        <li>Use the top-right help button to view page-specific guidance.</li>
+      </ul>
+    </div>
+  );
+
   return (
     <section className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_left,rgba(124,58,237,0.12),transparent_40%),radial-gradient(ellipse_at_bottom_right,rgba(79,70,229,0.12),transparent_40%)]" />
