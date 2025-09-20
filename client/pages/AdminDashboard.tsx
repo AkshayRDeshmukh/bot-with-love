@@ -8,6 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
+import usePageHelp from "@/hooks/usePageHelp";
+
 export default function AdminDashboard() {
   return (
     <section className="relative overflow-hidden">
