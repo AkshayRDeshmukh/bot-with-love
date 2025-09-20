@@ -2,6 +2,8 @@ import { Outlet } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { HelpProvider } from "@/components/Help/HelpProvider";
+import HelpButton from "@/components/Help/HelpButton";
 
 function Header() {
   return (
@@ -17,6 +19,10 @@ function Header() {
         <nav className="hidden items-center gap-6 md:flex" />
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          {/* Global help button (small '?' circle) */}
+          <div className="ml-2">
+            <HelpButton />
+          </div>
         </div>
       </div>
     </header>
@@ -48,12 +54,14 @@ function Footer() {
 
 export default function MainLayout() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1">
-        <Outlet />
-      </main>
-      <Footer />
-    </div>
+    <HelpProvider>
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <Footer />
+      </div>
+    </HelpProvider>
   );
 }
