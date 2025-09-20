@@ -94,6 +94,8 @@ function Stat({
   );
 }
 
+import usePageHelp from "@/hooks/usePageHelp";
+
 export default function AdminInterviewCandidates() {
   const { id } = useParams<{ id: string }>();
   const { rows } = useInterviewCandidates(id);
