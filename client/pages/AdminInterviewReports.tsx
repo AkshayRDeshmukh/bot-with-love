@@ -20,8 +20,21 @@ function formatDate(d?: string | null) {
   }
 }
 
+import usePageHelp from "@/hooks/usePageHelp";
+
 export default function AdminInterviewReports() {
   const { id } = useParams<{ id: string }>();
+
+  usePageHelp(
+    <div>
+      <p className="mb-2">Reports page shows aggregated results for candidates on this interview.</p>
+      <ul className="list-disc ml-5 text-sm">
+        <li>Use filters and date range to narrow down attempts.</li>
+        <li>Click expand on a candidate to view per-attempt scores.</li>
+        <li>Export CSV for offline analysis using the "Export CSV" button.</li>
+      </ul>
+    </div>
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any | null>(null);
