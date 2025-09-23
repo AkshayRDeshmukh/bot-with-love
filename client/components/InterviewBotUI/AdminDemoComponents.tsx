@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Users, Copy, FileText, BarChart3, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 
 export function DemoReportTemplate() {
   const sample = {
