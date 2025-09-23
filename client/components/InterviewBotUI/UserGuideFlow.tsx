@@ -35,24 +35,23 @@ export default function UserGuideFlow({ open = true, onClose }: { open?: boolean
 
           <CardContent>
             <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="md:col-span-2">
-                  <h3 className="text-lg font-semibold">Candidate interview preview</h3>
-                  <p className="text-sm text-muted-foreground mt-2">This is the real interview UI (preview mode). It uses the same components as the live interview; for the guide we run in TEXT_ONLY mode to avoid camera/mic permissions.</p>
+              <div>
+                <h3 className="text-lg font-semibold">Candidate interview preview</h3>
+                <p className="text-sm text-muted-foreground mt-2">This is the real interview UI (preview mode). It uses the same components as the live interview; for the guide we run in TEXT_ONLY mode to avoid camera/mic permissions.</p>
 
-                  <div className="mt-4 rounded-md border overflow-hidden">
-                    <div className="p-4 bg-gradient-to-br from-violet-50 to-indigo-50">
-                      <CandidateBotPreview
-                        interviewId={"guide-demo"}
-                        interview={{ title: "Frontend Engineer - React", description: "Demo interview", interviewerRole: "Technical Interviewer", durationMinutes: 20, interactionMode: "TEXT_ONLY" }}
-                      />
-                    </div>
+                <div className="mt-4 rounded-md border overflow-hidden">
+                  <div className="p-4 bg-gradient-to-br from-violet-50 to-indigo-50">
+                    <CandidateBotPreview
+                      interviewId={"guide-demo"}
+                      interview={{ title: "Frontend Engineer - React", description: "Demo interview", interviewerRole: "Technical Interviewer", durationMinutes: 20, interactionMode: "TEXT_ONLY" }}
+                    />
                   </div>
                 </div>
 
-                <div className="md:col-span-1">
+                {/* Controls placed below the player to fit narrow guides */}
+                <div className="mt-4">
                   <h4 className="text-sm font-semibold">Controls & icons</h4>
-                  <div className="mt-3 space-y-3 text-sm text-muted-foreground">
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-muted-foreground">
                     <div className="flex items-center gap-3">
                       <div className="rounded bg-background p-2"><Video className="h-4 w-4 text-muted-foreground"/></div>
                       <div>
@@ -73,7 +72,7 @@ export default function UserGuideFlow({ open = true, onClose }: { open?: boolean
                       <div className="rounded bg-background p-2"><Send className="h-4 w-4 text-muted-foreground"/></div>
                       <div>
                         <div className="font-medium">Send / Submit</div>
-                        <div className="text-xs">Submit typed answers to the chat or send recorded audio segments when requested.</div>
+                        <div className="text-xs">Submit typed responses to the chat or send recorded audio segments when requested.</div>
                       </div>
                     </div>
 
@@ -85,7 +84,7 @@ export default function UserGuideFlow({ open = true, onClose }: { open?: boolean
                       </div>
                     </div>
 
-                    <div>
+                    <div className="col-span-2">
                       <div className="font-medium">Proctoring & privacy</div>
                       <div className="text-xs text-muted-foreground">The system may capture a single photo at the start and run periodic checks to ensure session integrity. You will be notified if any proctoring flags occur.</div>
                     </div>
