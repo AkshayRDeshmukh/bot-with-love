@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, Video, Mic, Clock, Send, VideoOff, MicOff, MessageSquare } from "lucide-react";
 import DemoCandidatePreview from "./DemoCandidatePreview";
+import CandidateBotPreview from "@/pages/CandidateBotPreview";
 
 export default function UserGuideFlow({ open = true, onClose }: { open?: boolean; onClose?: () => void }) {
   const [show, setShow] = useState(open);
