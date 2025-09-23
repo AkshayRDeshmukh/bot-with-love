@@ -43,7 +43,7 @@ export default function AdminGuideFlow({ open = true, onClose }: { open?: boolea
                   Use the AI Report Template panel to auto-generate evaluation parameters or edit them manually. The component below is the real ReportTemplateEditor used in the admin editor.
                 </p>
                 <div className="mt-3">
-                  <ReportTemplateEditor interviewId={"guide-demo"} />
+                  <DemoReportTemplate />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Meaning: Parameters define what evaluators see — weight adjusts importance, scale sets scoring type.</p>
               </section>
@@ -51,10 +51,10 @@ export default function AdminGuideFlow({ open = true, onClose }: { open?: boolea
               <section>
                 <h3 className="text-lg font-semibold">3. Add candidates & share links</h3>
                 <p className="text-sm text-muted-foreground mt-2">
-                  You can add candidates individually or bulk-upload resumes. After adding a candidate, the system generates a secure link you can copy or email to the candidate. The Candidates panel below is the same component used in the admin area.
+                  You can add candidates individually or bulk-upload resumes. After adding a candidate, the system generates a secure link you can copy or email to the candidate. The Candidates panel below shows a demo list so you can preview the UI without contacting the server.
                 </p>
                 <div className="mt-3">
-                  <CandidatesPanel interviewId={"guide-demo"} />
+                  <DemoCandidatesPanel />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">Meaning: Invite URL contains a short-lived token that authenticates the candidate and opens the candidate portal.</p>
               </section>
