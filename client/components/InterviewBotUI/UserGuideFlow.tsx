@@ -6,10 +6,22 @@ import DemoCandidatePreview from "./DemoCandidatePreview";
 
 export default function UserGuideFlow({ open = true, onClose }: { open?: boolean; onClose?: () => void }) {
   const [show, setShow] = useState(open);
+  const [remainingSeconds, setRemainingSeconds] = useState(60);
 
   useEffect(() => {
     setShow(open);
+    if (open) setRemainingSeconds(60);
   }, [open]);
+
+  // countdown for demo guide (1 minute)
+  useEffect(() => {
+    if (!show) return;
+    if (remainingSeconds <= 0) return;
+    const id = window.setInterval(() => {
+      setRemainingSeconds((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [show, remainingSeconds]);
 
   if (!show) return null;
 
