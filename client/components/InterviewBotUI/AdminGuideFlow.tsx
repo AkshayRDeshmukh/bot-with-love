@@ -119,7 +119,18 @@ export default function AdminGuideFlow({ open = true, onClose }: { open?: boolea
                 <div className="mt-3">
                   <DemoCandidatesPanel />
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">Meaning: Invite URL contains a short-lived token that authenticates the candidate and opens the candidate portal.</p>
+
+                <div className="mt-3">
+                  <div className="text-sm font-medium">How to invite & share links</div>
+                  <ol className="list-decimal ml-6 mt-2 text-sm text-muted-foreground">
+                    <li>Add candidate or bulk-upload resumes using the buttons above.</li>
+                    <li>Click "Copy Link" to copy a secure invitation URL to the clipboard (demo shows alert).</li>
+                    <li>Email the link or use your ATS — the candidate opens the link and the portal logs them in with a secure token.</li>
+                    <li>Use the "Report" button to open the candidate's detailed report once they complete an attempt.</li>
+                  </ol>
+                </div>
+
+                <p className="text-xs text-muted-foreground mt-2">Meaning: Invite URL contains a short-lived token that authenticates the candidate and opens the candidate portal. The action buttons use the same icons as the real admin UI.</p>
               </section>
 
               <section>
