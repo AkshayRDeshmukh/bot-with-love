@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { HelpProvider } from "@/components/Help/HelpProvider";
 import HelpButton from "@/components/Help/HelpButton";
+import { Link } from "react-router-dom";
 
 function Header() {
   return (
@@ -20,8 +21,11 @@ function Header() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {/* Global help button (small '?' circle) */}
-          <div className="ml-2">
+          <div className="ml-2 flex items-center gap-2">
             <HelpButton />
+            <Link to="/ui">
+              <Button variant="ghost" className="hidden md:inline-flex">UI Guide</Button>
+            </Link>
           </div>
         </div>
       </div>
