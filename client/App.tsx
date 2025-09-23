@@ -130,6 +130,7 @@ const App = () => {
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="ui" element={<UI />} />
+                <Route path="admin-guide" element={<AdminGuide />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
