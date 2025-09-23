@@ -53,10 +53,7 @@ export default function UserGuideFlow({ open = true, onClose }: { open?: boolean
 
                 <div className="mt-4 rounded-md border overflow-hidden">
                   <div className="p-4 bg-gradient-to-br from-violet-50 to-indigo-50">
-                    <CandidateBotPreview
-                      interviewId={"guide-demo"}
-                      interview={{ title: "Frontend Engineer - React", description: "Demo interview", interviewerRole: "Technical Interviewer", durationMinutes: 20, interactionMode: "TEXT_ONLY" }}
-                    />
+                    <DemoCandidatePreview remainingSeconds={remainingSeconds} />
                   </div>
                 </div>
 
