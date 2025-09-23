@@ -110,17 +110,50 @@ export function DemoCandidatesPanel() {
                     <td className="px-3 py-2">{c.status}</td>
                     <td className="px-3 py-2">
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => alert(`Copy link: ${c.inviteUrl}`)}>
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy Link
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => alert("View Report (demo)")}>
-                          <FileText className="h-4 w-4 mr-2" />
-                          Report
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => alert(`Share: ${c.inviteUrl}`)}>
-                          <BarChart3 className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => alert(`Resume: ${c.email} (demo)`)}>
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Resume</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => alert(`Send invite to ${c.email} (demo)`)}>
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Send / Resend invite</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => alert(`Copy link: ${c.inviteUrl}`)}>
+                              <LinkIcon className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Copy invite link</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => alert("Reports (demo)")}>
+                              <BarChart3 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Reports</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => alert("Edit candidate (demo)")}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Edit</TooltipContent>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
