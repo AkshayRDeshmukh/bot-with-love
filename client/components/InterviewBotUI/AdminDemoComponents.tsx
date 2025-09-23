@@ -75,18 +75,21 @@ export function DemoCandidatesPanel() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Candidates (Demo)</CardTitle>
+      <CardHeader className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Users className="h-5 w-5 text-primary" />
+          <CardTitle>Candidates (Demo)</CardTitle>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => alert("Add candidate (demo)")}>
+            <Pencil className="h-4 w-4 mr-2" /> Add Candidate
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => alert("Bulk upload (demo)")}>Bulk upload</Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">Add candidates individually or upload resumes in bulk. Use the actions to invite or view reports.</div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => alert("Add candidate (demo)")}>Add Candidate</Button>
-              <Button size="sm" variant="outline" onClick={() => alert("Bulk upload (demo)")}>Bulk upload</Button>
-            </div>
-          </div>
+          <div className="text-sm text-muted-foreground">Add candidates individually or upload resumes in bulk. Use the actions to invite or view reports.</div>
 
           <div className="overflow-auto rounded-md border">
             <table className="w-full text-sm">
@@ -106,8 +109,17 @@ export function DemoCandidatesPanel() {
                     <td className="px-3 py-2">{c.status}</td>
                     <td className="px-3 py-2">
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => alert(`Copy link: ${c.inviteUrl}`)}>Copy Link</Button>
-                        <Button size="sm" variant="outline" onClick={() => alert("View Report (demo)")}>Report</Button>
+                        <Button size="sm" onClick={() => alert(`Copy link: ${c.inviteUrl}`)}>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy Link
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => alert("View Report (demo)")}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          Report
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => alert(`Share: ${c.inviteUrl}`)}>
+                          <BarChart3 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </td>
                   </tr>
