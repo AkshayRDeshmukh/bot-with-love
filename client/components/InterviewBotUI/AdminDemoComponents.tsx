@@ -1,7 +1,8 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Copy, FileText, BarChart3, ChevronDown, ChevronUp, Pencil } from "lucide-react";
+import { Users, Copy, FileText, BarChart3, ChevronDown, ChevronUp, Pencil, Link as LinkIcon, Send, MoreHorizontal } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 export function DemoReportTemplate() {
   const sample = {
