@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bot, Video, Mic, Clock, Send, VideoOff, MicOff, MessageSquare } from "lucide-react";
-import CandidateBotPreview from "@/pages/CandidateBotPreview";
+import DemoCandidatePreview from "./DemoCandidatePreview";
 
 export default function UserGuideFlow({ open = true, onClose }: { open?: boolean; onClose?: () => void }) {
   const [show, setShow] = useState(open);
