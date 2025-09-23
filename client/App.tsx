@@ -20,6 +20,7 @@ import CandidateBotPreview from "./pages/CandidateBotPreview";
 import AdminInterviewCandidates from "./pages/AdminInterviewCandidates";
 import AdminInterviewReports from "./pages/AdminInterviewReports";
 import UI from "./pages/UI";
+import AdminGuide from "./pages/AdminGuide";
 
 const queryClient = new QueryClient();
 
