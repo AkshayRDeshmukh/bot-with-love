@@ -35,101 +35,93 @@ export default function UserGuideFlow({ open = true, onClose }: { open?: boolean
 
           <CardContent>
             <div className="space-y-6">
-              <section>
-                <h3 className="text-lg font-semibold">1. Receiving the invitation</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  You will receive an email from the hiring organization with a secure link to start your interview. Open the email and click the "Start Interview" link. The link will open in your browser and automatically log you in using a secure token.
-                </p>
-                <div className="mt-3 flex items-center gap-3">
-                  <div className="rounded border p-3">
-                    <div className="text-sm font-medium">From: recruiter@company.com</div>
-                    <div className="text-sm text-muted-foreground">Subject: Interview Invitation</div>
-                    <div className="mt-2">
-                      <Button size="sm" onClick={() => window.alert('This demo navigates to the candidate preview page.')}>Open invitation link</Button>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="md:col-span-2">
+                  <h3 className="text-lg font-semibold">Candidate interview preview</h3>
+                  <p className="text-sm text-muted-foreground mt-2">This is the real interview UI (preview mode). It uses the same components as the live interview; for the guide we run in TEXT_ONLY mode to avoid camera/mic permissions.</p>
+
+                  <div className="mt-4 rounded-md border overflow-hidden">
+                    <div className="p-4 bg-gradient-to-br from-violet-50 to-indigo-50">
+                      <CandidateBotPreview
+                        interviewId={"guide-demo"}
+                        interview={{ title: "Frontend Engineer - React", description: "Demo interview", interviewerRole: "Technical Interviewer", durationMinutes: 20, interactionMode: "TEXT_ONLY" }}
+                      />
                     </div>
                   </div>
                 </div>
-              </section>
 
-              <section>
-                <h3 className="text-lg font-semibold">2. Login & Resume upload</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  The secure link typically logs you in automatically. If prompted, confirm your identity or upload your resume (PDF/DOCX). The resume helps the interviewer tailor questions to your experience.
-                </p>
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <Button onClick={() => window.alert('If not already uploaded, you can upload a resume on the real candidate portal.')}>Upload resume (demo)</Button>
-                  <Button variant="secondary" onClick={() => window.location.href = '/candidate/preview'}>Open candidate preview</Button>
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-lg font-semibold">3. Consent & privacy</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Before starting, you will be asked to consent to video and audio recording. Read the notice carefully — recordings and a single photo (for proctoring) may be shared with the hiring organization.
-                </p>
-                <div className="mt-3">
-                  <div className="rounded border p-4">
-                    <div className="mb-2 text-sm">This interview involves video and audio recording for evaluation purposes. By continuing you consent to being recorded.</div>
-                    <div className="flex gap-2">
-                      <Button onClick={() => window.alert('Consent accepted (demo)')}>I Agree, Start Interview</Button>
-                      <Button variant="secondary" onClick={() => window.alert('You declined (demo)')}>Decline</Button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-lg font-semibold">4. Camera & microphone permissions</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Your browser will ask permission to access your camera and microphone. Allow access so the interview can record your responses. If camera access is blocked, refresh the page and grant permissions from the browser's URL bar.
-                </p>
-
-                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="rounded border p-4">
-                    <div className="mb-2 font-medium">Camera preview</div>
-                    <div className="bg-black/5 h-36 w-full flex items-center justify-center rounded"> 
-                      <video className="h-full w-full object-cover rounded" playsInline muted autoPlay />
-                    </div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <Button size="sm" onClick={() => window.alert('Toggle camera (demo)')}><Video className="mr-2 h-4 w-4"/>Video</Button>
-                      <Button size="sm" onClick={() => window.alert('Toggle microphone (demo)')}><Mic className="mr-2 h-4 w-4"/>Mic</Button>
-                    </div>
-                  </div>
-
-                  <div className="rounded border p-4">
-                    <div className="mb-2 font-medium">Proctoring & privacy</div>
-                    <div className="text-sm text-muted-foreground">We may capture a single photo at the start for proctoring and run occasional face checks to ensure session integrity.</div>
-                    <div className="mt-3 flex gap-2">
-                      <Button size="sm" onClick={() => window.alert('Proctoring info (demo)')}>Learn more</Button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section>
-                <h3 className="text-lg font-semibold">5. During the interview</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  The interview will present an animated interviewer, a chat transcript, and controls for camera/mic. Some interviews include spoken questions (TTS) — you can answer verbally or type responses depending on the setup.
-                </p>
-
-                <div className="mt-3 rounded border p-4">
-                  <div className="flex items-center justify-between">
+                <div className="md:col-span-1">
+                  <h4 className="text-sm font-semibold">Controls & icons</h4>
+                  <div className="mt-3 space-y-3 text-sm text-muted-foreground">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-full bg-violet-500 p-2 text-white"><Bot className="h-4 w-4"/></div>
+                      <div className="rounded bg-background p-2"><Video className="h-4 w-4 text-muted-foreground"/></div>
                       <div>
-                        <div className="text-sm font-medium">AI Interviewer</div>
-                        <div className="text-xs text-muted-foreground">Ask behavior-based questions and follow-ups.</div>
+                        <div className="font-medium">Video</div>
+                        <div className="text-xs">Toggle your camera on/off. If disabled, interviewer records audio or text only.</div>
                       </div>
                     </div>
-                    <div className="text-sm text-muted-foreground flex items-center gap-2"><Clock className="h-4 w-4"/> <span>00:02:34</span></div>
-                  </div>
 
-                  <div className="mt-4 rounded border bg-background p-3">
-                    <div className="text-sm text-muted-foreground">Candidate answer preview (typed)</div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <input aria-label="answer" placeholder="Type your answer here" className="flex-1 rounded border px-3 py-2" />
-                      <Button size="sm"><Send className="h-4 w-4"/></Button>
+                    <div className="flex items-center gap-3">
+                      <div className="rounded bg-background p-2"><Mic className="h-4 w-4 text-muted-foreground"/></div>
+                      <div>
+                        <div className="font-medium">Microphone</div>
+                        <div className="text-xs">Mute/unmute your microphone during audio interviews.</div>
+                      </div>
                     </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="rounded bg-background p-2"><Send className="h-4 w-4 text-muted-foreground"/></div>
+                      <div>
+                        <div className="font-medium">Send / Submit</div>
+                        <div className="text-xs">Submit typed answers to the chat or send recorded audio segments when requested.</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="rounded bg-background p-2"><Clock className="h-4 w-4 text-muted-foreground"/></div>
+                      <div>
+                        <div className="font-medium">Timer</div>
+                        <div className="text-xs">Shows elapsed interview time; helps you pace your answers.</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="font-medium">Proctoring & privacy</div>
+                      <div className="text-xs text-muted-foreground">The system may capture a single photo at the start and run periodic checks to ensure session integrity. You will be notified if any proctoring flags occur.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <section>
+                <h3 className="text-lg font-semibold">Step-by-step candidate flow</h3>
+                <ol className="list-decimal ml-6 mt-2 text-sm text-muted-foreground space-y-2">
+                  <li>Receive invitation email and click the secure link (tokenized) to open the candidate portal.</li>
+                  <li>Upload your resume if requested and review the consent screen. Agree to recording & data sharing to proceed.</li>
+                  <li>The interview UI opens. Allow camera/mic if prompted (unless this is a text-only interview).</li>
+                  <li>Answer questions either by speaking (audio) or typing (text-only). Use the Send button to submit typed answers.</li>
+                  <li>When complete, the system saves your attempt and notifies the organization; reports are generated for reviewers.</li>
+                </ol>
+              </section>
+
+              <section>
+                <h3 className="text-lg font-semibold">Buttons & what they do</h3>
+                <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="font-medium">Camera / Video</div>
+                    <div className="text-muted-foreground">Toggle self-view camera. If off, your video will not be recorded.</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Microphone</div>
+                    <div className="text-muted-foreground">Mute/unmute your microphone. On text-only interviews this is disabled.</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Send</div>
+                    <div className="text-muted-foreground">Submit typed responses or finalize an audio response chunk.</div>
+                  </div>
+                  <div>
+                    <div className="font-medium">Timer</div>
+                    <div className="text-muted-foreground">Displays elapsed time and helps with pacing answers.</div>
                   </div>
                 </div>
               </section>
