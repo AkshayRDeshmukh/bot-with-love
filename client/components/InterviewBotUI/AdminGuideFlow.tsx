@@ -5,6 +5,7 @@ import { ReportTemplateEditor } from "@/components/admin/ReportTemplateEditor";
 import { CandidatesPanel } from "@/components/admin/CandidatesPanel";
 import { DemoReportTemplate, DemoCandidatesPanel } from "./AdminDemoComponents";
 import { AdminInterviewForm, InterviewInput } from "@/components/admin/AdminInterviewForm";
+import { FileText, Send, Link as LinkIcon, BarChart3, Pencil, MoreHorizontal } from "lucide-react";
 
 export default function AdminGuideFlow({ open = true, onClose }: { open?: boolean; onClose?: () => void }) {
   const [show, setShow] = useState(open);
