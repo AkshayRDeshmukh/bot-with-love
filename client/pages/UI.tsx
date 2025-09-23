@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import UserGuideFlow from "@/components/InterviewBotUI/UserGuideFlow";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 
 export default function UI() {
   const [openGuide, setOpenGuide] = useState(false);
@@ -24,7 +23,6 @@ export default function UI() {
               <p className="text-sm text-muted-foreground">Click the button below to open a step-by-step user guide that explains the candidate flow, permissions, and interview controls.</p>
               <div className="mt-4 flex gap-2">
                 <Button onClick={() => setOpenGuide(true)}>Open User Guide</Button>
-                <Link to="/candidate/preview"><Button variant="secondary">Open Candidate Preview</Button></Link>
               </div>
             </CardContent>
           </Card>

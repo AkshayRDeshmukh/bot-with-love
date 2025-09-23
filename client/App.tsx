@@ -126,7 +126,11 @@ const App = () => {
                 <Route path="candidate" element={<CandidatePortal />} />
                 <Route
                   path="candidate/preview"
-                  element={<CandidateBotPreview />}
+                  element={
+                    <ProtectedRoute>
+                      <CandidateBotPreview />
+                    </ProtectedRoute>
+                  }
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="ui" element={<UI />} />
