@@ -26,6 +26,9 @@ function Header() {
             <Link to="/ui">
               <Button variant="ghost" className="hidden md:inline-flex">UI Guide</Button>
             </Link>
+            <Link to="/admin-guide">
+              <Button variant="ghost" className="hidden md:inline-flex">Admin Guide</Button>
+            </Link>
           </div>
         </div>
       </div>
