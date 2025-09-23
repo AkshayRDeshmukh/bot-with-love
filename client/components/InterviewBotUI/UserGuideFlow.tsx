@@ -14,7 +14,7 @@ export default function UserGuideFlow({ open = true, onClose }: { open?: boolean
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-4xl overflow-auto"> 
+      <div className="w-full max-w-4xl max-h-[90vh] overflow-auto"> 
         <Card className="shadow-lg">
           <CardHeader>
             <div className="flex items-center justify-between">
