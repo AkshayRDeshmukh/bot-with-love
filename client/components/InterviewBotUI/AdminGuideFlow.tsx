@@ -124,13 +124,70 @@ export default function AdminGuideFlow({ open = true, onClose }: { open?: boolea
                   <div className="text-sm font-medium">How to invite & share links</div>
                   <ol className="list-decimal ml-6 mt-2 text-sm text-muted-foreground">
                     <li>Add candidate or bulk-upload resumes using the buttons above.</li>
-                    <li>Click "Copy Link" to copy a secure invitation URL to the clipboard (demo shows alert).</li>
+                    <li>Click the icon-only action buttons to perform quick actions (resume, send invite, copy link, reports, edit, more).</li>
                     <li>Email the link or use your ATS — the candidate opens the link and the portal logs them in with a secure token.</li>
-                    <li>Use the "Report" button to open the candidate's detailed report once they complete an attempt.</li>
+                    <li>Use the "Reports" action to open the candidate's detailed report once they complete an attempt.</li>
                   </ol>
                 </div>
 
-                <p className="text-xs text-muted-foreground mt-2">Meaning: Invite URL contains a short-lived token that authenticates the candidate and opens the candidate portal. The action buttons use the same icons as the real admin UI.</p>
+                <div className="mt-4">
+                  <div className="mb-2 text-sm font-medium">Action buttons (icon-only)</div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-center gap-1">
+                      <Button variant="ghost" size="icon"><FileText className="h-4 w-4"/></Button>
+                      <div className="text-xs text-muted-foreground">Resume</div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <Button variant="ghost" size="icon"><Send className="h-4 w-4"/></Button>
+                      <div className="text-xs text-muted-foreground">Send invite</div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <Button variant="ghost" size="icon"><LinkIcon className="h-4 w-4"/></Button>
+                      <div className="text-xs text-muted-foreground">Copy link</div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <Button variant="ghost" size="icon"><BarChart3 className="h-4 w-4"/></Button>
+                      <div className="text-xs text-muted-foreground">Reports</div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <Button variant="ghost" size="icon"><Pencil className="h-4 w-4"/></Button>
+                      <div className="text-xs text-muted-foreground">Edit</div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4"/></Button>
+                      <div className="text-xs text-muted-foreground">More</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                    <div>
+                      <div className="font-medium">Resume</div>
+                      <div>Open or preview the candidate's uploaded resume (PDF/DOCX). Useful to quickly check background without leaving the admin panel.</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">Send / Resend invite</div>
+                      <div>Send or resend the secure invitation email to the candidate. Tracks invite count and timestamp.</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">Copy invite link</div>
+                      <div>Copy the secure candidate link (tokenized URL) to the clipboard for manual sharing or embedding in emails.</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">Reports</div>
+                      <div>Open the candidate's report and aggregated scores. Expand attempts to inspect per-parameter ratings.</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">Edit</div>
+                      <div>Edit candidate metadata (name, email, max attempts, notes) or adjust their profile.</div>
+                    </div>
+                    <div>
+                      <div className="font-medium">More</div>
+                      <div>Opens a menu with additional actions for mobile or advanced tasks (download resume, delete, export, etc.).</div>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground mt-2">Meaning: Invite URL contains a short-lived token that authenticates the candidate and opens the candidate portal. The action buttons use the same icons as the real admin UI and are icon-only in the table for compactness.</p>
               </section>
 
               <section>
