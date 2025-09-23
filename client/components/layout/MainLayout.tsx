@@ -24,7 +24,7 @@ function Header() {
           <div className="ml-2 flex items-center gap-2">
             <HelpButton />
             <Link to="/ui">
-              <Button variant="ghost" className="hidden md:inline-flex">UI Guide</Button>
+              <Button variant="ghost" className="hidden md:inline-flex">User Guide</Button>
             </Link>
             <Link to="/admin-guide">
               <Button variant="ghost" className="hidden md:inline-flex">Admin Guide</Button>
