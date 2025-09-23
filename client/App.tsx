@@ -128,6 +128,7 @@ const App = () => {
                   element={<CandidateBotPreview />}
                 />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="ui" element={<UI />} />
                 <Route path="*" element={<NotFound />} />
               </Route>
             </Routes>
