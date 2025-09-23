@@ -24,6 +24,39 @@ export default function UserGuideFlow({ open = true, onClose }: { open?: boolean
     return () => clearInterval(id);
   }, [show, remainingSeconds]);
 
+  // Stub network and camera APIs while the guide is open so the real preview renders without making requests
+  useEffect(() => {
+    if (!show) return;
+
+    const origFetch = (window as any).fetch;
+    const origGetUserMedia = navigator.mediaDevices && (navigator.mediaDevices as any).getUserMedia;
+
+    (window as any).fetch = async (...args: any[]) => {
+      // Return a generic ok response with empty JSON so components expecting JSON won't crash
+      return new Response(JSON.stringify({}), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+
+    if (navigator.mediaDevices) {
+      try {
+        (navigator.mediaDevices as any).getUserMedia = async (_: any) => {
+          // Minimal fake stream with getTracks that returns stoppable tracks
+          return {
+            getTracks: () => [{ stop: () => {} }],
+            // allow assignment to video.srcObject
+            active: false,
+          } as any;
+        };
+      } catch (e) {}
+    }
+
+    return () => {
+      try {
+        (window as any).fetch = origFetch;
+        if (navigator.mediaDevices && origGetUserMedia) (navigator.mediaDevices as any).getUserMedia = origGetUserMedia;
+      } catch (e) {}
+    };
+  }, [show]);
+
   if (!show) return null;
 
   return (
