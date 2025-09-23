@@ -154,6 +154,15 @@ export function DemoCandidatesPanel() {
                           </TooltipTrigger>
                           <TooltipContent side="top">Edit</TooltipContent>
                         </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => alert("More actions (demo)")}>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">More</TooltipContent>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
