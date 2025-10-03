@@ -117,7 +117,7 @@ function summarizeProfile(p: { name?: string | null; email?: string | null; tota
   return parts.join('\n');
 }
 
-async function findPotentialCandidates(extracted: any, limit = 30) {
+async function findPotentialCandidates(extracted: any, limit = 30, interviewId?: string) {
   const email = (extracted?.email || '').toLowerCase();
   const domain = email.includes('@') ? email.split('@')[1] : null;
   const months = Number(extracted?.total_experience_months);
@@ -125,14 +125,46 @@ async function findPotentialCandidates(extracted: any, limit = 30) {
   const maxMonths = Number.isFinite(months) ? Math.floor(months + 36) : undefined;
   const skills: string[] = Array.isArray(extracted?.skills) ? extracted.skills.map((s: any) => String(s)) : [];
 
+  const orFilters = [
+    domain ? { email: { endsWith: `@${domain}`, mode: 'insensitive' } } : undefined,
+    typeof minMonths === 'number' && typeof maxMonths === 'number' ? { totalExperienceMonths: { gte: minMonths, lte: maxMonths } } : undefined,
+    skills.length ? { skills: { hasSome: skills } } : undefined,
+    extracted?.domain ? { domain: { equals: String(extracted.domain), mode: 'insensitive' } } : undefined,
+  ].filter(Boolean) as any[];
+
+  // If interviewId is provided, scope candidates to that interview only
+  if (interviewId) {
+    const whereClause: any = {};
+    if (orFilters.length) {
+      whereClause.AND = [
+        { interviewCandidates: { some: { interviewId } } },
+        { OR: orFilters },
+      ];
+    } else {
+      whereClause = { interviewCandidates: { some: { interviewId } } } as any;
+    }
+
+    const filtered = await prisma.candidate.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      select: { id: true, name: true, email: true, totalExperienceMonths: true, summary: true, domain: true, skills: true },
+    });
+    if (filtered.length > 0) return filtered.slice(0, limit);
+
+    const recent = await prisma.candidate.findMany({
+      where: { interviewCandidates: { some: { interviewId } } },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: { id: true, name: true, email: true, totalExperienceMonths: true, summary: true, domain: true, skills: true },
+    });
+    return recent;
+  }
+
+  // Fallback to system-wide search (existing behaviour)
   const filtered = await prisma.candidate.findMany({
     where: {
-      OR: [
-        domain ? { email: { endsWith: `@${domain}`, mode: 'insensitive' } } : undefined,
-        typeof minMonths === 'number' && typeof maxMonths === 'number' ? { totalExperienceMonths: { gte: minMonths, lte: maxMonths } } : undefined,
-        skills.length ? { skills: { hasSome: skills } } : undefined,
-        extracted?.domain ? { domain: { equals: String(extracted.domain), mode: 'insensitive' } } : undefined,
-      ].filter(Boolean) as any,
+      OR: orFilters as any,
     },
     orderBy: { createdAt: 'desc' },
     take: 100,
@@ -362,16 +394,23 @@ export const createCandidate = [
       console.warn("Resume extraction failed", e);
     }
 
-    // Duplicate detection (LLM + heuristics)
+    // Duplicate detection (LLM + heuristics) scoped to this interview
     try {
       const incomingEmail = (email || extracted?.email || '').trim().toLowerCase();
+      let byEmail: any = null;
       if (incomingEmail) {
-        const byEmail = await prisma.candidate.findUnique({ where: { email: incomingEmail } as any });
+        byEmail = await prisma.candidate.findUnique({ where: { email: incomingEmail } as any });
         if (byEmail) {
-          return res.status(409).send(`Looks like this profile already exists: ${byEmail.name || byEmail.email}`);
+          const existsForInterview = await prisma.interviewCandidate.findUnique({
+            where: { interviewId_candidateId: { interviewId: id, candidateId: byEmail.id } },
+          });
+          if (existsForInterview) {
+            return res.status(409).send(`Looks like this profile already exists for this interview: ${byEmail.name || byEmail.email}`);
+          }
         }
       }
-      const potentials = await findPotentialCandidates(extracted, 30);
+
+      const potentials = await findPotentialCandidates(extracted, 30, id);
       if (potentials.length) {
         const decision = await llmDecideDuplicate(extracted, potentials as any);
         if (decision && decision.duplicate) {
@@ -777,14 +816,20 @@ export const bulkUploadCandidates = [
           continue;
         }
 
-        // Duplicate detection
+        // Duplicate detection scoped to this interview
         try {
           const byEmail = await prisma.candidate.findUnique({ where: { email: email.toLowerCase() } as any });
           if (byEmail) {
-            results.push({ file: item.name, status: "failed", reason: `Duplicate: ${byEmail.name || byEmail.email}` });
-            continue;
+            const existsForInterview = await prisma.interviewCandidate.findUnique({
+              where: { interviewId_candidateId: { interviewId: id, candidateId: byEmail.id } },
+            });
+            if (existsForInterview) {
+              results.push({ file: item.name, status: "failed", reason: `Duplicate: ${byEmail.name || byEmail.email}` });
+              continue;
+            }
           }
-          const potentials = await findPotentialCandidates(extracted, 30);
+
+          const potentials = await findPotentialCandidates(extracted, 30, id);
           if (potentials.length) {
             const decision = await llmDecideDuplicate(extracted, potentials as any);
             if (decision && decision.duplicate) {
