@@ -134,7 +134,7 @@ async function findPotentialCandidates(extracted: any, limit = 30, interviewId?:
 
   // If interviewId is provided, scope candidates to that interview only
   if (interviewId) {
-    const whereClause: any = {};
+    let whereClause: any = {};
     if (orFilters.length) {
       whereClause.AND = [
         { interviewCandidates: { some: { interviewId } } },
