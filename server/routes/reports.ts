@@ -302,6 +302,7 @@ export const listInterviewReportsSummary: RequestHandler = async (req, res) => {
 
   const rows = attachments.map((rel) => ({
     candidate: { id: rel.candidate.id, name: rel.candidate.name || "", email: rel.candidate.email },
+    inviteToken: (rel as any).inviteToken || null,
     attempts: (byCandidate[rel.candidateId] || []).sort((a, b) => a.attemptNumber - b.attemptNumber),
   }));
 
@@ -309,13 +310,20 @@ export const listInterviewReportsSummary: RequestHandler = async (req, res) => {
   try {
     for (const r of rows) {
       const attemptsArr = Array.isArray(r.attempts) ? r.attempts : [];
+      const inviteToken = r.inviteToken || null;
       for (let i = 0; i < attemptsArr.length; i++) {
         const a = attemptsArr[i];
         const start = a.createdAt || new Date(0);
         const end = attemptsArr[i + 1]?.createdAt || new Date(Date.now() + 1000);
         try {
+          const whereCond: any = { createdAt: { gte: start, lt: end } };
+          if (inviteToken) {
+            whereCond.OR = [{ interviewId: id }, { attemptId: { contains: inviteToken } }];
+          } else {
+            whereCond.interviewId = id;
+          }
           const recs = await prisma.interviewRecording.findMany({
-            where: { interviewId: id, createdAt: { gte: start, lt: end } },
+            where: whereCond,
             orderBy: [{ seq: 'asc' }, { createdAt: 'asc' }],
             select: { id: true, url: true, blobName: true, seq: true, createdAt: true },
           });
