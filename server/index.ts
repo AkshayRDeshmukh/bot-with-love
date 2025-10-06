@@ -39,6 +39,7 @@ import {
 } from "./routes/candidate_public";
 import { transcribeAzure } from "./routes/azure_speech";
 import { getAzureToken } from "./routes/azure_token";
+import { uploadInterviewChunk } from "./routes/record_chunk";
 
 export function createServer() {
   const app = express();
@@ -74,6 +75,8 @@ export function createServer() {
   app.post("/api/azure/transcribe", transcribeAzure);
   // Azure token endpoint for client-side Speech SDK init
   app.get("/api/azure/token", getAzureToken);
+  // Upload interview recording chunks (17s blobs) to Azure Blob Storage
+  app.post("/api/record/chunk", ...uploadInterviewChunk);
 
   // Admin auth routes
   app.post("/api/admin/register", registerAdmin);
