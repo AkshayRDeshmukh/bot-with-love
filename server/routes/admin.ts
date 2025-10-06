@@ -144,3 +144,26 @@ export const me: RequestHandler = async (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
 };
+
+// Admin: list recent recordings with optional filters
+export const listRecordings: RequestHandler = async (req, res) => {
+  try {
+    const { interviewId, attemptId, inviteToken, limit } = req.query as any;
+    const take = Math.max(1, Math.min(200, Number(limit) || 100));
+    const where: any = {};
+    if (interviewId) where.interviewId = String(interviewId);
+    if (attemptId) where.attemptId = String(attemptId);
+    if (inviteToken) where.attemptId = { contains: String(inviteToken) };
+
+    const recs = await prisma.interviewRecording.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take,
+      select: { id: true, interviewId: true, attemptId: true, blobName: true, url: true, seq: true, createdAt: true },
+    });
+    res.json({ ok: true, count: recs.length, recordings: recs });
+  } catch (e: any) {
+    console.error("listRecordings error", e?.message || e);
+    res.status(500).json({ error: "Failed to list recordings" });
+  }
+};
