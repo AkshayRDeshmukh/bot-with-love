@@ -641,7 +641,7 @@ export default function CandidateBotPreview(props?: {
         }
       }
       interimText = interimText.trim();
-      if (interimText && !botSpeakingRef.current && interimText.length >= 3) {
+      if (interimText && interimText.length >= 1) {
         setInterim(interimText);
         setInput(interimText);
       }
@@ -762,8 +762,6 @@ export default function CandidateBotPreview(props?: {
             const j = await r.json();
             const txt = (j && (j.text || j?.text?.DisplayText)) || "";
             if (txt && txt.trim()) {
-              // If bot is speaking, ignore to avoid transcribing playback
-              if (botSpeakingRef.current) return;
               // Buffer recognized text for explicit send instead of auto-posting
               pendingTranscriptRef.current = pendingTranscriptRef.current
                 ? `${pendingTranscriptRef.current} ${String(txt).trim()}`.trim()
@@ -831,8 +829,6 @@ export default function CandidateBotPreview(props?: {
             if (e.result && e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
               const recognizedText = String(e.result.text || "").trim();
               if (recognizedText) {
-                // If bot is speaking, ignore to avoid transcribing playback
-                if (botSpeakingRef.current) return;
                 // Buffer recognized text for explicit send
                 pendingTranscriptRef.current = pendingTranscriptRef.current
                   ? `${pendingTranscriptRef.current} ${recognizedText}`.trim()
