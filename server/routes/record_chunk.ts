@@ -59,9 +59,10 @@ export const uploadInterviewChunk: RequestHandler[] = [
 
       const url = blockBlobClient.url;
 
-      // Persist metadata to database
+      // Persist metadata to database and include result in response
+      let savedRecord: any = null;
       try {
-        await prisma.interviewRecording.create({
+        savedRecord = await prisma.interviewRecording.create({
           data: {
             interviewId: interviewId || null,
             attemptId,
@@ -74,7 +75,7 @@ export const uploadInterviewChunk: RequestHandler[] = [
         console.warn("Failed to persist recording metadata", e);
       }
 
-      return res.json({ ok: true, url, blobName });
+      return res.json({ ok: true, url, blobName, saved: Boolean(savedRecord), recordingId: savedRecord?.id || null });
     } catch (e: any) {
       console.error("uploadInterviewChunk error", e);
       return res.status(500).json({ error: e?.message || "upload failed" });
