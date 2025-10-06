@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { RequestHandler } from "express";
 import multer from "multer";
 
 const upload = multer();
