@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { handleDemo } from "./routes/demo";
-import { loginAdmin, me, registerAdmin, verifyEmail } from "./routes/admin";
+import { loginAdmin, me, registerAdmin, verifyEmail, listRecordings } from "./routes/admin";
 import { requireAuth } from "./middleware/auth";
 import {
   createInterview,
