@@ -106,6 +106,8 @@ export const createInterview: RequestHandler = async (req, res) => {
           String(interactionMode).toUpperCase() === "TEXT_ONLY"
             ? "TEXT_ONLY"
             : "AUDIO",
+        // Speech provider: accept 'AZURE' explicitly, otherwise default to BROWSER
+        speechProvider: (req.body as any)?.speechProvider === "AZURE" ? "AZURE" : "BROWSER",
         cefrEvaluation: Boolean((req.body as any)?.cefrEvaluation || false),
         maxAttempts:
           typeof (req.body as any)?.maxAttempts === "number"
