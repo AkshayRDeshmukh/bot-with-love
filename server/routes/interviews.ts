@@ -240,6 +240,10 @@ export const updateInterview: RequestHandler = async (req, res) => {
             ? "TEXT_ONLY"
             : "AUDIO"
           : (existing as any).interactionMode,
+        // Speech provider update: if provided in request body, set accordingly, otherwise keep existing
+        speechProvider: typeof (req.body as any)?.speechProvider === "string"
+          ? (String((req.body as any).speechProvider).toUpperCase() === "AZURE" ? "AZURE" : "BROWSER")
+          : (existing as any).speechProvider,
         cefrEvaluation: typeof (req.body as any)?.cefrEvaluation === "boolean" ? (req.body as any).cefrEvaluation : (existing as any).cefrEvaluation,
         maxAttempts:
           typeof (req.body as any)?.maxAttempts === "number"
