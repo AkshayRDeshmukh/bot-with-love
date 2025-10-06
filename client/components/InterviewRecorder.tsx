@@ -59,7 +59,7 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const combinedStreamRef = useRef<MediaStream | null>(null);
   const seqRef = useRef<number>(0);
-  const uploadQueue = useUploadQueue();
+  const uploadQueue = useUploadQueue(attemptId, interviewId);
   const [recording, setRecording] = useState<boolean>(false);
 
   useEffect(() => {
