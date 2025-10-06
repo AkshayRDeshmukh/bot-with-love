@@ -180,6 +180,32 @@ export default function AdminNewInterview() {
                   </p>
                 )}
               </div>
+
+              <div className="grid gap-2">
+                <label className="text-sm">Speech Provider</label>
+                <div className="text-xs text-muted-foreground">Choose how candidate audio is transcribed.</div>
+                <RadioGroup
+                  className="grid grid-cols-2 gap-3 mt-2"
+                  value={form.watch("speechProvider")}
+                  onValueChange={(v) => form.setValue("speechProvider", v as any, { shouldDirty: true })}
+                >
+                  <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-3 transition hover:bg-accent ${form.watch("speechProvider") === "BROWSER" ? "ring-1 ring-primary" : ""}`}>
+                    <RadioGroupItem value="BROWSER" className="mt-0.5" />
+                    <div>
+                      <div className="text-sm font-medium">Browser (Web Speech API)</div>
+                      <div className="text-xs text-muted-foreground">Uses the user's browser speech recognition (default)</div>
+                    </div>
+                  </label>
+                  <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-3 transition hover:bg-accent ${form.watch("speechProvider") === "AZURE" ? "ring-1 ring-primary" : ""}`}>
+                    <RadioGroupItem value="AZURE" className="mt-0.5" />
+                    <div>
+                      <div className="text-sm font-medium">Azure Speech Service</div>
+                      <div className="text-xs text-muted-foreground">Send audio to Azure Speech for transcription</div>
+                    </div>
+                  </label>
+                </RadioGroup>
+              </div>
+
               <div className="grid gap-2">
                 <label className="text-sm">
                   Max Attempts (default for this interview)
