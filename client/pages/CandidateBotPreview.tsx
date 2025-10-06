@@ -526,12 +526,19 @@ export default function CandidateBotPreview(props?: {
   const [search] = useSearchParams();
   // Prefer explicit prop, fallback to URL search param
   const interviewId = props?.interviewId || search.get("id") || undefined;
+  const attemptId = useMemo(() => {
+    if (props?.candidateToken) return `attempt_${props.candidateToken}_${Date.now()}`;
+    return `attempt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  }, [props?.candidateToken]);
   const [interviewCtx, setInterviewCtx] = useState<{
     title?: string;
     description?: string;
     context?: string;
     interviewerRole?: string;
     durationMinutes?: number;
+    interactionMode?: string | null;
+    speechProvider?: string | null;
+    recordingEnabled?: boolean;
   } | null>(null);
   const [startedAt, setStartedAt] = useState<number | null>(Date.now());
   const [remainingSec, setRemainingSec] = useState<number | null>(null);
