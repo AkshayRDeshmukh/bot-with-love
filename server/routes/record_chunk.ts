@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import multer from "multer";
 import { getBlobServiceClient, getContainerName } from "../azure";
+import { prisma } from "../prisma";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -9,7 +10,7 @@ export const uploadInterviewChunk: RequestHandler[] = [
   async (req, res) => {
     try {
       const file = (req as any).file;
-      const { attemptId, seq, ts } = (req as any).body || {};
+      const { attemptId, seq, ts, interviewId } = (req as any).body || {};
       if (!file) return res.status(400).json({ error: "No chunk file provided" });
       if (!attemptId) return res.status(400).json({ error: "attemptId required" });
 
@@ -44,6 +45,21 @@ export const uploadInterviewChunk: RequestHandler[] = [
       });
 
       const url = blockBlobClient.url;
+
+      // Persist metadata to database
+      try {
+        await prisma.interviewRecording.create({
+          data: {
+            interviewId: interviewId || null,
+            attemptId,
+            blobName,
+            url,
+            seq: seq ? Number(seq) : undefined,
+          },
+        });
+      } catch (e) {
+        console.warn("Failed to persist recording metadata", e);
+      }
 
       return res.json({ ok: true, url, blobName });
     } catch (e: any) {
