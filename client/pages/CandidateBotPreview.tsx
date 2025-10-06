@@ -42,6 +42,7 @@ export default function CandidateBotPreview(props?: {
     interviewerRole?: string;
     durationMinutes?: number;
     interactionMode?: "AUDIO" | "TEXT_ONLY";
+    speechProvider?: "BROWSER" | "AZURE";
   };
   candidateToken?: string;
   attemptsInfo?: { allowed?: number; used?: number };
