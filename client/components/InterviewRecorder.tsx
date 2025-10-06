@@ -16,16 +16,16 @@ function useUploadQueue(attemptId?: string, interviewId?: string) {
     if (!runningRef.current) run(attemptId, interviewId);
   };
 
-  const run = async () => {
+  const run = async (attemptId?: string, interviewId?: string) => {
     runningRef.current = true;
     while (queueRef.current.length) {
       const item = queueRef.current.shift()!;
-      await uploadWithRetry(item.blob, item.seq, item.ts);
+      await uploadWithRetry(item.blob, item.seq, item.ts, attemptId, interviewId);
     }
     runningRef.current = false;
   };
 
-  const uploadWithRetry = async (blob: Blob, seq: number, ts: number) => {
+  const uploadWithRetry = async (blob: Blob, seq: number, ts: number, attemptId?: string, interviewId?: string) => {
     const maxAttempts = 5;
     let attempt = 0;
     let backoff = 500;
@@ -35,14 +35,14 @@ function useUploadQueue(attemptId?: string, interviewId?: string) {
         fd.append("chunk", blob, `chunk-${seq}.webm`);
         fd.append("seq", String(seq));
         fd.append("ts", String(ts));
-        // attemptId must be provided by caller when pushing
-        // The caller will append attemptId as query param below when calling push
-        const attemptId = (window as any).__INTERVIEW_ATTEMPT_ID__;
-        if (!attemptId) throw new Error("Missing attemptId for upload");
-        fd.append("attemptId", attemptId);
+        const aId = attemptId || (window as any).__INTERVIEW_ATTEMPT_ID__;
+        if (!aId) throw new Error("Missing attemptId for upload");
+        fd.append("attemptId", aId);
+        if (interviewId) fd.append("interviewId", interviewId);
         const res = await fetch("/api/record/chunk", { method: "POST", body: fd });
         if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-        return;
+        const data = await res.json().catch(() => ({}));
+        return data;
       } catch (e) {
         attempt++;
         await new Promise((r) => setTimeout(r, backoff));
