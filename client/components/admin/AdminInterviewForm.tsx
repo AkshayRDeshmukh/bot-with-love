@@ -72,6 +72,7 @@ export function AdminInterviewForm({
         speechProvider: (initial as any).speechProvider || "BROWSER",
         maxAttempts: (initial as any).maxAttempts ?? undefined,
         cefrEvaluation: (initial as any).cefrEvaluation ?? false,
+        recordingEnabled: (initial as any).recordingEnabled ?? true,
       });
     }
   }, [initial, form]);
@@ -89,6 +90,7 @@ export function AdminInterviewForm({
         interactionMode: (initial as any).interactionMode || "AUDIO",
         maxAttempts: (initial as any).maxAttempts ?? undefined,
         cefrEvaluation: (initial as any).cefrEvaluation ?? false,
+        recordingEnabled: (initial as any).recordingEnabled ?? true,
       });
     }
   }, [initial, form]);
