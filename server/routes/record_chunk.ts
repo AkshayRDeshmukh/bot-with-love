@@ -71,11 +71,23 @@ export const uploadInterviewChunk: RequestHandler[] = [
             seq: seq ? Number(seq) : undefined,
           },
         });
-      } catch (e) {
-        console.warn("Failed to persist recording metadata", e);
+      } catch (e: any) {
+        console.error("Failed to persist recording metadata", {
+          attemptId,
+          interviewId,
+          blobName,
+          url,
+          error: e?.message || String(e),
+          stack: e?.stack,
+        });
       }
 
-      return res.json({ ok: true, url, blobName, saved: Boolean(savedRecord), recordingId: savedRecord?.id || null });
+      const resBody: any = { ok: true, url, blobName, saved: Boolean(savedRecord), recordingId: savedRecord?.id || null };
+      // Include a brief error message in non-production for easier debugging
+      if (!savedRecord && process.env.NODE_ENV !== "production") {
+        resBody.savedError = "Failed to persist recording metadata; check server logs for details.";
+      }
+      return res.json(resBody);
     } catch (e: any) {
       console.error("uploadInterviewChunk error", e);
       return res.status(500).json({ error: e?.message || "upload failed" });
