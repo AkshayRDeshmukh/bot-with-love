@@ -1,5 +1,7 @@
 import { RequestHandler } from "express";
 
+import { RequestHandler } from "express";
+
 export const getAzureToken: RequestHandler = async (req, res) => {
   try {
     const apiKey = process.env.AZURE_SPEECH_KEY;
