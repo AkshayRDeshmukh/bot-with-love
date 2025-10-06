@@ -52,6 +52,7 @@ export function AdminInterviewForm({
       speechProvider: (initial as any)?.speechProvider || "BROWSER",
       maxAttempts: (initial as any)?.maxAttempts ?? undefined,
       cefrEvaluation: (initial as any)?.cefrEvaluation ?? false,
+      recordingEnabled: (initial as any)?.recordingEnabled ?? true,
     },
   });
 
