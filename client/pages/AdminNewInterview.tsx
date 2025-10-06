@@ -210,6 +210,20 @@ export default function AdminNewInterview() {
               </div>
 
               <div className="grid gap-2">
+                <label className="text-sm">Screen Recording</label>
+                <div className="flex items-center gap-3">
+                  <Controller
+                    control={form.control}
+                    name="recordingEnabled"
+                    render={({ field }) => (
+                      <Switch checked={field.value} onCheckedChange={(v: any) => field.onChange(!!v)} />
+                    )}
+                  />
+                  <div className="text-sm text-muted-foreground">Enable automatic screen recording for interviews (default: enabled)</div>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
                 <label className="text-sm">
                   Max Attempts (default for this interview)
                 </label>
