@@ -20,6 +20,7 @@ import {
   Send,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import InterviewRecorder from "@/components/InterviewRecorder";
 
 function useTimer() {
   const [seconds, setSeconds] = useState(0);
