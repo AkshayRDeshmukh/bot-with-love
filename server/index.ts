@@ -37,6 +37,7 @@ import {
   updateCandidateStatus,
   uploadProctorPhoto,
 } from "./routes/candidate_public";
+import { transcribeAzure } from "./routes/azure_speech";
 
 export function createServer() {
   const app = express();
