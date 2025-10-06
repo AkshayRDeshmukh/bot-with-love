@@ -1350,55 +1350,40 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                             )}
 
                             {/* Conversation History always visible */}
-                            {Array.isArray(reportTranscript) && reportTranscript.length > 0 && (
-                              <>
-                                <div className="page-break"></div>
-                                <div className="space-y-3 avoid-break animate-in fade-in slide-in-from-bottom-2">
-                                  <div className="text-lg font-semibold">
-                                    Conversation History
-                                  </div>
-                                  <div className="space-y-2">
-                                    {reportTranscript.map((m: any, i: number) => {
-                                      const role = String(
-                                        m.role || "",
-                                      ).toLowerCase();
+                            <>
+                              <div className="page-break"></div>
+                              <div className="space-y-3 avoid-break animate-in fade-in slide-in-from-bottom-2">
+                                <div className="text-lg font-semibold">
+                                  Conversation History
+                                </div>
+                                <div className="space-y-2">
+                                  {Array.isArray(reportTranscript) && reportTranscript.length > 0 ? (
+                                    reportTranscript.map((m: any, i: number) => {
+                                      const role = String(m.role || "").toLowerCase();
                                       const isUser = role === "user";
                                       const isAssistant = role === "assistant";
-                                      const align = isUser
-                                        ? "justify-end"
-                                        : "justify-start";
+                                      const align = isUser ? "justify-end" : "justify-start";
                                       const bubble = isUser
                                         ? "bg-sky-500/10 border border-sky-200 text-sky-900"
                                         : isAssistant
                                           ? "bg-violet-500/10 border border-violet-200 text-violet-900"
                                           : "bg-zinc-100 border border-zinc-200 text-zinc-800";
-                                      const label = isUser
-                                        ? "You"
-                                        : isAssistant
-                                          ? "AI"
-                                          : role || "System";
+                                      const label = isUser ? "You" : isAssistant ? "AI" : role || "System";
                                       return (
-                                        <div
-                                          key={i}
-                                          className={`flex ${align} avoid-break`}
-                                        >
-                                          <div
-                                            className={`max-w-[80%] rounded-2xl px-3 py-2 ${bubble}`}
-                                          >
-                                            <div className="text-[11px] opacity-70 mb-1">
-                                              {label}
-                                            </div>
-                                            <div className="whitespace-pre-wrap text-sm leading-6">
-                                              {m.content}
-                                            </div>
+                                        <div key={i} className={`flex ${align} avoid-break`}>
+                                          <div className={`max-w-[80%] rounded-2xl px-3 py-2 ${bubble}`}>
+                                            <div className="text-[11px] opacity-70 mb-1">{label}</div>
+                                            <div className="whitespace-pre-wrap text-sm leading-6">{m.content}</div>
                                           </div>
                                         </div>
                                       );
-                                    })}
-                                  </div>
+                                    })
+                                  ) : (
+                                    <div className="text-sm text-muted-foreground">No conversation history available.</div>
+                                  )}
                                 </div>
-                              </>
-                            )}
+                              </div>
+                            </>
 
                             {/* Clips area: shown only when toggled */}
                             {reportShowClips && recs.length > 0 && (
