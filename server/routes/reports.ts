@@ -488,16 +488,31 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
 
     // Attach recordings for each attempt by time window (between this attempt's createdAt and the next attempt's createdAt)
     const attemptsWithRecordings: any[] = [];
+    // Fetch inviteToken for this candidate to allow fallback matching if recordings were saved without interviewId
+    let inviteToken: string | null = null;
+    try {
+      const ic = await prisma.interviewCandidate.findUnique({
+        where: { interviewId_candidateId: { interviewId: id, candidateId: cid } },
+        select: { inviteToken: true },
+      });
+      inviteToken = (ic as any)?.inviteToken || null;
+    } catch (e) {
+      inviteToken = null;
+    }
+
     for (let i = 0; i < attempts.length; i++) {
       const a = attempts[i];
       const start = a.createdAt || new Date(0);
       const end = attempts[i + 1]?.createdAt || new Date(Date.now() + 1000);
       try {
+        const whereCond: any = { createdAt: { gte: start, lt: end } };
+        if (inviteToken) {
+          whereCond.OR = [{ interviewId: id }, { attemptId: { contains: inviteToken } }];
+        } else {
+          whereCond.interviewId = id;
+        }
         const recs = await prisma.interviewRecording.findMany({
-          where: {
-            interviewId: id,
-            createdAt: { gte: start, lt: end },
-          },
+          where: whereCond,
           orderBy: [{ seq: 'asc' }, { createdAt: 'asc' }],
           select: { id: true, url: true, blobName: true, seq: true, createdAt: true },
         });
