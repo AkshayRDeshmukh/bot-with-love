@@ -453,6 +453,28 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
       orderBy: [{ attemptNumber: "asc" }, { createdAt: "asc" }],
       select: { attemptNumber: true, createdAt: true, id: true },
     });
+
+    // Attach recordings for each attempt by time window (between this attempt's createdAt and the next attempt's createdAt)
+    const attemptsWithRecordings: any[] = [];
+    for (let i = 0; i < attempts.length; i++) {
+      const a = attempts[i];
+      const start = a.createdAt || new Date(0);
+      const end = attempts[i + 1]?.createdAt || new Date(Date.now() + 1000);
+      try {
+        const recs = await prisma.interviewRecording.findMany({
+          where: {
+            interviewId: id,
+            createdAt: { gte: start, lt: end },
+          },
+          orderBy: [{ seq: 'asc' }, { createdAt: 'asc' }],
+          select: { id: true, url: true, blobName: true, seq: true, createdAt: true },
+        });
+        attemptsWithRecordings.push({ ...a, recordings: recs });
+      } catch (e) {
+        attemptsWithRecordings.push({ ...a, recordings: [] });
+      }
+    }
+
     // Determine proctor photo availability (transcript-level first, then candidate-level)
     let proctorPhotoUrl: string | null = null;
     try {
@@ -496,7 +518,7 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
       report: existing,
       template,
       transcript: turns,
-      attempts,
+      attempts: attemptsWithRecordings,
       proctorPhotoUrl,
     });
   }
