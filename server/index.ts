@@ -72,6 +72,8 @@ export function createServer() {
 
   // Azure speech transcription (used by candidate UI when configured)
   app.post("/api/azure/transcribe", transcribeAzure);
+  // Azure token endpoint for client-side Speech SDK init
+  app.get("/api/azure/token", getAzureToken);
 
   // Admin auth routes
   app.post("/api/admin/register", registerAdmin);
