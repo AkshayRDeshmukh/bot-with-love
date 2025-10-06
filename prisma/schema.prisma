@@ -119,6 +119,8 @@ model Interview {
   transcripts InterviewTranscript[]
   reportTemplate ReportTemplate?
   reports        InterviewReport[]
+  // Recordings captured for this interview
+  recordings     InterviewRecording[]
 
   @@map("interviews")
   @@index([adminId])
