@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Mic, MessageSquareText } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Controller } from "react-hook-form";
 
 const schema = z.object({
   title: z.string().min(3),
@@ -281,6 +283,20 @@ export function AdminInterviewForm({
           <label htmlFor="cefrEvaluation" className="text-sm text-muted-foreground">
             When enabled, reports use CEFR bands (A1..C2) across parameters for language evaluation.
           </label>
+        </div>
+      </div>
+
+      <div className="grid gap-2">
+        <label className="text-sm">Screen Recording</label>
+        <div className="flex items-center gap-3">
+          <Controller
+            control={form.control}
+            name="recordingEnabled"
+            render={({ field }) => (
+              <Switch checked={field.value} onCheckedChange={(v: any) => field.onChange(!!v)} />
+            )}
+          />
+          <div className="text-sm text-muted-foreground">Enable automatic screen recording for interviews (default: enabled)</div>
         </div>
       </div>
 
