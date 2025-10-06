@@ -179,3 +179,18 @@ model InterviewReport {
   @@index([candidateId])
   @@map("interview_reports")
 }
+
+model InterviewRecording {
+  id String @id @default(uuid())
+  interviewId String?
+  attemptId String
+  blobName String
+  url String
+  seq Int?
+  createdAt DateTime @default(now())
+
+  interview Interview? @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@index([interviewId])
+  @@map("interview_recordings")
+}
