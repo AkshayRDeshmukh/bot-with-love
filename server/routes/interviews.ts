@@ -246,6 +246,7 @@ export const updateInterview: RequestHandler = async (req, res) => {
           ? (String((req.body as any).speechProvider).toUpperCase() === "AZURE" ? "AZURE" : "BROWSER")
           : (existing as any).speechProvider,
         cefrEvaluation: typeof (req.body as any)?.cefrEvaluation === "boolean" ? (req.body as any).cefrEvaluation : (existing as any).cefrEvaluation,
+        recordingEnabled: typeof (req.body as any)?.recordingEnabled === "boolean" ? (req.body as any).recordingEnabled : (existing as any).recordingEnabled,
         maxAttempts:
           typeof (req.body as any)?.maxAttempts === "number"
             ? Math.max(1, Math.floor((req.body as any).maxAttempts))
