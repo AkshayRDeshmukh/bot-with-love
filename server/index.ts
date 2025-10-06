@@ -38,6 +38,7 @@ import {
   uploadProctorPhoto,
 } from "./routes/candidate_public";
 import { transcribeAzure } from "./routes/azure_speech";
+import { getAzureToken } from "./routes/azure_token";
 
 export function createServer() {
   const app = express();
