@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 type Props = {
   attemptId: string;
+  interviewId?: string;
   enabled?: boolean;
 };
 
