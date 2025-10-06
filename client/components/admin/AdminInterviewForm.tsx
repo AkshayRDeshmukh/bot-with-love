@@ -49,10 +49,29 @@ export function AdminInterviewForm({
       interviewerRole: initial?.interviewerRole || "",
       durationMinutes: (initial as any)?.durationMinutes ?? undefined,
       interactionMode: (initial as any)?.interactionMode || "AUDIO",
+      speechProvider: (initial as any)?.speechProvider || "BROWSER",
       maxAttempts: (initial as any)?.maxAttempts ?? undefined,
       cefrEvaluation: (initial as any)?.cefrEvaluation ?? false,
     },
   });
+
+  // Sync defaults when initial loads/changes
+  useEffect(() => {
+    if (initial) {
+      form.reset({
+        title: initial.title || "",
+        description: initial.description || "",
+        context: initial.context || "",
+        contextDomain: (initial as any).contextDomain ?? undefined,
+        interviewerRole: initial.interviewerRole || "",
+        durationMinutes: (initial as any).durationMinutes ?? undefined,
+        interactionMode: (initial as any).interactionMode || "AUDIO",
+        speechProvider: (initial as any).speechProvider || "BROWSER",
+        maxAttempts: (initial as any).maxAttempts ?? undefined,
+        cefrEvaluation: (initial as any).cefrEvaluation ?? false,
+      });
+    }
+  }, [initial, form]);
 
   // Sync defaults when initial loads/changes
   useEffect(() => {
