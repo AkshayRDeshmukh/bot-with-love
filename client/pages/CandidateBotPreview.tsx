@@ -720,14 +720,16 @@ export default function CandidateBotPreview(props?: {
     };
   }, [muted]);
 
-  // Azure Speech: capture audio and send chunks to server for transcription
+  // Azure Speech: attempt browser SDK first, fallback to sending chunks to server
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const azureRecognizerRef = useRef<any>(null);
   useEffect(() => {
     const useAzure = props?.interview?.speechProvider === "AZURE";
     if (!useAzure) return;
     let stream: MediaStream | null = null;
+    let usingSdk = false;
 
-    const startRecording = async () => {
+    const startMediaRecorderFallback = async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false } as any);
       } catch (e) {
@@ -748,7 +750,7 @@ export default function CandidateBotPreview(props?: {
             const r = await fetch("/api/azure/transcribe", { method: "POST", body: fd });
             if (!r.ok) return;
             const j = await r.json();
-            const txt = (j && j.text) || "";
+            const txt = (j && (j.text || j?.text?.DisplayText)) || "";
             if (txt && txt.trim()) {
               addMessage("me", String(txt).trim());
               const reply = await askLLM(String(txt).trim());
@@ -767,9 +769,107 @@ export default function CandidateBotPreview(props?: {
       }
     };
 
-    if (!muted) startRecording();
+    const startAzureSdk = async () => {
+      try {
+        // get credentials (region + key or token)
+        const t = await fetch(`/api/azure/token`);
+        if (!t.ok) throw new Error(`token fetch failed: ${t.status}`);
+        const creds = await t.json();
+        const azureApiKey = creds.apiKey || creds.key || creds.subscriptionKey;
+        const azureRegion = creds.region;
+        if (!azureApiKey || !azureRegion) throw new Error("Azure token missing fields");
+
+        // load sdk if not present
+        if (typeof window !== "undefined" && !(window as any).SpeechSDK) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://aka.ms/csspeech/jsbrowserpackageraw";
+            script.onload = () => resolve();
+            script.onerror = (e) => reject(new Error("Failed to load Speech SDK"));
+            document.head.appendChild(script);
+          });
+        }
+
+        const SpeechSDK = (window as any).SpeechSDK;
+        if (!SpeechSDK) throw new Error("SpeechSDK unavailable after load");
+
+        // create config using subscription (server-provided key). For production use token exchange
+        const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(azureApiKey, azureRegion);
+        speechConfig.speechRecognitionLanguage = "en-US";
+        try {
+          speechConfig.outputFormat = SpeechSDK.OutputFormat.Detailed;
+        } catch {}
+
+        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+        const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+
+        recognizer.recognizing = (s: any, e: any) => {
+          const interimText = e.result && e.result.text ? String(e.result.text) : "";
+          try {
+            setInterim(interimText);
+            setInput(interimText);
+          } catch {}
+          // console.log(`🎤 Azure recognizing: ${interimText}`);
+        };
+
+        recognizer.recognized = async (s: any, e: any) => {
+          try {
+            if (e.result && e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+              const recognizedText = String(e.result.text || "").trim();
+              if (recognizedText) {
+                // treat as finalized chunk
+                addMessage("me", recognizedText);
+                const reply = await askLLM(recognizedText);
+                addMessage("bot", reply);
+                speakBot(reply);
+              }
+            }
+          } catch (err) {
+            console.warn("azure recognized handler error", err);
+          }
+        };
+
+        recognizer.sessionStopped = (_s: any, _e: any) => {
+          try {
+            recognizer.stopContinuousRecognitionAsync();
+          } catch {}
+        };
+        recognizer.canceled = (_s: any, e: any) => {
+          console.warn("Azure recognition canceled", e && e.reason);
+          try {
+            recognizer.stopContinuousRecognitionAsync();
+          } catch {}
+        };
+
+        azureRecognizerRef.current = recognizer;
+        recognizer.startContinuousRecognitionAsync();
+        usingSdk = true;
+        console.log("Azure SDK recognition started");
+      } catch (e) {
+        console.warn("Azure SDK init failed, falling back to media recorder:", e);
+        usingSdk = false;
+      }
+    };
+
+    const init = async () => {
+      // try SDK first
+      await startAzureSdk();
+      if (!usingSdk && !muted) {
+        await startMediaRecorderFallback();
+      }
+    };
+
+    if (!muted) init();
 
     return () => {
+      try {
+        if (azureRecognizerRef.current) {
+          try {
+            azureRecognizerRef.current.stopContinuousRecognitionAsync();
+          } catch {}
+          azureRecognizerRef.current = null;
+        }
+      } catch {}
       try {
         mediaRecorderRef.current?.stop();
       } catch {}
