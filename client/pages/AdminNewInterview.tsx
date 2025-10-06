@@ -21,6 +21,7 @@ const schema = z.object({
   context: z.string().min(3),
   interviewerRole: z.string().min(2),
   interactionMode: z.enum(["AUDIO", "TEXT_ONLY"]),
+  speechProvider: z.enum(["BROWSER","AZURE"]).optional(),
   maxAttempts: z
     .number({ invalid_type_error: "Max attempts must be a number" })
     .int()
