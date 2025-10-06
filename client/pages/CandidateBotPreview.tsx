@@ -342,11 +342,68 @@ export default function CandidateBotPreview(props?: {
     botSpeakingRef.current = botSpeaking;
   }, [botSpeaking]);
 
+  const pauseTranscription = () => {
+    try {
+      // Stop Web Speech recognition
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+    } catch {}
+    try {
+      // Stop Azure recognizer
+      if (azureRecognizerRef.current && typeof azureRecognizerRef.current.stopContinuousRecognitionAsync === "function") {
+        try {
+          azureRecognizerRef.current.stopContinuousRecognitionAsync(() => {}, () => {});
+        } catch {}
+      }
+    } catch {}
+    try {
+      // Pause media recorder to avoid sending chunks
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        try {
+          // pause may not exist in older implementations
+          if (typeof mediaRecorderRef.current.pause === "function") mediaRecorderRef.current.pause();
+        } catch {}
+      }
+    } catch {}
+  };
+
+  const resumeTranscription = () => {
+    if (muted) return; // don't resume if mic muted
+    try {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch {}
+      }
+    } catch {}
+    try {
+      if (azureRecognizerRef.current && typeof azureRecognizerRef.current.startContinuousRecognitionAsync === "function") {
+        try {
+          azureRecognizerRef.current.startContinuousRecognitionAsync();
+        } catch {}
+      }
+    } catch {}
+    try {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "paused") {
+        try {
+          if (typeof mediaRecorderRef.current.resume === "function") mediaRecorderRef.current.resume();
+        } catch {}
+      }
+    } catch {}
+  };
+
   const cancelSpeak = () => {
     try {
       synthRef.current?.cancel();
     } catch {}
     setBotSpeaking(false);
+    // ensure transcription is resumed after cancelling bot speak
+    try {
+      resumeTranscription();
+    } catch {}
   };
 
   const speakBot = (text: string) => {
@@ -362,10 +419,30 @@ export default function CandidateBotPreview(props?: {
     utter.rate = 1;
     utter.pitch = 1;
     utter.volume = 1;
-    utter.onstart = () => setBotSpeaking(true);
-    utter.onend = () => setBotSpeaking(false);
-    utter.onerror = () => setBotSpeaking(false);
+    utter.onstart = () => {
+      // pause transcription immediately when bot starts speaking
+      try {
+        pauseTranscription();
+      } catch {}
+      setBotSpeaking(true);
+    };
+    utter.onend = () => {
+      setBotSpeaking(false);
+      try {
+        resumeTranscription();
+      } catch {}
+    };
+    utter.onerror = () => {
+      setBotSpeaking(false);
+      try {
+        resumeTranscription();
+      } catch {}
+    };
     utterRef.current = utter;
+    // ensure transcription paused before we speak
+    try {
+      pauseTranscription();
+    } catch {}
     synthRef.current?.speak(utter);
   };
 
