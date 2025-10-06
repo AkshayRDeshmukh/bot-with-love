@@ -83,6 +83,7 @@ export function createServer() {
   app.get("/api/admin/verify", verifyEmail);
   app.post("/api/admin/login", loginAdmin);
   app.get("/api/admin/me", me);
+  app.get("/api/admin/recordings", requireAuth, listRecordings);
 
   // Interview routes (owner scoped)
   app.post("/api/interviews", requireAuth, createInterview);
