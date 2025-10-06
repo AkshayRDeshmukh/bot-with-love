@@ -12,6 +12,11 @@ enum InterviewInteractionMode {
   TEXT_ONLY
 }
 
+enum SpeechProvider {
+  BROWSER
+  AZURE
+}
+
 model Admin {
   id                 String   @id @default(uuid())
   name               String
