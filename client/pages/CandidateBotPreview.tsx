@@ -390,6 +390,8 @@ export default function CandidateBotPreview(props?: {
   const chatBodyRef = useRef<HTMLDivElement | null>(null);
   const [interim, setInterim] = useState("");
   const pendingFinalRef = useRef<string>("");
+  // buffered finalized text waiting for explicit user send
+  const pendingTranscriptRef = useRef<string>("");
   const silenceTimerRef = useRef<number | null>(null);
   const recentFinalizedAtRef = useRef<number>(0);
   const lastEventAtRef = useRef<number>(Date.now());
@@ -546,8 +548,19 @@ export default function CandidateBotPreview(props?: {
 
   function handleSend() {
     if (ended) return;
-    const text = (interim || input).trim();
+    // Combine any buffered finalized transcript with current input/interim
+    const buffered = pendingTranscriptRef.current.trim();
+    const typed = (interim || input).trim();
+    let text = "";
+    if (buffered && typed) {
+      text = buffered === typed ? buffered : `${buffered} ${typed}`.trim();
+    } else {
+      text = (buffered || typed).trim();
+    }
     if (!text) return;
+    // clear buffers
+    pendingTranscriptRef.current = "";
+    pendingFinalRef.current = "";
     setInterim("");
     addMessage("me", text);
     setInput("");
@@ -596,16 +609,15 @@ export default function CandidateBotPreview(props?: {
       const interimNow = interim.trim();
       const finalText = `${pending} ${interimNow}`.trim();
       if (finalText) {
+        // Buffer finalized text for explicit user send instead of auto-posting
+        pendingTranscriptRef.current = pendingTranscriptRef.current
+          ? `${pendingTranscriptRef.current} ${finalText}`.trim()
+          : finalText;
         pendingFinalRef.current = "";
         setInterim("");
-        setInput("");
+        // If user hasn't typed anything manually, show buffered text in input
+        setInput((cur) => (cur && cur.trim() ? cur : pendingTranscriptRef.current));
         recentFinalizedAtRef.current = Date.now();
-        addMessage("me", finalText);
-        (async () => {
-          const reply = await askLLM(finalText);
-          addMessage("bot", reply);
-          speakBot(reply);
-        })();
       }
     };
 
@@ -657,18 +669,16 @@ export default function CandidateBotPreview(props?: {
       }
     };
     recog.onend = () => {
-      // avoid double finalization if we just finalized
+      // finalize any pending final text into the buffer (do not auto-send)
       if (Date.now() - recentFinalizedAtRef.current > 250) {
         const pending = pendingFinalRef.current.trim();
         if (pending) {
           pendingFinalRef.current = "";
-          addMessage("me", pending);
-          (async () => {
-            const reply = await askLLM(pending);
-            addMessage("bot", reply);
-            speakBot(reply);
-          })();
-          setInput("");
+          pendingTranscriptRef.current = pendingTranscriptRef.current
+            ? `${pendingTranscriptRef.current} ${pending}`.trim()
+            : pending;
+          setInterim("");
+          setInput((cur) => (cur && cur.trim() ? cur : pendingTranscriptRef.current));
         }
       }
       if (!muted) {
@@ -752,10 +762,14 @@ export default function CandidateBotPreview(props?: {
             const j = await r.json();
             const txt = (j && (j.text || j?.text?.DisplayText)) || "";
             if (txt && txt.trim()) {
-              addMessage("me", String(txt).trim());
-              const reply = await askLLM(String(txt).trim());
-              addMessage("bot", reply);
-              speakBot(reply);
+              // If bot is speaking, ignore to avoid transcribing playback
+              if (botSpeakingRef.current) return;
+              // Buffer recognized text for explicit send instead of auto-posting
+              pendingTranscriptRef.current = pendingTranscriptRef.current
+                ? `${pendingTranscriptRef.current} ${String(txt).trim()}`.trim()
+                : String(txt).trim();
+              setInterim("");
+              setInput((cur) => (cur && cur.trim() ? cur : pendingTranscriptRef.current));
             }
           } catch (e) {
             console.warn("Azure transcribe failed", e);
@@ -812,16 +826,19 @@ export default function CandidateBotPreview(props?: {
           // console.log(`🎤 Azure recognizing: ${interimText}`);
         };
 
-        recognizer.recognized = async (s: any, e: any) => {
+        recognizer.recognized = (s: any, e: any) => {
           try {
             if (e.result && e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
               const recognizedText = String(e.result.text || "").trim();
               if (recognizedText) {
-                // treat as finalized chunk
-                addMessage("me", recognizedText);
-                const reply = await askLLM(recognizedText);
-                addMessage("bot", reply);
-                speakBot(reply);
+                // If bot is speaking, ignore to avoid transcribing playback
+                if (botSpeakingRef.current) return;
+                // Buffer recognized text for explicit send
+                pendingTranscriptRef.current = pendingTranscriptRef.current
+                  ? `${pendingTranscriptRef.current} ${recognizedText}`.trim()
+                  : recognizedText;
+                setInterim("");
+                setInput((cur) => (cur && cur.trim() ? cur : pendingTranscriptRef.current));
               }
             }
           } catch (err) {
