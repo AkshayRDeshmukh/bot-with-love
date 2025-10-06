@@ -712,7 +712,7 @@ export default function CandidateBotPreview(props?: {
   const inputAreaRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => {
     // If interview is configured to use Azure Speech, skip browser SpeechRecognition
-    const useAzure = props?.interview?.speechProvider === "AZURE";
+    const useAzure = (props?.interview?.speechProvider || interviewCtx?.speechProvider) === "AZURE";
     if (useAzure) return; // Azure handled by MediaRecorder flow below
 
     const SpeechRecognition: any =
@@ -869,13 +869,13 @@ export default function CandidateBotPreview(props?: {
       } catch {}
       if (watchdog) window.clearInterval(watchdog);
     };
-  }, [muted]);
+  }, [muted, interviewCtx?.speechProvider]);
 
   // Azure Speech: attempt browser SDK first, fallback to sending chunks to server
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const azureRecognizerRef = useRef<any>(null);
   useEffect(() => {
-    const useAzure = props?.interview?.speechProvider === "AZURE";
+    const useAzure = (props?.interview?.speechProvider || interviewCtx?.speechProvider) === "AZURE";
     if (!useAzure) return;
     let stream: MediaStream | null = null;
     let usingSdk = false;
@@ -1037,7 +1037,7 @@ export default function CandidateBotPreview(props?: {
       }
       mediaRecorderRef.current = null;
     };
-  }, [muted, props?.interview?.speechProvider]);
+  }, [muted, interviewCtx?.speechProvider]);
 
   useEffect(() => {
     const el = inputAreaRef.current;
