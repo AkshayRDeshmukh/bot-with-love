@@ -145,6 +145,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
   const [reportAttempts, setReportAttempts] = useState<
     { attemptNumber: number; createdAt?: string; id?: string }[]
   >([]);
+  const [reportShowClips, setReportShowClips] = useState<boolean>(false);
 
   // Ref to the report sheet content so we can clone it for printing (right side panel)
   const reportSheetRef = useRef<HTMLElement | null>(null);
