@@ -14,6 +14,8 @@ import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Mic, MessageSquareText } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Controller } from "react-hook-form";
 
 const schema = z.object({
   title: z.string().min(3),
