@@ -10,9 +10,22 @@ export const uploadInterviewChunk: RequestHandler[] = [
   async (req, res) => {
     try {
       const file = (req as any).file;
-      const { attemptId, seq, ts, interviewId } = (req as any).body || {};
+      let { attemptId, seq, ts, interviewId } = (req as any).body || {};
       if (!file) return res.status(400).json({ error: "No chunk file provided" });
       if (!attemptId) return res.status(400).json({ error: "attemptId required" });
+
+      // If interviewId wasn't provided, try to derive it from attemptId pattern 'attempt_<inviteToken>_...'
+      if (!interviewId && typeof attemptId === 'string') {
+        const m = String(attemptId).match(/^attempt_([0-9a-fA-F-]{36})_/);
+        if (m) {
+          try {
+            const ic = await prisma.interviewCandidate.findFirst({ where: { inviteToken: m[1] } });
+            if (ic) interviewId = ic.interviewId;
+          } catch (e) {
+            // ignore lookup errors
+          }
+        }
+      }
 
       const blobService = getBlobServiceClient();
       const containerName = getContainerName();
