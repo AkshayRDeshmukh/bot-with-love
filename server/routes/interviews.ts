@@ -109,6 +109,7 @@ export const createInterview: RequestHandler = async (req, res) => {
         // Speech provider: accept 'AZURE' explicitly, otherwise default to BROWSER
         speechProvider: (req.body as any)?.speechProvider === "AZURE" ? "AZURE" : "BROWSER",
         cefrEvaluation: Boolean((req.body as any)?.cefrEvaluation || false),
+        recordingEnabled: typeof (req.body as any)?.recordingEnabled === "boolean" ? (req.body as any).recordingEnabled : true,
         maxAttempts:
           typeof (req.body as any)?.maxAttempts === "number"
             ? Math.max(1, Math.floor((req.body as any).maxAttempts))
