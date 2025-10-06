@@ -36,8 +36,9 @@ export default function AdminNewInterview() {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { interactionMode: "AUDIO", maxAttempts: undefined },
+    defaultValues: { interactionMode: "AUDIO", speechProvider: "BROWSER", maxAttempts: undefined },
   });
+
 
   const onSubmit = async (values: FormValues) => {
     setError(null);
