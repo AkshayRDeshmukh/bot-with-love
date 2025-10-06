@@ -305,6 +305,30 @@ export const listInterviewReportsSummary: RequestHandler = async (req, res) => {
     attempts: (byCandidate[rel.candidateId] || []).sort((a, b) => a.attemptNumber - b.attemptNumber),
   }));
 
+  // For each attempt, attach recordings found in the database within the attempt's time window
+  try {
+    for (const r of rows) {
+      const attemptsArr = Array.isArray(r.attempts) ? r.attempts : [];
+      for (let i = 0; i < attemptsArr.length; i++) {
+        const a = attemptsArr[i];
+        const start = a.createdAt || new Date(0);
+        const end = attemptsArr[i + 1]?.createdAt || new Date(Date.now() + 1000);
+        try {
+          const recs = await prisma.interviewRecording.findMany({
+            where: { interviewId: id, createdAt: { gte: start, lt: end } },
+            orderBy: [{ seq: 'asc' }, { createdAt: 'asc' }],
+            select: { id: true, url: true, blobName: true, seq: true, createdAt: true },
+          });
+          a.recordings = recs;
+        } catch (e) {
+          a.recordings = [];
+        }
+      }
+    }
+  } catch (e) {
+    // ignore errors when attaching recordings
+  }
+
   res.json({ interview: { id: interview.id, title: interview.title }, parameters: params, rows });
 };
 
