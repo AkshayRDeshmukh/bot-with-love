@@ -7,13 +7,13 @@ type Props = {
 };
 
 // Simple upload queue with concurrency=1 and retry
-function useUploadQueue() {
+function useUploadQueue(attemptId?: string, interviewId?: string) {
   const queueRef = useRef<Array<{ blob: Blob; seq: number; ts: number }>>([]);
   const runningRef = useRef(false);
 
   const push = (item: { blob: Blob; seq: number; ts: number }) => {
     queueRef.current.push(item);
-    if (!runningRef.current) run();
+    if (!runningRef.current) run(attemptId, interviewId);
   };
 
   const run = async () => {
