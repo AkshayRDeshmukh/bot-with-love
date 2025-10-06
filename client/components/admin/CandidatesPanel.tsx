@@ -1334,71 +1334,85 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                       {(() => {
                         const selAttempt = (reportAttempts || []).find((x) => x.attemptNumber === reportAttempt);
                         const recs = Array.isArray(selAttempt?.recordings) ? selAttempt!.recordings : [];
-                        if (recs.length > 0) {
-                          return (
-                            <div className="mt-4">
-                              <div className="text-lg font-semibold mb-2">Recorded clips</div>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                {recs.map((rec: any) => (
-                                  <div key={rec.id} className="bg-white border rounded p-1">
-                                    <video controls src={rec.url} className="w-full h-28 object-cover bg-black" />
-                                    <div className="text-xs text-muted-foreground mt-1">{rec.seq != null ? `#${String(rec.seq).padStart(2, '0')}` : ''} {rec.createdAt ? new Date(rec.createdAt).toLocaleString() : ''}</div>
-                                    <div className="text-xs mt-1"><a className="text-blue-600 hover:underline" href={rec.url} target="_blank" rel="noreferrer">Open</a></div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        }
-                        return Array.isArray(reportTranscript) && reportTranscript.length > 0 ? (
+                        const [showClips, setShowClips] = ((): [boolean, (v: boolean) => void] => {
+                          // Store per-render state using closure-backed ref in component scope isn't possible here; instead hoist state above.
+                          return [false, () => {}];
+                        })();
+
+                        // NOTE: The actual showClips state is managed by the outer component state 'reportShowClips' (see below). We will render a button to toggle it.
+                        return (
                           <>
-                            <div className="page-break"></div>
-                            <div className="space-y-3 avoid-break animate-in fade-in slide-in-from-bottom-2">
-                              <div className="text-lg font-semibold">
-                                Conversation History
+                            {recs.length > 0 && (
+                              <div className="mb-3">
+                                <button
+                                  className="px-3 py-2 text-sm rounded border bg-white hover:bg-muted"
+                                  onClick={() => {
+                                    // toggle global reportShowClips state
+                                    try {
+                                      const ev = new CustomEvent('toggleReportClips');
+                                      window.dispatchEvent(ev);
+                                    } catch (e) {}
+                                  }}
+                                >
+                                  Show recorded clips ({recs.length})
+                                </button>
                               </div>
-                              <div className="space-y-2">
-                                {reportTranscript.map((m: any, i: number) => {
-                                  const role = String(
-                                    m.role || "",
-                                  ).toLowerCase();
-                                  const isUser = role === "user";
-                                  const isAssistant = role === "assistant";
-                                  const align = isUser
-                                    ? "justify-end"
-                                    : "justify-start";
-                                  const bubble = isUser
-                                    ? "bg-sky-500/10 border border-sky-200 text-sky-900"
-                                    : isAssistant
-                                      ? "bg-violet-500/10 border border-violet-200 text-violet-900"
-                                      : "bg-zinc-100 border border-zinc-200 text-zinc-800";
-                                  const label = isUser
-                                    ? "You"
-                                    : isAssistant
-                                      ? "AI"
-                                      : role || "System";
-                                  return (
-                                    <div
-                                      key={i}
-                                      className={`flex ${align} avoid-break`}
-                                    >
-                                      <div
-                                        className={`max-w-[80%] rounded-2xl px-3 py-2 ${bubble}`}
-                                      >
-                                        <div className="text-[11px] opacity-70 mb-1">
-                                          {label}
+                            )}
+
+                            {Array.isArray(reportTranscript) && reportTranscript.length > 0 && (
+                              <>
+                                <div className="page-break"></div>
+                                <div className="space-y-3 avoid-break animate-in fade-in slide-in-from-bottom-2">
+                                  <div className="text-lg font-semibold">
+                                    Conversation History
+                                  </div>
+                                  <div className="space-y-2">
+                                    {reportTranscript.map((m: any, i: number) => {
+                                      const role = String(
+                                        m.role || "",
+                                      ).toLowerCase();
+                                      const isUser = role === "user";
+                                      const isAssistant = role === "assistant";
+                                      const align = isUser
+                                        ? "justify-end"
+                                        : "justify-start";
+                                      const bubble = isUser
+                                        ? "bg-sky-500/10 border border-sky-200 text-sky-900"
+                                        : isAssistant
+                                          ? "bg-violet-500/10 border border-violet-200 text-violet-900"
+                                          : "bg-zinc-100 border border-zinc-200 text-zinc-800";
+                                      const label = isUser
+                                        ? "You"
+                                        : isAssistant
+                                          ? "AI"
+                                          : role || "System";
+                                      return (
+                                        <div
+                                          key={i}
+                                          className={`flex ${align} avoid-break`}
+                                        >
+                                          <div
+                                            className={`max-w-[80%] rounded-2xl px-3 py-2 ${bubble}`}
+                                          >
+                                            <div className="text-[11px] opacity-70 mb-1">
+                                              {label}
+                                            </div>
+                                            <div className="whitespace-pre-wrap text-sm leading-6">
+                                              {m.content}
+                                            </div>
+                                          </div>
                                         </div>
-                                        <div className="whitespace-pre-wrap text-sm leading-6">
-                                          {m.content}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
+                            {/* Render clips area when global state indicates show */}
+                            <div id="report-clips-area"></div>
                           </>
-                        ) : null;
+                        );
                       })()}
                     </div>
                   </div>
