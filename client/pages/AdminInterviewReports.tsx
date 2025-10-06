@@ -234,6 +234,22 @@ export default function AdminInterviewReports() {
                                 </tbody>
                               </table>
                             </div>
+
+                            {/* Recordings gallery for this attempt */}
+                            {Array.isArray(att.recordings) && att.recordings.length > 0 && (
+                              <div className="mt-2">
+                                <div className="text-sm font-medium mb-1">Recorded clips</div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                  {att.recordings.map((rec: any) => (
+                                    <div key={rec.id} className="bg-white border rounded p-1">
+                                      <video controls src={rec.url} className="w-full h-28 object-cover bg-black" />
+                                      <div className="text-xs text-muted-foreground mt-1">{rec.seq != null ? `#${String(rec.seq).padStart(2, '0')}` : ''} {rec.createdAt ? new Date(rec.createdAt).toLocaleString() : ''}</div>
+                                      <div className="text-xs mt-1"><a className="text-blue-600 hover:underline" href={rec.url} target="_blank" rel="noreferrer">Open</a></div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>
