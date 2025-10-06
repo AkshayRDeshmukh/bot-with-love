@@ -48,6 +48,7 @@ export const getCandidateSession: RequestHandler = async (req, res) => {
       interviewerRole: interview.interviewerRole,
       durationMinutes: interview.durationMinutes ?? undefined,
       interactionMode: (interview as any).interactionMode,
+      speechProvider: (interview as any).speechProvider || "BROWSER",
     },
     candidate: {
       id: candidate.id,
