@@ -1331,8 +1331,26 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                         );
                       })()}
 
-                      {Array.isArray(reportTranscript) &&
-                        reportTranscript.length > 0 && (
+                      {(() => {
+                        const selAttempt = (reportAttempts || []).find((x) => x.attemptNumber === reportAttempt);
+                        const recs = Array.isArray(selAttempt?.recordings) ? selAttempt!.recordings : [];
+                        if (recs.length > 0) {
+                          return (
+                            <div className="mt-4">
+                              <div className="text-lg font-semibold mb-2">Recorded clips</div>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {recs.map((rec: any) => (
+                                  <div key={rec.id} className="bg-white border rounded p-1">
+                                    <video controls src={rec.url} className="w-full h-28 object-cover bg-black" />
+                                    <div className="text-xs text-muted-foreground mt-1">{rec.seq != null ? `#${String(rec.seq).padStart(2, '0')}` : ''} {rec.createdAt ? new Date(rec.createdAt).toLocaleString() : ''}</div>
+                                    <div className="text-xs mt-1"><a className="text-blue-600 hover:underline" href={rec.url} target="_blank" rel="noreferrer">Open</a></div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return Array.isArray(reportTranscript) && reportTranscript.length > 0 ? (
                           <>
                             <div className="page-break"></div>
                             <div className="space-y-3 avoid-break animate-in fade-in slide-in-from-bottom-2">
@@ -1380,7 +1398,8 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                               </div>
                             </div>
                           </>
-                        )}
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                 </div>
