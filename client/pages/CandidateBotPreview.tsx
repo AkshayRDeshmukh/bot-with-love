@@ -577,6 +577,9 @@ export default function CandidateBotPreview(props?: {
                   typeof data?.durationMinutes === "number"
                     ? data.durationMinutes
                     : undefined,
+                interactionMode: data?.interactionMode,
+                speechProvider: data?.speechProvider,
+                recordingEnabled: typeof data?.recordingEnabled === "boolean" ? data.recordingEnabled : true,
               });
             }
           }
