@@ -344,6 +344,8 @@ export default function CandidateBotPreview(props?: {
 
   const pauseTranscription = () => {
     try {
+      // Mark that we paused due to bot playback
+      transcriptionPausedByBotRef.current = true;
       // Stop Web Speech recognition
       if (recognitionRef.current) {
         try {
@@ -360,18 +362,60 @@ export default function CandidateBotPreview(props?: {
       }
     } catch {}
     try {
-      // Pause media recorder to avoid sending chunks
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      // Stop media recorder to avoid sending chunks (stop clears any buffered dataavailable)
+      if (mediaRecorderRef.current) {
         try {
-          // pause may not exist in older implementations
-          if (typeof mediaRecorderRef.current.pause === "function") mediaRecorderRef.current.pause();
+          if (mediaRecorderRef.current.state === "recording" || mediaRecorderRef.current.state === "paused") {
+            mediaRecorderRef.current.stop();
+          }
         } catch {}
+        mediaRecorderRef.current = null;
       }
     } catch {}
   };
 
+  const startMediaRecorderFromStream = () => {
+    try {
+      const stream = streamRef.current;
+      if (!stream) return;
+      const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      mediaRecorderRef.current = mr;
+      mr.ondataavailable = async (ev: BlobEvent) => {
+        try {
+          // do not transcribe during bot playback
+          if (botSpeakingRef.current) return;
+          const blob = ev.data;
+          if (!blob || blob.size === 0) return;
+          const fd = new FormData();
+          fd.append("audio", blob, "chunk.webm");
+          const r = await fetch("/api/azure/transcribe", { method: "POST", body: fd });
+          if (!r.ok) return;
+          const j = await r.json();
+          const txt = (j && (j.text || j?.text?.DisplayText)) || "";
+          if (txt && txt.trim()) {
+            // Buffer recognized text for explicit send instead of auto-posting
+            pendingTranscriptRef.current = pendingTranscriptRef.current
+              ? `${pendingTranscriptRef.current} ${String(txt).trim()}`.trim()
+              : String(txt).trim();
+            setInterim("");
+            setInput((cur) => (cur && cur.trim() ? cur : pendingTranscriptRef.current));
+          }
+        } catch (e) {
+          console.warn("Azure transcribe failed", e);
+        }
+      };
+      mr.onerror = (e) => console.warn("MediaRecorder error", e);
+      mr.start(3000);
+    } catch (e) {
+      console.warn("Failed to start media recorder from stream", e);
+    }
+  };
+
   const resumeTranscription = () => {
     if (muted) return; // don't resume if mic muted
+    // only resume if we paused due to bot playback
+    if (!transcriptionPausedByBotRef.current) return;
+    transcriptionPausedByBotRef.current = false;
     try {
       if (recognitionRef.current) {
         try {
@@ -387,12 +431,13 @@ export default function CandidateBotPreview(props?: {
       }
     } catch {}
     try {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "paused") {
-        try {
-          if (typeof mediaRecorderRef.current.resume === "function") mediaRecorderRef.current.resume();
-        } catch {}
+      // If mediaRecorder was stopped earlier, restart from existing stream
+      if (!mediaRecorderRef.current && props?.interview?.speechProvider === "AZURE") {
+        startMediaRecorderFromStream();
       }
-    } catch {}
+    } catch (e) {
+      console.warn("Failed to resume media recorder", e);
+    }
   };
 
   const cancelSpeak = () => {
@@ -474,6 +519,8 @@ export default function CandidateBotPreview(props?: {
   const lastEventAtRef = useRef<number>(Date.now());
   const recStartAtRef = useRef<number>(0);
   const botSpeakingRef = useRef<boolean>(false);
+  // flag to indicate transcription was paused due to bot playback
+  const transcriptionPausedByBotRef = useRef<boolean>(false);
   const SILENCE_MS = 350;
   const [search] = useSearchParams();
   // Prefer explicit prop, fallback to URL search param
