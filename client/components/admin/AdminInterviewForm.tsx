@@ -27,6 +27,7 @@ const schema = z.object({
     .min(1, { message: "Minimum 1 attempt" })
     .optional(),
   cefrEvaluation: z.boolean().optional(),
+  recordingEnabled: z.boolean().optional(),
   speechProvider: z.enum(["BROWSER","AZURE"]).optional(),
 });
 
