@@ -562,6 +562,10 @@ export default function CandidateBotPreview(props?: {
   const recognitionRef = useRef<any>(null);
   const inputAreaRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => {
+    // If interview is configured to use Azure Speech, skip browser SpeechRecognition
+    const useAzure = props?.interview?.speechProvider === "AZURE";
+    if (useAzure) return; // Azure handled by MediaRecorder flow below
+
     const SpeechRecognition: any =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
@@ -714,6 +718,66 @@ export default function CandidateBotPreview(props?: {
       if (watchdog) window.clearInterval(watchdog);
     };
   }, [muted]);
+
+  // Azure Speech: capture audio and send chunks to server for transcription
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  useEffect(() => {
+    const useAzure = props?.interview?.speechProvider === "AZURE";
+    if (!useAzure) return;
+    let stream: MediaStream | null = null;
+
+    const startRecording = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false } as any);
+      } catch (e) {
+        console.warn("Unable to access microphone for Azure speech", e);
+        return;
+      }
+      if (!stream) return;
+      try {
+        const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+        mediaRecorderRef.current = mr;
+
+        mr.ondataavailable = async (ev: BlobEvent) => {
+          try {
+            const blob = ev.data;
+            if (!blob || blob.size === 0) return;
+            const fd = new FormData();
+            fd.append("audio", blob, "chunk.webm");
+            const r = await fetch("/api/azure/transcribe", { method: "POST", body: fd });
+            if (!r.ok) return;
+            const j = await r.json();
+            const txt = (j && j.text) || "";
+            if (txt && txt.trim()) {
+              addMessage("me", String(txt).trim());
+              const reply = await askLLM(String(txt).trim());
+              addMessage("bot", reply);
+              speakBot(reply);
+            }
+          } catch (e) {
+            console.warn("Azure transcribe failed", e);
+          }
+        };
+
+        mr.onerror = (e) => console.warn("MediaRecorder error", e);
+        mr.start(3000); // emit dataavailable every 3s
+      } catch (e) {
+        console.warn("MediaRecorder unsupported or failed", e);
+      }
+    };
+
+    if (!muted) startRecording();
+
+    return () => {
+      try {
+        mediaRecorderRef.current?.stop();
+      } catch {}
+      if (stream) {
+        stream.getTracks().forEach((t) => t.stop());
+      }
+      mediaRecorderRef.current = null;
+    };
+  }, [muted, props?.interview?.speechProvider]);
 
   useEffect(() => {
     const el = inputAreaRef.current;
