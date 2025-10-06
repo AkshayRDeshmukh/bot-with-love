@@ -69,6 +69,9 @@ export function createServer() {
   // LLM chat (preview + app usage)
   app.post("/api/llm/chat", chatWithLLM);
 
+  // Azure speech transcription (used by candidate UI when configured)
+  app.post("/api/azure/transcribe", transcribeAzure);
+
   // Admin auth routes
   app.post("/api/admin/register", registerAdmin);
   app.get("/api/admin/verify", verifyEmail);
