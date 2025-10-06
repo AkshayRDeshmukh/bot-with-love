@@ -25,6 +25,7 @@ const schema = z.object({
     .min(1, { message: "Minimum 1 attempt" })
     .optional(),
   cefrEvaluation: z.boolean().optional(),
+  speechProvider: z.enum(["BROWSER","AZURE"]).optional(),
 });
 
 export type InterviewInput = z.infer<typeof schema>;
