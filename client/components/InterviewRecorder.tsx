@@ -144,7 +144,7 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
         combinedStreamRef.current?.getTracks().forEach((t) => t.stop());
       } catch {}
     };
-  }, [enabled]);
+  }, [enabled, muted]);
 
   return (
     <div>
