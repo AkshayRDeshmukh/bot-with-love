@@ -525,11 +525,22 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
         } else {
           whereCond.interviewId = id;
         }
-        const recs = await prisma.interviewRecording.findMany({
+        let recs = await prisma.interviewRecording.findMany({
           where: whereCond,
           orderBy: [{ seq: 'asc' }, { createdAt: 'asc' }],
           select: { id: true, url: true, blobName: true, seq: true, createdAt: true },
         });
+        recs = (recs || []).map((x: any) => ({ ...x, url: (String(x?.url || "") || null) }));
+        // append SAS if configured
+        const appendSas = (u: string | null) => {
+          try {
+            if (!u) return u;
+            const sas = String(process.env.AZURE_BLOB_SAS || "").trim();
+            if (!sas) return u;
+            return u.includes("?") ? `${u}&${sas.replace(/^\?/, "")}` : `${u}?${sas.replace(/^\?/, "")}`;
+          } catch (e) { return u; }
+        };
+        recs = recs.map((x: any) => ({ ...x, url: appendSas(x?.url) }));
         attemptsWithRecordings.push({ ...a, recordings: recs });
       } catch (e) {
         attemptsWithRecordings.push({ ...a, recordings: [] });
