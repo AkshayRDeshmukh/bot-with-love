@@ -81,12 +81,19 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
 
     const start = async () => {
       try {
-        // get display (screen) stream
-        const displayStream = await (navigator.mediaDevices as any).getDisplayMedia({
-          video: true,
-          audio: true,
-        });
-        displayStreamRef.current = displayStream;
+        // get display (screen) stream if not already available
+        let displayStream = displayStreamRef.current;
+        try {
+          const hasActive = displayStream && displayStream.getTracks && displayStream.getTracks().some((t: any) => t.readyState !== "ended");
+          if (!hasActive) {
+            displayStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: true });
+            displayStreamRef.current = displayStream;
+            try { const m = await import("@/lib/media"); m.registerAppMediaStream(displayStream); } catch {}
+          }
+        } catch (e) {
+          // if getDisplayMedia fails, clear ref
+          displayStream = displayStreamRef.current;
+        }
         // get mic stream too
         let micStream: MediaStream | null = null;
         try {
