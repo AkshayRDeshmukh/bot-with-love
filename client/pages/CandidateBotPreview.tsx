@@ -1291,6 +1291,7 @@ export default function CandidateBotPreview(props?: {
                               try { pendingFinalRef.current = ""; } catch {}
                               try { setInterim(""); } catch {}
                               try { setInput(""); } catch {}
+                              try { import("@/lib/media").then((m) => m.stopAllAppMediaStreams()).catch(() => {}); } catch {}
                             } else {
                               try { recognitionRef.current?.start(); } catch {}
                             }
