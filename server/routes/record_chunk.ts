@@ -39,6 +39,11 @@ export const uploadInterviewChunk: RequestHandler[] = [
       }
 
       const now = new Date(Number(ts) || Date.now());
+
+      const source = (req as any).body?.source || null;
+      try {
+        console.info("Received chunk upload", { attemptId, interviewId, seq, ts, source });
+      } catch {}
       const pad = (n: number) => String(n).padStart(2, "0");
       const y = now.getFullYear();
       const m = pad(now.getMonth() + 1);
