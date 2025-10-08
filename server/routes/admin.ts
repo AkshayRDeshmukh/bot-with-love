@@ -4,6 +4,18 @@ import jwt from "jsonwebtoken";
 import sgMail from "@sendgrid/mail";
 import { prisma } from "../prisma";
 
+// Helper to append server-side SAS token to URLs if configured
+const appendSas = (u: string | null) => {
+  try {
+    if (!u) return u;
+    const sas = String(process.env.AZURE_BLOB_SAS || "").trim();
+    if (!sas) return u;
+    return u.includes("?") ? `${u}&${sas.replace(/^\?/, "")}` : `${u}?${sas.replace(/^\?/, "")}`;
+  } catch (e) {
+    return u;
+  }
+};
+
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
 const APP_BASE_URL = process.env.APP_BASE_URL || "";
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
