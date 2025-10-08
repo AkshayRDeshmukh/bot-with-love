@@ -1034,5 +1034,5 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     proctorPhotoUrl = null;
   }
 
-  return res.json({ report: saved, template, transcript: turns, attempts: attemptsWithRecordings, proctorPhotoUrl });
+  return res.json({ report: saved, template, transcript: turns, attempts: attemptsWithRecordings, proctorPhotoUrl, debug: (parsed && (parsed as any).__debug) || null });
 };
