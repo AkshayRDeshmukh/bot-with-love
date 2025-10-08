@@ -64,6 +64,8 @@ function useUploadQueue(attemptId?: string, interviewId?: string) {
 export default function InterviewRecorder({ attemptId, interviewId, enabled = true, muted = false }: Props & { muted?: boolean }) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const combinedStreamRef = useRef<MediaStream | null>(null);
+  const displayStreamRef = useRef<MediaStream | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
   const seqRef = useRef<number>(0);
   const uploadQueue = useUploadQueue(attemptId, interviewId);
   const [recording, setRecording] = useState<boolean>(false);
