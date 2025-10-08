@@ -100,6 +100,9 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
         if (micStream && !muted) micStream.getAudioTracks().forEach((t) => combined.addTrack(t));
 
         combinedStreamRef.current = combined;
+        try { const m = await import("@/lib/media"); m.registerAppMediaStream(displayStream); } catch {}
+        try { const m = await import("@/lib/media"); m.registerAppMediaStream(micStream); } catch {}
+        try { const m = await import("@/lib/media"); m.registerAppMediaStream(combined); } catch {}
 
         // create MediaRecorder for chunks ~17000ms
         const options: any = { mimeType: "video/webm; codecs=vp8,opus" };
