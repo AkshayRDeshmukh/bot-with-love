@@ -87,7 +87,7 @@ export const uploadInterviewChunk: RequestHandler[] = [
         });
       }
 
-      const resBody: any = { ok: true, url, blobName, saved: Boolean(savedRecord), recordingId: savedRecord?.id || null };
+      const resBody: any = { ok: true, url, blobName, saved: Boolean(savedRecord), recordingId: savedRecord?.id || null, source: source || null };
       // Include a brief error message in non-production for easier debugging
       if (!savedRecord && process.env.NODE_ENV !== "production") {
         resBody.savedError = "Failed to persist recording metadata; check server logs for details.";
