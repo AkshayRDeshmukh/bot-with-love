@@ -79,6 +79,25 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
     if (!enabled) return;
     let mounted = true;
 
+    // When muted toggles, ensure mic/display audio tracks are disabled/enabled and stop recorder if needed
+    (async function handleMuteChange() {
+      try {
+        if (typeof muted !== "undefined") {
+          try {
+            if (micStreamRef.current) micStreamRef.current.getAudioTracks().forEach((t) => (t.enabled = !muted));
+          } catch {}
+          try {
+            if (displayStreamRef.current) displayStreamRef.current.getAudioTracks().forEach((t) => (t.enabled = !muted));
+          } catch {}
+          if (muted) {
+            try {
+              if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop();
+            } catch {}
+          }
+        }
+      } catch {}
+    })();
+
     const start = async () => {
       try {
         let displayStream: MediaStream | null = null;
