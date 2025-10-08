@@ -890,6 +890,7 @@ export default function CandidateBotPreview(props?: {
       }
       if (!stream) return;
       try {
+        try { const m = await import("@/lib/media"); m.registerAppMediaStream(stream); } catch {}
         const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
         mediaRecorderRef.current = mr;
 
