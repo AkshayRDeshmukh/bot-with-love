@@ -1055,6 +1055,7 @@ export default function CandidateBotPreview(props?: {
     try {
       streamRef.current?.getTracks().forEach((t) => (t.enabled = false));
     } catch {}
+    try { const m = await import("@/lib/media"); m.stopAllAppMediaStreams(); } catch {}
     setMuted(true);
     if (props?.candidateToken) {
       const history = messages.map((m) => ({
