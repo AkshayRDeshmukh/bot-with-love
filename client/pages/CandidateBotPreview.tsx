@@ -1271,8 +1271,25 @@ export default function CandidateBotPreview(props?: {
                             streamRef.current?.getAudioTracks() || [];
                           tracks.forEach((t) => (t.enabled = !next));
                           try {
-                            if (next) recognitionRef.current?.stop();
-                            else recognitionRef.current?.start();
+                            if (next) {
+                              try { recognitionRef.current?.stop(); } catch {}
+                              try {
+                                if (azureRecognizerRef.current && typeof azureRecognizerRef.current.stopContinuousRecognitionAsync === "function") {
+                                  azureRecognizerRef.current.stopContinuousRecognitionAsync(() => {}, () => {});
+                                }
+                              } catch {}
+                              try {
+                                if (mediaRecorderRef.current && (mediaRecorderRef.current.state === "recording" || mediaRecorderRef.current.state === "paused")) {
+                                  mediaRecorderRef.current.stop();
+                                }
+                              } catch {}
+                              try { pendingTranscriptRef.current = ""; } catch {}
+                              try { pendingFinalRef.current = ""; } catch {}
+                              try { setInterim(""); } catch {}
+                              try { setInput(""); } catch {}
+                            } else {
+                              try { recognitionRef.current?.start(); } catch {}
+                            }
                           } catch {}
                           return next;
                         });
