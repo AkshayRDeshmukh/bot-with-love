@@ -1030,6 +1030,7 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                         );
                         url.searchParams.set("attempt", String(reportAttempt));
                         url.searchParams.set("force", "1");
+                        url.searchParams.set("useRawTranscript", "1");
                         const rep = await fetch(url.toString(), {
                           credentials: "include",
                         });
