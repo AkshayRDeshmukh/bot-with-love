@@ -1501,7 +1501,7 @@ export default function CandidateBotPreview(props?: {
         </div>
       )}
       {interviewCtx?.recordingEnabled && !ended && (
-        <InterviewRecorder attemptId={attemptId} interviewId={interviewId} enabled={true} />
+        <InterviewRecorder attemptId={attemptId} interviewId={interviewId} enabled={true} muted={muted} />
       )}
     </section>
   );
