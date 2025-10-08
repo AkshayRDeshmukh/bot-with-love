@@ -167,12 +167,13 @@ export const listRecordings: RequestHandler = async (req, res) => {
     if (attemptId) where.attemptId = String(attemptId);
     if (inviteToken) where.attemptId = { contains: String(inviteToken) };
 
-    const recs = await prisma.interviewRecording.findMany({
+    let recs = await prisma.interviewRecording.findMany({
       where,
       orderBy: { createdAt: "desc" },
       take,
       select: { id: true, interviewId: true, attemptId: true, blobName: true, url: true, seq: true, createdAt: true },
     });
+    recs = (recs || []).map((r: any) => ({ ...r, url: appendSas(r?.url) }));
     res.json({ ok: true, count: recs.length, recordings: recs });
   } catch (e: any) {
     console.error("listRecordings error", e?.message || e);
