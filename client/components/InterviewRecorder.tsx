@@ -152,7 +152,7 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
       try {
         combinedStreamRef.current?.getTracks().forEach((t) => t.stop());
       } catch {}
-      try { const m = await import("@/lib/media"); m.unregisterAppMediaStream(combinedStreamRef.current); } catch {}
+      try { import("@/lib/media").then((m) => m.unregisterAppMediaStream(combinedStreamRef.current)).catch(() => {}); } catch {}
     };
   }, [enabled, muted]);
 
