@@ -1007,7 +1007,7 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     const start = a.createdAt || new Date(0);
     const end = attempts[i + 1]?.createdAt || new Date(Date.now() + 1000);
     try {
-      const recs = await prisma.interviewRecording.findMany({
+      let recs = await prisma.interviewRecording.findMany({
         where: {
           interviewId: id,
           createdAt: { gte: start, lt: end },
@@ -1015,6 +1015,16 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
         orderBy: [{ seq: 'asc' }, { createdAt: 'asc' }],
         select: { id: true, url: true, blobName: true, seq: true, createdAt: true },
       });
+      // append SAS if configured
+      const appendSasLocal = (u: string | null) => {
+        try {
+          if (!u) return u;
+          const sas = String(process.env.AZURE_BLOB_SAS || "").trim();
+          if (!sas) return u;
+          return u.includes("?") ? `${u}&${sas.replace(/^\?/, "")}` : `${u}?${sas.replace(/^\?/, "")}`;
+        } catch (e) { return u; }
+      };
+      recs = (recs || []).map((x: any) => ({ ...x, url: appendSasLocal(x?.url) }));
       attemptsWithRecordings.push({ ...a, recordings: recs });
     } catch (e) {
       attemptsWithRecordings.push({ ...a, recordings: [] });
