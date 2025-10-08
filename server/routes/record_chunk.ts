@@ -62,7 +62,9 @@ export const uploadInterviewChunk: RequestHandler[] = [
         blobHTTPHeaders: { blobContentType: file.mimetype || "application/octet-stream" },
       });
 
-      const url = blockBlobClient.url;
+      const rawUrl = blockBlobClient.url;
+      const sas = String(process.env.AZURE_BLOB_SAS || "").trim();
+      const url = sas ? `${rawUrl}${rawUrl.includes("?") ? "&" : "?"}${sas.replace(/^\?/, "")}` : rawUrl;
 
       // Persist metadata to database and include result in response
       let savedRecord: any = null;
