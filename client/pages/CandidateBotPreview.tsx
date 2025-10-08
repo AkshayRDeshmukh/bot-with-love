@@ -712,6 +712,27 @@ export default function CandidateBotPreview(props?: {
   const recognitionRef = useRef<any>(null);
   const inputAreaRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => {
+    // diagnostics: wrap media device calls to log when invoked (helps identify who triggers screen share)
+    try {
+      const md: any = navigator.mediaDevices || {};
+      if (md.getDisplayMedia && !md.__wrapped_getDisplayMedia__) {
+        const orig = md.getDisplayMedia.bind(md);
+        md.getDisplayMedia = (opts?: any) => {
+          try { console.warn("mediaDevices.getDisplayMedia called", opts, new Error().stack); } catch {}
+          return orig(opts);
+        };
+        md.__wrapped_getDisplayMedia__ = true;
+      }
+      if (md.getUserMedia && !md.__wrapped_getUserMedia__) {
+        const origU = md.getUserMedia.bind(md);
+        md.getUserMedia = (opts?: any) => {
+          try { console.warn("mediaDevices.getUserMedia called", opts, new Error().stack); } catch {}
+          return origU(opts);
+        };
+        md.__wrapped_getUserMedia__ = true;
+      }
+    } catch (e) {}
+
     // If interview is configured to use Azure Speech, skip browser SpeechRecognition
     const useAzure = (props?.interview?.speechProvider || interviewCtx?.speechProvider) === "AZURE";
     if (useAzure) return; // Azure handled by MediaRecorder flow below
