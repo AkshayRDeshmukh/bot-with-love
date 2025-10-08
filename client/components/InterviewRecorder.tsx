@@ -91,7 +91,7 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
         const combined = new MediaStream();
         displayStream.getVideoTracks().forEach((t) => combined.addTrack(t));
         displayStream.getAudioTracks().forEach((t) => combined.addTrack(t));
-        if (micStream) micStream.getAudioTracks().forEach((t) => combined.addTrack(t));
+        if (micStream && !muted) micStream.getAudioTracks().forEach((t) => combined.addTrack(t));
 
         combinedStreamRef.current = combined;
 
