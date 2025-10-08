@@ -86,13 +86,16 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
           video: true,
           audio: true,
         });
+        displayStreamRef.current = displayStream;
         // get mic stream too
         let micStream: MediaStream | null = null;
         try {
           micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          micStreamRef.current = micStream;
         } catch (e) {
           // mic might be denied or not available
           micStream = null;
+          micStreamRef.current = null;
         }
 
         // combine tracks: prefer display audio + mic audio if available
