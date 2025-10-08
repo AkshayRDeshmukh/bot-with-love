@@ -585,17 +585,37 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     }
   }
 
-  const transcriptRow = await prisma.interviewTranscript.findFirst({
-    where: { interviewId: id, candidateId: cid, attemptNumber: targetAttempt },
-    orderBy: { createdAt: "desc" },
-  });
-  if (!transcriptRow)
-    return res.status(404).json({ error: "Transcript not found" });
+  // Support explicit request to use all transcript rows for the attempt (useRawTranscript=1)
+  const useRaw = ((req.query as any)?.useRawTranscript === "1" || (req.query as any)?.useRawTranscript === "true");
 
-  const turns = ((transcriptRow.content as any[]) || []).map((m: any) => ({
-    role: String(m.role || "user").toLowerCase(),
-    content: String(m.content || "").trim(),
-  }));
+  let turns: { role: string; content: string }[] = [];
+
+  if (useRaw) {
+    // fetch all transcript rows for this attempt and concatenate their content arrays in chronological order
+    const rows = await prisma.interviewTranscript.findMany({
+      where: { interviewId: id, candidateId: cid, attemptNumber: targetAttempt },
+      orderBy: [{ createdAt: 'asc' }],
+    });
+    for (const row of rows) {
+      const contentArr = (row.content as any[]) || [];
+      for (const m of contentArr) {
+        turns.push({ role: String(m.role || "user").toLowerCase(), content: String(m.content || "").trim() });
+      }
+    }
+  } else {
+    const transcriptRow = await prisma.interviewTranscript.findFirst({
+      where: { interviewId: id, candidateId: cid, attemptNumber: targetAttempt },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!transcriptRow)
+      return res.status(404).json({ error: "Transcript not found" });
+
+    turns = ((transcriptRow.content as any[]) || []).map((m: any) => ({
+      role: String(m.role || "user").toLowerCase(),
+      content: String(m.content || "").trim(),
+    }));
+  }
+
   const answers = turns
     .filter((t) => t.role === "user" && t.content)
     .map((t) => t.content)
