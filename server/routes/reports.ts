@@ -621,7 +621,70 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     .map((t) => t.content)
     .slice(-200);
 
-  const prompt = buildCandidateReportPrompt({ template: { ...template, templateSummary: (tpl as any)?.templateSummary || null }, answers, cefrEnabled: Boolean(interview?.cefrEvaluation) });
+  let prompt: string | null = null;
+  // If caller asked to force using raw transcript and useRawTranscript, skip LLM and run deterministic fallback scoring
+  if (force && useRaw) {
+    try {
+      const allText = Array.isArray(answers) && answers.length > 0 ? String(answers.join(" ")) : "";
+      const words = (allText || "").trim().split(/\s+/).filter(Boolean);
+      const totalWords = words.length;
+      const tplParams = Array.isArray((template as any)?.parameters) ? (template as any).parameters : [];
+      const paramDebug: any = {};
+      const fallback = tplParams.map((p: any) => {
+        const min = Number(p?.scale?.min ?? 1);
+        const max = Number(p?.scale?.max ?? 5);
+        const mid = Number.isFinite(min) && Number.isFinite(max) ? Math.round((min + max) / 2) : min;
+        if (!totalWords || totalWords < 5) {
+          paramDebug[p.id] = { totalWords, keywordMatches: 0 };
+          return {
+            id: p.id,
+            name: p.name,
+            score: mid,
+            comment: "No evidence in transcript to evaluate this parameter; assigned a default conservative score.",
+          };
+        }
+        const cap = 500;
+        const lenFactor = Math.min(totalWords, cap) / cap;
+        let scoreFloat = min + lenFactor * (max - min);
+        const textLower = allText.toLowerCase();
+        const nameTokens = String(p?.name || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+        let keywordMatches = 0;
+        for (const t of nameTokens) {
+          if (t.length < 3) continue;
+          if (textLower.includes(t)) keywordMatches++;
+        }
+        const descTokens = String(p?.description || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+        for (const t of descTokens) {
+          if (t.length < 4) continue;
+          if (textLower.includes(t)) keywordMatches++;
+        }
+        const synonyms = (p?.synonyms || []) as string[];
+        for (const s of synonyms) {
+          if (typeof s === 'string' && s.length > 3 && textLower.includes(s.toLowerCase())) keywordMatches++;
+        }
+        const nudge = Math.min(keywordMatches, 3) * 0.12 * (max - min);
+        scoreFloat = scoreFloat + nudge;
+        const finalScore = Math.max(min, Math.min(max, Math.round(scoreFloat)));
+        paramDebug[p.id] = { totalWords, keywordMatches };
+        return {
+          id: p.id,
+          name: p.name,
+          score: finalScore,
+          comment: `Automatically computed from transcript (words=${totalWords}, keywordMatches=${keywordMatches}).`,
+        };
+      });
+
+      // set parsed early so downstream logic uses these params
+      const parsedLocal: any = { summary: "", parameters: fallback };
+      (parsedLocal as any).__debug = { used: 'fallback', totalWords: words.length, paramDebug };
+      // attach to outer 'parsed' variable by setting a temporary variable on res.locals so later code can pick it up
+      (res as any).__forced_parsed = parsedLocal;
+    } catch (e) {
+      (res as any).__forced_parsed = { summary: "", parameters: [] };
+    }
+  } else {
+    prompt = buildCandidateReportPrompt({ template: { ...template, templateSummary: (tpl as any)?.templateSummary || null }, answers, cefrEnabled: Boolean(interview?.cefrEvaluation) });
+  }
 
   let parsed: any = null;
   try {
