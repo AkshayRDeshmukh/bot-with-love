@@ -111,8 +111,8 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
           if (!blob || blob.size === 0) return;
           const seq = ++seqRef.current;
           const ts = Date.now();
-          // push into upload queue
-          uploadQueue.push({ blob, seq, ts });
+          // push into upload queue (annotate source for telemetry)
+          uploadQueue.push({ blob, seq, ts, source: "InterviewRecorder" });
         };
 
         mr.onerror = (e) => console.warn("MediaRecorder error", e);
