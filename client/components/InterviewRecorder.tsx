@@ -61,7 +61,7 @@ function useUploadQueue(attemptId?: string, interviewId?: string) {
   return { push };
 }
 
-export default function InterviewRecorder({ attemptId, interviewId, enabled = true, muted = false }: Props & { muted?: boolean }) {
+export default function InterviewRecorder({ attemptId, interviewId, enabled = true, muted = false, captureScreen = false }: Props & { muted?: boolean; captureScreen?: boolean }) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const combinedStreamRef = useRef<MediaStream | null>(null);
   const displayStreamRef = useRef<MediaStream | null>(null);
