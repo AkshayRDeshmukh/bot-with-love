@@ -170,7 +170,9 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
         combinedStreamRef.current?.getTracks().forEach((t) => t.stop());
       } catch {}
       try { import("@/lib/media").then((m) => m.unregisterAppMediaStream(combinedStreamRef.current)).catch(() => {}); } catch {}
-      try { import("@/lib/media").then((m) => m.unregisterAppMediaStream(displayStreamRef.current)).catch(() => {}); } catch {}
+      if (captureScreen) {
+        try { import("@/lib/media").then((m) => m.unregisterAppMediaStream(displayStreamRef.current)).catch(() => {}); } catch {}
+      }
       try { import("@/lib/media").then((m) => m.unregisterAppMediaStream(micStreamRef.current)).catch(() => {}); } catch {}
     };
   }, [enabled, muted]);
