@@ -721,17 +721,59 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
       const tplParams = Array.isArray((template as any)?.parameters)
         ? (template as any).parameters
         : [];
+      // Build a dynamic fallback using simple heuristics over the candidate answers/transcript
+      const allText = Array.isArray(answers) && answers.length > 0 ? String(answers.join(" ")) : "";
+      const words = (allText || "").trim().split(/\s+/).filter(Boolean);
+      const totalWords = words.length;
       const fallback = tplParams.map((p: any) => {
         const min = Number(p?.scale?.min ?? 1);
         const max = Number(p?.scale?.max ?? 5);
-        const mid = Number.isFinite(min) && Number.isFinite(max)
+        const mid = Number.isFinite(min) && Number.isFinite(max
+        )
           ? Math.round((min + max) / 2)
           : min;
+
+        // If there is very little transcript, keep conservative midpoint
+        if (!totalWords || totalWords < 5) {
+          return {
+            id: p.id,
+            name: p.name,
+            score: mid,
+            comment: "No evidence in transcript to evaluate this parameter; assigned a default conservative score.",
+          };
+        }
+
+        // Base score proportional to transcript length (cap at 500 words)
+        const cap = 500;
+        const lenFactor = Math.min(totalWords, cap) / cap; // 0..1
+        let scoreFloat = min + lenFactor * (max - min);
+
+        // Keyword boost: if parameter name or description words appear in transcript, nudge score up
+        const textLower = allText.toLowerCase();
+        const nameTokens = String(p?.name || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+        let keywordMatches = 0;
+        for (const t of nameTokens) {
+          if (t.length < 3) continue;
+          if (textLower.includes(t)) keywordMatches++;
+        }
+        // also check description for keywords
+        const descTokens = String(p?.description || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+        for (const t of descTokens) {
+          if (t.length < 4) continue;
+          if (textLower.includes(t)) keywordMatches++;
+        }
+        // Each match nudges score by ~10% of scale range, up to 2 matches
+        const nudge = Math.min(keywordMatches, 2) * 0.1 * (max - min);
+        scoreFloat = scoreFloat + nudge;
+
+        // Clamp and round
+        const finalScore = Math.max(min, Math.min(max, Math.round(scoreFloat)));
+
         return {
           id: p.id,
           name: p.name,
-          score: mid,
-          comment: "No evidence in transcript to evaluate this parameter; assigned a default conservative score.",
+          score: finalScore,
+          comment: `Automatically computed from transcript (words=${totalWords}, keywordMatches=${keywordMatches}).`,
         };
       });
       parsed.parameters = fallback;
