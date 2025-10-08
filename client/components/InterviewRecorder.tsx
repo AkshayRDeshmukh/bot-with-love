@@ -8,10 +8,10 @@ type Props = {
 
 // Simple upload queue with concurrency=1 and retry
 function useUploadQueue(attemptId?: string, interviewId?: string) {
-  const queueRef = useRef<Array<{ blob: Blob; seq: number; ts: number }>>([]);
+  const queueRef = useRef<Array<{ blob: Blob; seq: number; ts: number; source?: string }>>([]);
   const runningRef = useRef(false);
 
-  const push = (item: { blob: Blob; seq: number; ts: number }) => {
+  const push = (item: { blob: Blob; seq: number; ts: number; source?: string }) => {
     queueRef.current.push(item);
     if (!runningRef.current) run(attemptId, interviewId);
   };
@@ -20,12 +20,12 @@ function useUploadQueue(attemptId?: string, interviewId?: string) {
     runningRef.current = true;
     while (queueRef.current.length) {
       const item = queueRef.current.shift()!;
-      await uploadWithRetry(item.blob, item.seq, item.ts, attemptId, interviewId);
+      await uploadWithRetry(item.blob, item.seq, item.ts, attemptId, interviewId, item.source);
     }
     runningRef.current = false;
   };
 
-  const uploadWithRetry = async (blob: Blob, seq: number, ts: number, attemptId?: string, interviewId?: string) => {
+  const uploadWithRetry = async (blob: Blob, seq: number, ts: number, attemptId?: string, interviewId?: string, source?: string) => {
     const maxAttempts = 5;
     let attempt = 0;
     let backoff = 500;
@@ -39,17 +39,23 @@ function useUploadQueue(attemptId?: string, interviewId?: string) {
         if (!aId) throw new Error("Missing attemptId for upload");
         fd.append("attemptId", aId);
         if (interviewId) fd.append("interviewId", interviewId);
+        if (source) fd.append("source", source);
+        // telemetry/logging for easier debugging which component produced this chunk
+        try {
+          console.debug("Uploading chunk", { attemptId: aId, interviewId, seq, ts, source });
+        } catch {}
         const res = await fetch("/api/record/chunk", { method: "POST", body: fd });
         if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
         const data = await res.json().catch(() => ({}));
         return data;
       } catch (e) {
         attempt++;
+        try { console.warn("Chunk upload attempt failed", { attempt, seq, source, err: e }); } catch {}
         await new Promise((r) => setTimeout(r, backoff));
         backoff *= 1.8;
       }
     }
-    console.error("Failed to upload chunk after retries, dropping chunk seq=", seq);
+    console.error("Failed to upload chunk after retries, dropping chunk seq=", seq, "source=", source);
   };
 
   return { push };
