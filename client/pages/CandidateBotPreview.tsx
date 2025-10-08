@@ -281,6 +281,7 @@ export default function CandidateBotPreview(props?: {
               },
         } as any);
         streamRef.current = stream;
+        try { const m = await import("@/lib/media"); m.registerAppMediaStream(stream); } catch {}
         if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (e: any) {
         setMediaError(e?.message || "Camera access denied");
