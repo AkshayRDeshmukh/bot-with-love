@@ -1069,5 +1069,40 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     proctorPhotoUrl = null;
   }
 
+  // Ensure every recording url returned includes SAS token if configured
+  try {
+    const sas = String(process.env.AZURE_BLOB_SAS || "").trim();
+    const appendSasFinal = (u: string | null) => {
+      try {
+        if (!u) return u;
+        if (!sas) return u;
+        return u.includes("?") ? `${u}&${sas.replace(/^\?/, "")}` : `${u}?${sas.replace(/^\?/, "")}`;
+      } catch (e) { return u; }
+    };
+    if (Array.isArray(attemptsWithRecordings)) {
+      for (const a of attemptsWithRecordings) {
+        if (!a || !Array.isArray(a.recordings)) continue;
+        for (const r of a.recordings) {
+          try {
+            r.url = appendSasFinal(r.url);
+          } catch {}
+        }
+      }
+    }
+    // Also ensure rows (used by admin listing) have recordings appended
+    if (Array.isArray(rows)) {
+      for (const r0 of rows) {
+        const attemptsArr = Array.isArray(r0.attempts) ? r0.attempts : [];
+        for (const a of attemptsArr) {
+          if (!a || !Array.isArray(a.recordings)) continue;
+          for (const r of a.recordings) {
+            try { r.url = appendSasFinal(r.url); } catch {}
+          }
+        }
+      }
+    }
+    try { console.info("SAS present for reporting URLs: ", !!sas); } catch {}
+  } catch (e) {}
+
   return res.json({ report: saved, template, transcript: turns, attempts: attemptsWithRecordings, proctorPhotoUrl, debug: (parsed && (parsed as any).__debug) || null });
 };
