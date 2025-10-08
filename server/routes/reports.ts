@@ -687,26 +687,32 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
   }
 
   let parsed: any = null;
-  try {
-    const reply = await groqChat(
-      [
-        { role: "system", content: "You return only strict JSON, no prose." },
-        { role: "user", content: prompt },
-      ],
-      { temperature: 0.1 },
-    );
-    try {
-      parsed = JSON.parse(reply);
-    } catch {
-      parsed = extractFirstJsonObject(reply);
-    }
-  } catch (e) {
-    parsed = null;
-  }
 
-  // Ensure parsed is an object with parameters array
-  if (!parsed || !Array.isArray(parsed.parameters)) {
-    parsed = { summary: "", parameters: [] };
+  // If we computed a forced parsed result earlier, use it and skip LLM
+  if ((res as any).__forced_parsed) {
+    parsed = (res as any).__forced_parsed;
+  } else {
+    try {
+      const reply = await groqChat(
+        [
+          { role: "system", content: "You return only strict JSON, no prose." },
+          { role: "user", content: prompt },
+        ],
+        { temperature: 0.1 },
+      );
+      try {
+        parsed = JSON.parse(reply);
+      } catch {
+        parsed = extractFirstJsonObject(reply);
+      }
+    } catch (e) {
+      parsed = null;
+    }
+
+    // Ensure parsed is an object with parameters array
+    if (!parsed || !Array.isArray(parsed.parameters)) {
+      parsed = { summary: "", parameters: [] };
+    }
   }
 
   // If some template parameters are missing from the LLM response, ask the LLM specifically to evaluate only the missing ones using the candidate answers.
