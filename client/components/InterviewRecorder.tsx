@@ -81,19 +81,23 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
 
     const start = async () => {
       try {
-        // get display (screen) stream if not already available
-        let displayStream = displayStreamRef.current;
-        try {
-          const hasActive = displayStream && displayStream.getTracks && displayStream.getTracks().some((t: any) => t.readyState !== "ended");
-          if (!hasActive) {
-            displayStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: true });
-            displayStreamRef.current = displayStream;
-            try { const m = await import("@/lib/media"); m.registerAppMediaStream(displayStream); } catch {}
-          }
-        } catch (e) {
-          // if getDisplayMedia fails, clear ref
+        let displayStream: MediaStream | null = null;
+        // if captureScreen requested, get display stream
+        if (captureScreen) {
           displayStream = displayStreamRef.current;
+          try {
+            const hasActive = displayStream && displayStream.getTracks && displayStream.getTracks().some((t: any) => t.readyState !== "ended");
+            if (!hasActive) {
+              displayStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: true });
+              displayStreamRef.current = displayStream;
+              try { const m = await import("@/lib/media"); m.registerAppMediaStream(displayStream); } catch {}
+            }
+          } catch (e) {
+            // if getDisplayMedia fails, clear ref
+            displayStream = displayStreamRef.current;
+          }
         }
+
         // get mic stream too
         let micStream: MediaStream | null = null;
         try {
@@ -105,19 +109,20 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
           micStreamRef.current = null;
         }
 
-        // combine tracks: prefer display audio + mic audio if available
+        // combine tracks
         const combined = new MediaStream();
-        displayStream.getVideoTracks().forEach((t) => combined.addTrack(t));
-        if (!muted) displayStream.getAudioTracks().forEach((t) => combined.addTrack(t));
+        if (captureScreen && displayStream) {
+          displayStream.getVideoTracks().forEach((t) => combined.addTrack(t));
+          if (!muted) displayStream.getAudioTracks().forEach((t) => combined.addTrack(t));
+        }
         if (micStream && !muted) micStream.getAudioTracks().forEach((t) => combined.addTrack(t));
 
         combinedStreamRef.current = combined;
-        try { const m = await import("@/lib/media"); m.registerAppMediaStream(displayStream); } catch {}
         try { const m = await import("@/lib/media"); m.registerAppMediaStream(micStream); } catch {}
         try { const m = await import("@/lib/media"); m.registerAppMediaStream(combined); } catch {}
 
         // create MediaRecorder for chunks ~17000ms
-        const options: any = { mimeType: "video/webm; codecs=vp8,opus" };
+        const options: any = captureScreen ? { mimeType: "video/webm; codecs=vp8,opus" } : { mimeType: "audio/webm; codecs=opus" };
         const mr = new MediaRecorder(combined, options);
         mediaRecorderRef.current = mr;
 
