@@ -306,6 +306,18 @@ export const listInterviewReportsSummary: RequestHandler = async (req, res) => {
     attempts: (byCandidate[rel.candidateId] || []).sort((a, b) => a.attemptNumber - b.attemptNumber),
   }));
 
+  // Helper to append server-side SAS token to URLs if configured
+  const appendSas = (u: string | null) => {
+    try {
+      if (!u) return u;
+      const sas = String(process.env.AZURE_BLOB_SAS || "").trim();
+      if (!sas) return u;
+      return u.includes("?") ? `${u}&${sas.replace(/^\?/, "")}` : `${u}?${sas.replace(/^\?/, "")}`;
+    } catch (e) {
+      return u;
+    }
+  };
+
   // For each attempt, attach recordings found in the database within the attempt's time window
   try {
     for (const r of rows) {
@@ -322,11 +334,13 @@ export const listInterviewReportsSummary: RequestHandler = async (req, res) => {
           } else {
             whereCond.interviewId = id;
           }
-          const recs = await prisma.interviewRecording.findMany({
+          let recs = await prisma.interviewRecording.findMany({
             where: whereCond,
             orderBy: [{ seq: 'asc' }, { createdAt: 'asc' }],
             select: { id: true, url: true, blobName: true, seq: true, createdAt: true },
           });
+          // append SAS token to urls server-side if configured
+          recs = (recs || []).map((x: any) => ({ ...x, url: appendSas(x?.url) }));
           a.recordings = recs;
         } catch (e) {
           a.recordings = [];
