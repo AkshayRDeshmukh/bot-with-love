@@ -1035,6 +1035,7 @@ export default function CandidateBotPreview(props?: {
         mediaRecorderRef.current?.stop();
       } catch {}
       if (stream) {
+        try { const m = await import("@/lib/media"); m.unregisterAppMediaStream(stream); } catch {}
         stream.getTracks().forEach((t) => t.stop());
       }
       mediaRecorderRef.current = null;
