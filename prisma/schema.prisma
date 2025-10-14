@@ -111,6 +111,8 @@ model Interview {
   recordingEnabled Boolean  @default(true)
   // Default attempts allowed per candidate (nullable => fallback to 1)
   maxAttempts     Int?
+  // Optional CC emails to include on candidate invite emails
+  inviteCcEmails  String[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
