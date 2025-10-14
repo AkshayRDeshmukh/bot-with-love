@@ -1061,14 +1061,12 @@ export default function CandidateBotPreview(props?: {
         const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
 
         recognizer.recognizing = (s: any, e: any) => {
+          if (muted || botSpeakingRef.current) return;
           const interimText = e.result && e.result.text ? String(e.result.text) : "";
           try {
-            if (!botSpeakingRef.current) {
-              setInterim(interimText);
-              setInput(interimText);
-            }
+            setInterim(interimText);
+            setInput(interimText);
           } catch {}
-          // console.log(`🎤 Azure recognizing: ${interimText}`);
         };
 
         recognizer.recognized = (s: any, e: any) => {
