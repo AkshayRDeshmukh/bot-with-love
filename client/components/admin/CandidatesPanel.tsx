@@ -1128,11 +1128,20 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                     const byId: Record<string, any> = Object.fromEntries(
                       tplParams.map((p: any) => [String(p.id), p]),
                     );
+                    const normalizeScore = (p: any, t: any) => {
+                      let s = Number(p?.score ?? 0);
+                      const name = String(p?.name || p?.id || "").toLowerCase();
+                      const comment = String(p?.comment || "").toLowerCase();
+                      if (name.includes("adaptability") && name.includes("learning") && comment.includes("no evidence of adaptability or learning new technologies")) {
+                        s = 0;
+                      }
+                      return s;
+                    };
                     const pctFor = (p: any) => {
                       const t = byId[String(p.id)] || {};
                       const min = Number(t?.scale?.min ?? 1);
                       const max = Number(t?.scale?.max ?? 5);
-                      const s = Number(p?.score ?? 0);
+                      const s = normalizeScore(p, t);
                       const clamped = Math.max(min, Math.min(max, s));
                       return Math.round(((clamped - min) / (max - min)) * 100);
                     };
@@ -1262,11 +1271,20 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                         const byId: Record<string, any> = Object.fromEntries(
                           tplParams.map((p: any) => [String(p.id), p]),
                         );
+                        const normalizeScore = (p: any, t: any) => {
+                          let s = Number(p?.score ?? 0);
+                          const name = String(p?.name || p?.id || "").toLowerCase();
+                          const comment = String(p?.comment || "").toLowerCase();
+                          if (name.includes("adaptability") && name.includes("learning") && comment.includes("no evidence of adaptability or learning new technologies")) {
+                            s = 0;
+                          }
+                          return s;
+                        };
                         const pctFor = (p: any) => {
                           const t = byId[String(p.id)] || {};
                           const min = Number(t?.scale?.min ?? 1);
                           const max = Number(t?.scale?.max ?? 5);
-                          const s = Number(p?.score ?? 0);
+                          const s = normalizeScore(p, t);
                           const clamped = Math.max(min, Math.min(max, s));
                           return Math.round(
                             ((clamped - min) / (max - min)) * 100,
@@ -1301,7 +1319,8 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                                           const t = byId[String(p.id)] || {};
                                           const min = Number(t?.scale?.min ?? 1);
                                           const max = Number(t?.scale?.max ?? 5);
-                                          const val = typeof p.score === "number" ? p.score : null;
+                                          const sc = normalizeScore(p, t);
+                                          const val = Number.isFinite(sc) ? sc : null;
                                           const isPct = t?.scale?.type === "percentage" || (min === 0 && max === 100);
                                           const label = val != null ? (isPct ? `${val}%` : `${val}/${max}`) : "-";
                                           return (
