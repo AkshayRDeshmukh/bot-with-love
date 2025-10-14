@@ -91,6 +91,16 @@ export const createInterview: RequestHandler = async (req, res) => {
       contextSummary = null;
     }
 
+    const rawCc = (req.body as any)?.inviteCcEmails ?? (req.body as any)?.inviteCc;
+    const ccArr: string[] = Array.isArray(rawCc)
+      ? rawCc.map((s: any) => String(s)).filter(Boolean)
+      : typeof rawCc === "string"
+        ? String(rawCc)
+            .split(/[,;\s]+/)
+            .map((s) => s.trim())
+            .filter((s) => s)
+        : [];
+
     const interview = await prisma.interview.create({
       data: {
         adminId,
@@ -114,6 +124,7 @@ export const createInterview: RequestHandler = async (req, res) => {
           typeof (req.body as any)?.maxAttempts === "number"
             ? Math.max(1, Math.floor((req.body as any).maxAttempts))
             : null,
+        inviteCcEmails: ccArr,
       } as any,
     });
     res.status(201).json(interview);
