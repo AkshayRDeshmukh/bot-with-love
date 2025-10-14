@@ -313,6 +313,16 @@ export function AdminInterviewForm({
         </div>
       </div>
 
+      <div className="grid gap-2">
+        <label className="text-sm">CC emails for invites (optional)</label>
+        <input
+          className="h-10 rounded-md border bg-background px-3"
+          placeholder="example1@company.com, example2@company.com"
+          {...form.register("inviteCc")}
+        />
+        <div className="text-xs text-muted-foreground">Comma-separated list; these addresses will be CCed on candidate invite emails.</div>
+      </div>
+
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={submitting}>
           {submitting ? "Saving..." : "Save"}
