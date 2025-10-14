@@ -421,6 +421,8 @@ export default function CandidateBotPreview(props?: {
           if (botSpeakingRef.current) return;
           const blob = ev.data;
           if (!blob || blob.size === 0) return;
+          const provider = (props?.interview?.speechProvider || interviewCtx?.speechProvider) as string | undefined;
+          if (provider !== "AZURE") return;
           const fd = new FormData();
           fd.append("audio", blob, "chunk.webm");
           const r = await fetch("/api/azure/transcribe", { method: "POST", body: fd });
@@ -996,9 +998,11 @@ export default function CandidateBotPreview(props?: {
             if (botSpeakingRef.current) return;
             const blob = ev.data;
             if (!blob || blob.size === 0) return;
-            const fd = new FormData();
-            fd.append("audio", blob, "chunk.webm");
-            const r = await fetch("/api/azure/transcribe", { method: "POST", body: fd });
+            const provider = (props?.interview?.speechProvider || interviewCtx?.speechProvider) as string | undefined;
+          if (provider !== "AZURE") return;
+          const fd = new FormData();
+          fd.append("audio", blob, "chunk.webm");
+          const r = await fetch("/api/azure/transcribe", { method: "POST", body: fd });
             if (!r.ok) return;
             const j = await r.json();
             const txt = (j && (j.text || j?.text?.DisplayText)) || "";
