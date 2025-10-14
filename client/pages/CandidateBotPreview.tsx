@@ -927,7 +927,9 @@ export default function CandidateBotPreview(props?: {
     if (!muted) {
       try {
         recog.start();
-      } catch {}
+      } catch {
+        try { startMediaRecorderFromStream(); } catch {}
+      }
     }
 
     const watchdog = window.setInterval(() => {
