@@ -51,8 +51,14 @@ export async function getUserMediaSafe(constraints: MediaStreamConstraints): Pro
   }
   const reasons: string[] = [];
   try {
-    if (!(window as any).isSecureContext) reasons.push("requires HTTPS or localhost");
-    if (window.top !== window) reasons.push("not allowed in embedded iframe without camera/microphone permissions");
+    // Treat localhost and common loopback addresses as secure contexts for development
+    const hostname = (typeof location !== "undefined" && location && location.hostname) ? String(location.hostname) : "";
+    const isLocalhost = /^(localhost|127\.|::1)$/.test(hostname);
+    const isSecure = Boolean((window as any).isSecureContext) || isLocalhost;
+    if (!isSecure) reasons.push("requires HTTPS or localhost");
+    try {
+      if (window.top !== window) reasons.push("not allowed in embedded iframe without camera/microphone permissions");
+    } catch {}
   } catch {}
   const extra = reasons.length ? `: ${reasons.join("; ")}` : "";
   throw new Error(`Media devices unavailable${extra}`);
