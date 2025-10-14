@@ -1388,6 +1388,18 @@ export default function CandidateBotPreview(props?: {
                               try { setInterim(""); } catch {}
                               try { setInput(""); } catch {}
                             } else {
+                              // On unmute ensure an audio track exists; add one if missing
+                              try {
+                                (async () => {
+                                  try {
+                                    const s = streamRef.current;
+                                    if (s && s.getAudioTracks && s.getAudioTracks().length === 0) {
+                                      const mic = await getUserMediaSafe({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false } as any);
+                                      mic.getAudioTracks().forEach((t) => s.addTrack(t));
+                                    }
+                                  } catch {}
+                                })();
+                              } catch {}
                               try { recognitionRef.current?.start(); } catch {}
                               try { resumeTranscription(); } catch {}
                             }
