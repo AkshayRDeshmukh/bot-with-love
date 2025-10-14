@@ -57,6 +57,9 @@ export function AdminInterviewForm({
       maxAttempts: (initial as any)?.maxAttempts ?? undefined,
       cefrEvaluation: (initial as any)?.cefrEvaluation ?? false,
       recordingEnabled: (initial as any)?.recordingEnabled ?? true,
+      inviteCc: Array.isArray((initial as any)?.inviteCcEmails)
+        ? ((initial as any).inviteCcEmails as string[]).join(", ")
+        : (initial as any)?.inviteCc || "",
     },
   });
 
