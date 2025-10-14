@@ -1370,6 +1370,7 @@ export default function CandidateBotPreview(props?: {
                               try { setInput(""); } catch {}
                             } else {
                               try { recognitionRef.current?.start(); } catch {}
+                              try { resumeTranscription(); } catch {}
                             }
                           } catch {}
                           return next;
