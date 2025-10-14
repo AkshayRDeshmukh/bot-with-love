@@ -53,6 +53,8 @@ export default function AdminInterviewEditor() {
           interviewerRole: data.interviewerRole,
           durationMinutes: data.durationMinutes ?? undefined,
           interactionMode: data.interactionMode || "AUDIO",
+          speechProvider: (data as any)?.speechProvider || "BROWSER",
+          recordingEnabled: (data as any)?.recordingEnabled ?? true,
           maxAttempts: (data as any)?.maxAttempts ?? undefined,
           cefrEvaluation: (data as any)?.cefrEvaluation ?? false,
           ...(Array.isArray((data as any)?.inviteCcEmails) ? { inviteCcEmails: (data as any).inviteCcEmails } : {}),
@@ -100,6 +102,8 @@ export default function AdminInterviewEditor() {
           interviewerRole: data.interviewerRole,
           durationMinutes: data.durationMinutes ?? undefined,
           interactionMode: data.interactionMode || "AUDIO",
+          speechProvider: (data as any)?.speechProvider || "BROWSER",
+          recordingEnabled: (data as any)?.recordingEnabled ?? true,
           maxAttempts: (data as any)?.maxAttempts ?? undefined,
           cefrEvaluation: (data as any)?.cefrEvaluation ?? false,
           ...(Array.isArray((data as any)?.inviteCcEmails) ? { inviteCcEmails: (data as any).inviteCcEmails } : {}),
@@ -377,6 +381,20 @@ export default function AdminInterviewEditor() {
                             <div className="mt-1">
                               {initial?.contextDomain ?? "—"}
                             </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">Speech Provider</div>
+                            <div className="mt-1">
+                              {((initial as any)?.speechProvider || "BROWSER") === "AZURE" ? "Azure Speech Service" : "Browser (Web Speech API)"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">Screen Recording</div>
+                            <div className="mt-1">{(initial as any)?.recordingEnabled ? "Enabled" : "Disabled"}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">CC Emails</div>
+                            <div className="mt-1">{Array.isArray((initial as any)?.inviteCcEmails) ? ((initial as any).inviteCcEmails.join(", ")) : "—"}</div>
                           </div>
                         </div>
                       </TooltipProvider>
