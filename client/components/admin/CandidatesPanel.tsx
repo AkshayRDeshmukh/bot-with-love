@@ -1145,41 +1145,38 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                       const pct = ((clamped - min) / (max - min)) * 100;
                       return Math.round(pct * 100) / 100; // two decimal precision
                     };
-                    const overall =
-                      typeof reportData?.structure?.overall === "number"
-                        ? reportData.structure.overall
-                        : (() => {
-                            let acc = 0,
-                              tw = 0;
-                            for (const p of params) {
-                              const t = byId[String(p.id)] || {};
-                              const w = Number(t.weight) || 0;
-                              if (!w) continue;
-                              const pct = pctFor(p);
-                              acc += pct * w;
-                              tw += w;
-                            }
-                            const baseOverall = tw > 0 ? acc / tw : 0; // float in 0..100
+                    const overall = (() => {
+                      let acc = 0,
+                        tw = 0;
+                      for (const p of params) {
+                        const t = byId[String(p.id)] || {};
+                        const w = Number(t.weight) || 0;
+                        if (!w) continue;
+                        const pct = pctFor(p);
+                        acc += pct * w;
+                        tw += w;
+                      }
+                      const baseOverall = tw > 0 ? acc / tw : 0; // float in 0..100
 
-                            // Time factor: fraction of interview duration used by this attempt (0..1)
-                            let timeFactor = 1;
-                            try {
-                              const sel = (reportAttempts || []).find((x) => x.attemptNumber === reportAttempt);
-                              if (sel?.createdAt) {
-                                const start = new Date(sel.createdAt);
-                                const next = (reportAttempts || []).find((x) => x.attemptNumber === reportAttempt + 1);
-                                const end = next?.createdAt ? new Date(next.createdAt) : (currentCandidate?.completedAt ? new Date(currentCandidate.completedAt) : new Date());
-                                const durationMinutes = Math.max(0, (end.getTime() - start.getTime()) / 60000);
-                                const totalMinutes = Number(reportInterview?.durationMinutes) || durationMinutes || 1;
-                                timeFactor = Math.max(0, Math.min(1, durationMinutes / totalMinutes));
-                              }
-                            } catch (e) {
-                              // ignore and keep factor = 1
-                            }
+                      // Time factor: fraction of interview duration used by this attempt (0..1)
+                      let timeFactor = 1;
+                      try {
+                        const sel = (reportAttempts || []).find((x) => x.attemptNumber === reportAttempt);
+                        if (sel?.createdAt) {
+                          const start = new Date(sel.createdAt);
+                          const next = (reportAttempts || []).find((x) => x.attemptNumber === reportAttempt + 1);
+                          const end = next?.createdAt ? new Date(next.createdAt) : (currentCandidate?.completedAt ? new Date(currentCandidate.completedAt) : new Date());
+                          const durationMinutes = Math.max(0, (end.getTime() - start.getTime()) / 60000);
+                          const totalMinutes = Number(reportInterview?.durationMinutes) || durationMinutes || 1;
+                          timeFactor = Math.max(0, Math.min(1, durationMinutes / totalMinutes));
+                        }
+                      } catch (e) {
+                        // ignore and keep factor = 1
+                      }
 
-                            const finalOverallFloat = baseOverall * timeFactor;
-                            return Math.round(finalOverallFloat);
-                          })();
+                      const finalOverallFloat = baseOverall * timeFactor;
+                      return Math.round(finalOverallFloat);
+                    })();
                     const color =
                       overall < 50
                         ? "#ef4444"
