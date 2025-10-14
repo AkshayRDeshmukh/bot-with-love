@@ -439,14 +439,18 @@ export default function CandidateBotPreview(props?: {
 
   const resumeTranscription = () => {
     if (muted) return; // don't resume if mic muted
-    // only resume if we paused due to bot playback
-    if (!transcriptionPausedByBotRef.current) return;
+    // resume if paused by bot; also start fallback if browser speech is unavailable
+    const browserProvider = (props?.interview?.speechProvider || interviewCtx?.speechProvider) !== "AZURE";
+    if (!transcriptionPausedByBotRef.current && !(browserProvider && typeof (window as any).SpeechRecognition === "undefined" && !recognitionRef.current)) return;
     transcriptionPausedByBotRef.current = false;
     try {
       if (recognitionRef.current) {
         try {
           recognitionRef.current.start();
         } catch {}
+      } else if (browserProvider) {
+        // Fallback to media-recorder approach using existing stream
+        try { startMediaRecorderFromStream(); } catch {}
       }
     } catch {}
     try {
@@ -458,7 +462,7 @@ export default function CandidateBotPreview(props?: {
     } catch {}
     try {
       // If mediaRecorder was stopped earlier, restart from existing stream
-      if (!mediaRecorderRef.current && props?.interview?.speechProvider === "AZURE") {
+      if (!mediaRecorderRef.current && (props?.interview?.speechProvider === "AZURE" || (browserProvider && typeof (window as any).SpeechRecognition === "undefined"))) {
         startMediaRecorderFromStream();
       }
     } catch (e) {
