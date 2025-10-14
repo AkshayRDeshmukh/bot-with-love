@@ -29,6 +29,7 @@ const schema = z.object({
   cefrEvaluation: z.boolean().optional(),
   recordingEnabled: z.boolean().optional(),
   speechProvider: z.enum(["BROWSER","AZURE"]).optional(),
+  inviteCc: z.string().optional(),
 });
 
 export type InterviewInput = z.infer<typeof schema>;
