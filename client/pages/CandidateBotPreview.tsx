@@ -417,8 +417,8 @@ export default function CandidateBotPreview(props?: {
       mediaRecorderRef.current = mr;
       mr.ondataavailable = async (ev: BlobEvent) => {
         try {
-          // do not transcribe during bot playback
-          if (botSpeakingRef.current) return;
+          // do not transcribe when muted or during bot playback
+          if (muted || botSpeakingRef.current) return;
           const blob = ev.data;
           if (!blob || blob.size === 0) return;
           const provider = (props?.interview?.speechProvider || interviewCtx?.speechProvider) as string | undefined;
@@ -838,7 +838,7 @@ export default function CandidateBotPreview(props?: {
 
     const finalizeIfNeeded = () => {
       // do not process finalization while bot is speaking
-      if (botSpeakingRef.current) return;
+      if (muted || botSpeakingRef.current) return;
       const pending = pendingFinalRef.current.trim();
       const interimNow = interim.trim();
       const finalText = `${pending} ${interimNow}`.trim();
@@ -857,7 +857,7 @@ export default function CandidateBotPreview(props?: {
 
     recog.onresult = (event: any) => {
       // do not process recognition results while bot is speaking
-      if (botSpeakingRef.current) return;
+      if (muted || botSpeakingRef.current) return;
       // reset silence timer on any result
       if (silenceTimerRef.current) window.clearTimeout(silenceTimerRef.current);
       let interimText = "";
@@ -906,7 +906,7 @@ export default function CandidateBotPreview(props?: {
     };
     recog.onend = () => {
       // do not finalize or restart recognition while bot is speaking
-      if (botSpeakingRef.current) return;
+      if (muted || botSpeakingRef.current) return;
       // finalize any pending final text into the buffer (do not auto-send)
       if (Date.now() - recentFinalizedAtRef.current > 250) {
         const pending = pendingFinalRef.current.trim();
@@ -994,8 +994,8 @@ export default function CandidateBotPreview(props?: {
 
         mr.ondataavailable = async (ev: BlobEvent) => {
           try {
-            // do not transcribe during bot playback
-            if (botSpeakingRef.current) return;
+            // do not transcribe when muted or during bot playback
+            if (muted || botSpeakingRef.current) return;
             const blob = ev.data;
             if (!blob || blob.size === 0) return;
             const provider = (props?.interview?.speechProvider || interviewCtx?.speechProvider) as string | undefined;
@@ -1073,7 +1073,7 @@ export default function CandidateBotPreview(props?: {
 
         recognizer.recognized = (s: any, e: any) => {
           try {
-            if (botSpeakingRef.current) return;
+            if (muted || botSpeakingRef.current) return;
             if (e.result && e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
               const recognizedText = String(e.result.text || "").trim();
               if (recognizedText) {
