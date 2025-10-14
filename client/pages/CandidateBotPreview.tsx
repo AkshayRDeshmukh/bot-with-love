@@ -26,6 +26,7 @@ import { toast } from "@/hooks/use-toast";
 import InterviewRecorder from "@/components/InterviewRecorder";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Editor from "@monaco-editor/react";
+import { getUserMediaSafe } from "@/lib/media";
 
 function useTimer() {
   const [seconds, setSeconds] = useState(0);
@@ -293,7 +294,7 @@ export default function CandidateBotPreview(props?: {
     // Start camera and (optionally) mic
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await getUserMediaSafe({
           video: true,
           audio: textOnly
             ? false
@@ -960,7 +961,7 @@ export default function CandidateBotPreview(props?: {
 
     const startMediaRecorderFallback = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false } as any);
+        stream = await getUserMediaSafe({ audio: true, video: false } as any);
       } catch (e) {
         console.warn("Unable to access microphone for Azure speech", e);
         return;
