@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
+import { getDisplayMediaSafe, getUserMediaSafe } from "@/lib/media";
+
 type Props = {
   attemptId: string;
   interviewId?: string;
@@ -107,7 +109,7 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
           try {
             const hasActive = displayStream && displayStream.getTracks && displayStream.getTracks().some((t: any) => t.readyState !== "ended");
             if (!hasActive) {
-              displayStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: true });
+              displayStream = await getDisplayMediaSafe({ video: true, audio: true } as any);
               displayStreamRef.current = displayStream;
               try { const m = await import("@/lib/media"); m.registerAppMediaStream(displayStream); } catch {}
             }
@@ -120,7 +122,7 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
         // get mic stream too
         let micStream: MediaStream | null = null;
         try {
-          micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          micStream = await getUserMediaSafe({ audio: true, video: false } as any);
           micStreamRef.current = micStream;
         } catch (e) {
           // mic might be denied or not available
