@@ -55,6 +55,7 @@ export default function AdminInterviewEditor() {
           interactionMode: data.interactionMode || "AUDIO",
           maxAttempts: (data as any)?.maxAttempts ?? undefined,
           cefrEvaluation: (data as any)?.cefrEvaluation ?? false,
+          ...(Array.isArray((data as any)?.inviteCcEmails) ? { inviteCcEmails: (data as any).inviteCcEmails } : {}),
         });
       } catch (e) {
         setError("Failed to load interview");
@@ -96,6 +97,7 @@ export default function AdminInterviewEditor() {
           interactionMode: data.interactionMode || "AUDIO",
           maxAttempts: (data as any)?.maxAttempts ?? undefined,
           cefrEvaluation: (data as any)?.cefrEvaluation ?? false,
+          ...(Array.isArray((data as any)?.inviteCcEmails) ? { inviteCcEmails: (data as any).inviteCcEmails } : {}),
         });
       } else {
         // fallback to submitted values
