@@ -307,6 +307,15 @@ export default function CandidateBotPreview(props?: {
         streamRef.current = stream;
         try { const m = await import("@/lib/media"); m.registerAppMediaStream(stream); } catch {}
         if (videoRef.current) videoRef.current.srcObject = stream;
+        // If using browser speech and native API is missing, start fallback now
+        try {
+          const provider = (props?.interview?.speechProvider || interviewCtx?.speechProvider) as any;
+          const isAzure = provider === "AZURE";
+          const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+          if (!isAzure && !SR && !muted) {
+            startMediaRecorderFromStream();
+          }
+        } catch {}
       } catch (e: any) {
         setMediaError(e?.message || "Camera access denied");
         setProctorPromptOpen(false);
