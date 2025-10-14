@@ -73,11 +73,16 @@ export default function AdminInterviewEditor() {
     try {
       const url = isEdit ? `/api/interviews/${id}` : "/api/interviews";
       const method = isEdit ? "PUT" : "POST";
+      const ccArr = typeof (values as any).inviteCc === "string"
+        ? (values as any).inviteCc.split(/[,;\s]+/).map((s: string) => s.trim()).filter((s: string) => s)
+        : [];
+      const payload: any = { ...values, inviteCcEmails: ccArr };
+      delete payload.inviteCc;
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         setError("Failed to save interview");
