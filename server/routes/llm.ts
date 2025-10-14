@@ -224,9 +224,53 @@ export const chatWithLLM: RequestHandler = async (req, res) => {
       candidateDomain: candidateProfile?.domain,
     });
 
+    // Attempt-aware controls: avoid repeating questions from previous attempts and increase difficulty
+    let attemptInfo: { current: number; previousQs: string[] } = { current: 1, previousQs: [] };
+    try {
+      if (typeof token === "string" && token) {
+        const ic = await prisma.interviewCandidate.findFirst({ where: { inviteToken: String(token) } });
+        if (ic) {
+          const transcripts = await prisma.interviewTranscript.findMany({
+            where: { interviewId: ic.interviewId, candidateId: ic.candidateId },
+            orderBy: [{ attemptNumber: "asc" }, { createdAt: "asc" }],
+            select: { attemptNumber: true, content: true },
+          });
+          const latestAttempt = transcripts.length ? transcripts[transcripts.length - 1].attemptNumber : 1;
+          attemptInfo.current = latestAttempt || 1;
+          const seen = new Set<string>();
+          for (const tr of transcripts) {
+            if (tr.attemptNumber >= attemptInfo.current) continue; // only previous attempts
+            const arr = Array.isArray((tr as any).content) ? ((tr as any).content as any[]) : [];
+            for (const m of arr) {
+              if (m && m.role === "assistant" && typeof m.content === "string") {
+                const text = String(m.content).trim();
+                // Heuristic: treat assistant lines ending with '?' or starting with prompts as questions
+                if (/\?$/.test(text) || /^(can|could|explain|describe|how|why|what|implement|build)\b/i.test(text)) {
+                  const norm = text.replace(/\s+/g, " ").toLowerCase();
+                  if (!seen.has(norm)) {
+                    seen.add(norm);
+                    attemptInfo.previousQs.push(text);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch {}
 
     const messages: ChatMessage[] = [];
     messages.push({ role: "system", content: sys });
+
+    // Inject attempt-aware guidance
+    if (attemptInfo.previousQs.length > 0) {
+      const list = attemptInfo.previousQs.slice(-30).map((q, i) => `- ${q}`).join("\n");
+      messages.push({ role: "system", content: `Previously asked questions from earlier attempts (do NOT repeat or paraphrase these):\n${list}` });
+    }
+    if (attemptInfo.current > 1) {
+      const level = attemptInfo.current === 2 ? "intermediate" : attemptInfo.current === 3 ? "advanced" : "expert";
+      messages.push({ role: "system", content: `This is attempt #${attemptInfo.current}. Increase difficulty to ${level}, requiring deeper reasoning, code-quality, edge cases, and realistic constraints compared to prior attempts.` });
+    }
 
     // If no history, generate a deterministic server-side ice-breaker assistant message using candidate profile if available
     if (!hasHistory) {
