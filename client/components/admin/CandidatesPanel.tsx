@@ -1130,9 +1130,8 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                     );
                     const normalizeScore = (p: any, t: any) => {
                       let s = Number(p?.score ?? 0);
-                      const name = String(p?.name || p?.id || "").toLowerCase();
                       const comment = String(p?.comment || "").toLowerCase();
-                      if (name.includes("adaptability") && name.includes("learning") && comment.includes("no evidence of adaptability or learning new technologies")) {
+                      if (comment.includes("no evidence")) {
                         s = 0;
                       }
                       return s;
@@ -1272,14 +1271,13 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                           tplParams.map((p: any) => [String(p.id), p]),
                         );
                         const normalizeScore = (p: any, t: any) => {
-                          let s = Number(p?.score ?? 0);
-                          const name = String(p?.name || p?.id || "").toLowerCase();
-                          const comment = String(p?.comment || "").toLowerCase();
-                          if (name.includes("adaptability") && name.includes("learning") && comment.includes("no evidence of adaptability or learning new technologies")) {
-                            s = 0;
-                          }
-                          return s;
-                        };
+                      let s = Number(p?.score ?? 0);
+                      const comment = String(p?.comment || "").toLowerCase();
+                      if (comment.includes("no evidence")) {
+                        s = 0;
+                      }
+                      return s;
+                    };
                         const pctFor = (p: any) => {
                           const t = byId[String(p.id)] || {};
                           const min = Number(t?.scale?.min ?? 1);
