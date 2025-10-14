@@ -264,6 +264,12 @@ export const updateInterview: RequestHandler = async (req, res) => {
             : (req.body as any)?.maxAttempts === null
               ? null
               : (existing as any).maxAttempts,
+        inviteCcEmails: ((): string[] => {
+          const raw = (req.body as any)?.inviteCcEmails ?? (req.body as any)?.inviteCc;
+          if (Array.isArray(raw)) return raw.map((s: any) => String(s)).filter(Boolean);
+          if (typeof raw === "string") return raw.split(/[,;\s]+/).map((s) => s.trim()).filter((s) => s);
+          return (existing as any).inviteCcEmails || [];
+        })(),
       } as any,
     });
     res.json(updated);
