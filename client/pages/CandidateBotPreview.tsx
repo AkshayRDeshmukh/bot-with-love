@@ -87,16 +87,7 @@ export default function CandidateBotPreview(props?: {
     };
     return m[l] || "plaintext";
   };
-  const [editorTheme, setEditorTheme] = useState<"vs-dark" | "light">("light");
-  useEffect(() => {
-    try {
-      const update = () => setEditorTheme(document.documentElement.classList.contains("dark") ? "vs-dark" : "light");
-      update();
-      const obs = new MutationObserver(update);
-      obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-      return () => obs.disconnect();
-    } catch {}
-  }, []);
+  const editorTheme: "vs-dark" = "vs-dark";
 
   // Proctoring: enabled toggle, status, baseline hash and interval
   const [proctoringEnabled, setProctoringEnabled] = useState(false);
