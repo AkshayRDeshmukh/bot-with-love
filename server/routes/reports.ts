@@ -847,22 +847,22 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
           ? Math.round((min + max) / 2)
           : min;
 
-        // If there is very little transcript, keep conservative midpoint
-        if (!totalWords || totalWords < 5) {
+        // If there is very little transcript, assign minimum score (strict)
+        if (!totalWords || totalWords < 30) {
           return {
             id: p.id,
             name: p.name,
-            score: mid,
-            comment: "No evidence in transcript to evaluate this parameter; assigned a default conservative score.",
+            score: min,
+            comment: "No evidence in transcript to evaluate this parameter; assigned minimum score.",
           };
         }
 
-        // Base score proportional to transcript length (cap at 500 words)
+        // Base score starts at minimum; only increases with evidence
         const cap = 500;
         const lenFactor = Math.min(totalWords, cap) / cap; // 0..1
-        let scoreFloat = min + lenFactor * (max - min);
+        let scoreFloat = min; // strict baseline
 
-        // Keyword boost: if parameter name or description words appear in transcript, nudge score up
+        // Keyword evidence: if parameter name/description words appear in transcript, nudge score up
         const textLower = allText.toLowerCase();
         const nameTokens = String(p?.name || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
         let keywordMatches = 0;
@@ -876,9 +876,20 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
           if (t.length < 4) continue;
           if (textLower.includes(t)) keywordMatches++;
         }
-        // Each match nudges score by ~10% of scale range, up to 2 matches
+
+        // If there is no keyword-level evidence, keep minimum score
+        if (keywordMatches === 0) {
+          return {
+            id: p.id,
+            name: p.name,
+            score: min,
+            comment: `No evidence of relevant skills in transcript; assigned minimum score (words=${totalWords}).`,
+          };
+        }
+
+        // With evidence, scale modestly by transcript length + keyword matches
         const nudge = Math.min(keywordMatches, 2) * 0.1 * (max - min);
-        scoreFloat = scoreFloat + nudge;
+        scoreFloat = min + lenFactor * 0.5 * (max - min) + nudge; // stricter growth
 
         // Clamp and round
         const finalScore = Math.max(min, Math.min(max, Math.round(scoreFloat)));
