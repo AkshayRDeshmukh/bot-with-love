@@ -801,7 +801,10 @@ export default function CandidateBotPreview(props?: {
     const SpeechRecognition: any =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    if (!SpeechRecognition) {
+      try { startMediaRecorderFromStream(); } catch {}
+      return;
+    }
     const recog = new SpeechRecognition();
     recog.continuous = true;
     recog.interimResults = true;
