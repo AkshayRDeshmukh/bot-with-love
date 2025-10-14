@@ -531,6 +531,7 @@ export const inviteCandidate: RequestHandler = async (req, res) => {
         await sgMail.send({
           to,
           from: SENDGRID_FROM,
+          cc: Array.isArray((interview as any)?.inviteCcEmails) && (interview as any).inviteCcEmails.length > 0 ? (interview as any).inviteCcEmails : undefined,
           subject: `Interview Invitation: ${interviewTitle}`,
           html: `
             <div style="font-family: Arial, sans-serif; line-height: 1.5;">
@@ -609,6 +610,7 @@ export const inviteBulk: RequestHandler = async (req, res) => {
           await sgMail.send({
             to,
             from: SENDGRID_FROM,
+            cc: Array.isArray((interview as any)?.inviteCcEmails) && (interview as any).inviteCcEmails.length > 0 ? (interview as any).inviteCcEmails : undefined,
             subject: `Interview Invitation: ${interview.title}`,
             html: `
               <div style="font-family: Arial, sans-serif; line-height: 1.5;">
