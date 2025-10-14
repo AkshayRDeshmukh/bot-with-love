@@ -18,9 +18,13 @@ import {
   ChevronRight,
   ChevronLeft,
   Send,
+  Code2,
+  Clipboard,
+  Download,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import InterviewRecorder from "@/components/InterviewRecorder";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 function useTimer() {
   const [seconds, setSeconds] = useState(0);
@@ -65,6 +69,10 @@ export default function CandidateBotPreview(props?: {
   const streamRef = useRef<MediaStream | null>(null);
   const [proctorPromptOpen, setProctorPromptOpen] = useState(true);
   const [proctorUploading, setProctorUploading] = useState(false);
+  // Code editor state
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [codeLang, setCodeLang] = useState<string>("javascript");
+  const [codeText, setCodeText] = useState<string>("");
 
   // Proctoring: enabled toggle, status, baseline hash and interval
   const [proctoringEnabled, setProctoringEnabled] = useState(false);
@@ -510,6 +518,39 @@ export default function CandidateBotPreview(props?: {
 
   type ChatMessage = { from: "bot" | "me"; text: string; t: string };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const codingPrompt = useMemo(() => {
+    const lastBot = [...messages].reverse().find((m) => m.from === "bot");
+    const t = String(lastBot?.text || "").toLowerCase();
+    if (!t) return false;
+    if (t.includes("```")) return true;
+    const kws = [
+      "code",
+      "program",
+      "implement",
+      "function",
+      "class",
+      "algorithm",
+      "refactor",
+      "solve",
+      "script",
+      "write a",
+      "python",
+      "javascript",
+      "typescript",
+      "java ",
+      "c++",
+      "c#",
+      "golang",
+      "go ",
+      "sql",
+      "regex",
+      "react",
+      "node",
+      "bug",
+      "fix the code",
+    ];
+    return kws.some((k) => t.includes(k));
+  }, [messages]);
   const [input, setInput] = useState("");
   const chatBodyRef = useRef<HTMLDivElement | null>(null);
   const [interim, setInterim] = useState("");
@@ -1371,6 +1412,13 @@ export default function CandidateBotPreview(props?: {
                         <ChevronLeft className="h-4 w-4" />
                       )}
                     </button>
+                    <button
+                      className={`ml-2 inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm ${codingPrompt ? "bg-violet-600 text-white" : "bg-white/90 text-black"}`}
+                      onClick={() => setCodeOpen(true)}
+                      aria-label="Open Code Editor"
+                    >
+                      <Code2 className="h-4 w-4" /> Code Editor
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1503,6 +1551,102 @@ export default function CandidateBotPreview(props?: {
           </div>
         </div>
       )}
+      {/* Code Editor Dialog */}
+      <Dialog open={codeOpen} onOpenChange={setCodeOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Code Editor</DialogTitle>
+            <DialogDescription>
+              Use this editor to draft your coding answer. You can send it as a formatted code block.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm">Language</label>
+              <select
+                className="h-9 rounded-md border bg-background px-2 text-sm"
+                value={codeLang}
+                onChange={(e) => setCodeLang(e.target.value)}
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+                <option value="csharp">C#</option>
+                <option value="go">Go</option>
+                <option value="sql">SQL</option>
+              </select>
+              {codingPrompt && (
+                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Suggested for this question</span>
+              )}
+            </div>
+            <textarea
+              value={codeText}
+              onChange={(e) => setCodeText(e.target.value)}
+              className="min-h-[260px] w-full resize-y rounded-md border bg-background p-3 font-mono text-sm"
+              placeholder="Write your solution here..."
+            />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={async () => {
+                    try { await navigator.clipboard.writeText(codeText); } catch {}
+                  }}
+                >
+                  <Clipboard className="mr-2 h-4 w-4" /> Copy
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    const extMap: Record<string, string> = {
+                      javascript: "js",
+                      typescript: "ts",
+                      python: "py",
+                      java: "java",
+                      cpp: "cpp",
+                      csharp: "cs",
+                      go: "go",
+                      sql: "sql",
+                    };
+                    const ext = extMap[codeLang] || "txt";
+                    const blob = new Blob([codeText], { type: "text/plain;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `solution.${ext}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  <Download className="mr-2 h-4 w-4" /> Download
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    const codeBlock = `\`\`\`${codeLang}\n${codeText}\n\`\`\``;
+                    setInput(codeBlock);
+                    setInterim("");
+                    pendingTranscriptRef.current = "";
+                    pendingFinalRef.current = "";
+                    setCodeOpen(false);
+                    handleSend();
+                  }}
+                  disabled={!codeText.trim()}
+                >
+                  Send as answer
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter />
+        </DialogContent>
+      </Dialog>
+
       {ended && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/95 backdrop-blur">
           <div className="mx-4 w-full max-w-md rounded-2xl border bg-card p-6 text-center shadow-xl">
