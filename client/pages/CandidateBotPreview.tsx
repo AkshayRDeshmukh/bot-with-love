@@ -25,6 +25,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import InterviewRecorder from "@/components/InterviewRecorder";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import Editor from "@monaco-editor/react";
 
 function useTimer() {
   const [seconds, setSeconds] = useState(0);
@@ -73,6 +74,29 @@ export default function CandidateBotPreview(props?: {
   const [codeOpen, setCodeOpen] = useState(false);
   const [codeLang, setCodeLang] = useState<string>("javascript");
   const [codeText, setCodeText] = useState<string>("");
+  const mapLang = (l: string) => {
+    const m: Record<string, string> = {
+      javascript: "javascript",
+      typescript: "typescript",
+      python: "python",
+      java: "java",
+      cpp: "cpp",
+      csharp: "csharp",
+      go: "go",
+      sql: "sql",
+    };
+    return m[l] || "plaintext";
+  };
+  const [editorTheme, setEditorTheme] = useState<"vs-dark" | "light">("light");
+  useEffect(() => {
+    try {
+      const update = () => setEditorTheme(document.documentElement.classList.contains("dark") ? "vs-dark" : "light");
+      update();
+      const obs = new MutationObserver(update);
+      obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+      return () => obs.disconnect();
+    } catch {}
+  }, []);
 
   // Proctoring: enabled toggle, status, baseline hash and interval
   const [proctoringEnabled, setProctoringEnabled] = useState(false);
@@ -1581,12 +1605,16 @@ export default function CandidateBotPreview(props?: {
                 <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Suggested for this question</span>
               )}
             </div>
-            <textarea
-              value={codeText}
-              onChange={(e) => setCodeText(e.target.value)}
-              className="min-h-[260px] w-full resize-y rounded-md border bg-background p-3 font-mono text-sm"
-              placeholder="Write your solution here..."
-            />
+            <div className="h-[360px]">
+              <Editor
+                height="100%"
+                language={mapLang(codeLang)}
+                theme={editorTheme}
+                value={codeText}
+                onChange={(v) => setCodeText(v || "")}
+                options={{ minimap: { enabled: false }, fontSize: 14, wordWrap: "on", automaticLayout: true }}
+              />
+            </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex gap-2">
                 <Button
