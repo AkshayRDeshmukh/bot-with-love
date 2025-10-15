@@ -77,7 +77,7 @@ export default function AdminAuth() {
             Admin Access
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Have an account? Sign in. Otherwise, create your admin account.
+            Have an account? Sign in.
           </p>
           {message && (
             <div className="mt-4 rounded-md border bg-card p-3 text-sm">
@@ -90,13 +90,12 @@ export default function AdminAuth() {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle>Welcome</CardTitle>
-              <CardDescription>Sign in or sign up</CardDescription>
+              <CardDescription>Sign in</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="signin" className="w-full">
                 <TabsList className="mb-4">
                   <TabsTrigger value="signin">Sign in</TabsTrigger>
-                  <TabsTrigger value="signup">Sign up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin">
                   <form
@@ -120,60 +119,6 @@ export default function AdminAuth() {
                     </div>
                     <Button type="submit" className="w-full">
                       Sign in
-                    </Button>
-                  </form>
-                </TabsContent>
-                <TabsContent value="signup">
-                  <form
-                    className="space-y-3"
-                    onSubmit={regForm.handleSubmit(onRegister)}
-                  >
-                    <div className="grid gap-2">
-                      <label className="text-sm">Full Name</label>
-                      <input
-                        className="h-10 rounded-md border bg-background px-3"
-                        {...regForm.register("name")}
-                      />
-                      {regForm.formState.errors.name && (
-                        <p className="text-xs text-destructive">
-                          {regForm.formState.errors.name.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-sm">Work Email</label>
-                      <input
-                        className="h-10 rounded-md border bg-background px-3"
-                        {...regForm.register("email")}
-                      />
-                      {regForm.formState.errors.email && (
-                        <p className="text-xs text-destructive">
-                          {regForm.formState.errors.email.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-sm">Company</label>
-                      <input
-                        className="h-10 rounded-md border bg-background px-3"
-                        {...regForm.register("company")}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-sm">Password</label>
-                      <input
-                        type="password"
-                        className="h-10 rounded-md border bg-background px-3"
-                        {...regForm.register("password")}
-                      />
-                      {regForm.formState.errors.password && (
-                        <p className="text-xs text-destructive">
-                          {regForm.formState.errors.password.message}
-                        </p>
-                      )}
-                    </div>
-                    <Button type="submit" className="w-full">
-                      Create Account
                     </Button>
                   </form>
                 </TabsContent>
