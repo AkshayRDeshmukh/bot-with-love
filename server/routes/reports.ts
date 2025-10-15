@@ -357,15 +357,16 @@ export const listInterviewReportsSummary: RequestHandler = async (req, res) => {
 function buildCandidateReportPrompt(args: {
   template: any;
   answers: string[];
+  qaPairs?: { q: string; a: string | null }[];
   cefrEnabled?: boolean;
 }) {
-  const { template, answers, cefrEnabled } = args;
+  const { template, answers, qaPairs, cefrEnabled } = args;
   const lines: string[] = [];
   lines.push(
     "You are a strict technical interviewer. Generate a comprehensive interview evaluation as strict JSON only.",
   );
   lines.push(
-    "Use ONLY the candidate's answers below as evidence. Ignore any interviewer prompts or external context.",
+    "Use ONLY the transcript below. Evaluate answers relative to the specific questions asked. If a question was asked and the candidate did not answer it, do NOT award any marks for that question (assign the minimum for affected parameters).",
   );
 
   // Include brief template-level guidance if available (helps the evaluator focus on role priorities)
@@ -397,10 +398,22 @@ function buildCandidateReportPrompt(args: {
       "When CEFR is requested, the primary rating should be the 'cefr' string. Additionally, include 'score' numeric values mapped to the parameter's scale (e.g., 1-5 or percentage) so the system can render numeric charts. Ensure consistency between 'cefr' and numeric 'score'.",
     );
   }
-  lines.push("Candidate answers (chronological):");
-  for (let i = 0; i < answers.length; i++) {
-    lines.push(`A${i + 1}: ${answers[i]}`);
+
+  // Provide explicit Q/A pairing to judge correctness and completeness
+  if (Array.isArray(qaPairs) && qaPairs.length > 0) {
+    lines.push("Questions and paired candidate answers (Qn -> An):");
+    qaPairs.forEach((p, i) => {
+      const aTxt = p.a ? p.a : "<no answer>";
+      lines.push(`Q${i + 1}: ${p.q}`);
+      lines.push(`A${i + 1}: ${aTxt}`);
+    });
+  } else {
+    lines.push("Candidate answers (chronological):");
+    for (let i = 0; i < answers.length; i++) {
+      lines.push(`A${i + 1}: ${answers[i]}`);
+    }
   }
+
   lines.push(
     'Return ONLY valid JSON with this exact shape: { "summary": string, "parameters": [ { "id": string, "name": string, "score": number, "comment": string } ], "overall": number }.',
   );
@@ -416,22 +429,25 @@ function buildCandidateReportPrompt(args: {
 
   lines.push("Scoring rules:");
   lines.push(
-    "- 1-5 scales: default to 2/5 with limited evidence; 1/5 if weak/missing; 4-5/5 ONLY with multiple, specific, technical evidences.",
+    "- Only award marks when a question was asked AND the answer addressed it correctly or partially. If a question had no answer or was irrelevant, assign the minimum score for impacted parameters (0% for percentage scales).",
   );
   lines.push(
-    "- Percentage scales: default to 40-55% with limited evidence; <40% if weak/missing; >80% ONLY with strong evidence.",
+    "- 1-5 scales: default to 2/5 with limited evidence; 1/5 if weak or partially relevant; use minimum if no answer exists; 4-5/5 ONLY with multiple, specific, technical evidences tied to asked questions.",
   );
   lines.push(
-    "- Be conservative. Penalize vague or missing evidence. Reward concrete, correct, role-relevant details.",
+    "- Percentage scales: default to 40-55% with limited evidence; <40% if weak; use 0% if no answer exists; >80% ONLY with strong evidence.",
+  );
+  lines.push(
+    "- Be conservative. Penalize vague, off-topic, or missing evidence. Reward concrete, correct, role-relevant details.",
   );
   lines.push(
     "- Ensure scores are within each parameter's min/max. Use integers on 1-5 scales.",
   );
   lines.push(
-    "- Comments must cite specific evidence from the answers (short quotes or precise paraphrases).",
+    "- Comments must cite specific evidence from the answers (short quotes or precise paraphrases) and reference the relevant question number (e.g., Q3).",
   );
   lines.push(
-    "- If insufficient evidence for a parameter, explicitly state that and assign a lower score.",
+    "- If insufficient evidence for a parameter, explicitly state that and assign the minimum.",
   );
   lines.push(
     "- Overall must be a weighted aggregate (0-100). Typical averages should fall between 40 and 60 unless evidence is exceptional.",
