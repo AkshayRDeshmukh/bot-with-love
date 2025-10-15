@@ -662,6 +662,24 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
     .map((t) => t.content)
     .slice(-200);
 
+  // Build Q/A pairs based on assistant questions followed by nearest user answer
+  const qaPairs: { q: string; a: string | null }[] = (() => {
+    const pairs: { q: string; a: string | null }[] = [];
+    for (let i = 0; i < turns.length; i++) {
+      const t = turns[i];
+      if (t.role !== "assistant" || !t.content) continue;
+      let ans: string | null = null;
+      for (let j = i + 1; j < turns.length; j++) {
+        const u = turns[j];
+        if (u.role === "assistant") break; // next question begins; no answer
+        if (u.role === "user" && u.content) { ans = u.content; break; }
+      }
+      pairs.push({ q: t.content, a: ans && ans.trim() ? ans : null });
+    }
+    // limit to last 50 pairs to keep prompt bounded
+    return pairs.slice(-50);
+  })();
+
   let prompt: string | null = null;
   // If caller asked to force using raw transcript and useRawTranscript, skip LLM and run deterministic fallback scoring
   if (force && useRaw) {
