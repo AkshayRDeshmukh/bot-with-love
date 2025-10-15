@@ -569,6 +569,40 @@ export const inviteCandidate: RequestHandler = async (req, res) => {
   });
 };
 
+export const ensureInviteUrl: RequestHandler = async (req, res) => {
+  const adminId = (req as AuthRequest).userId!;
+  const { id, cid } = req.params as { id: string; cid: string };
+  const interview = await prisma.interview.findFirst({ where: { id, adminId } });
+  if (!interview) return res.status(404).json({ error: "Interview not found" });
+
+  const relation = await prisma.interviewCandidate.findUnique({
+    where: { interviewId_candidateId: { interviewId: id, candidateId: cid } },
+  });
+  if (!relation)
+    return res
+      .status(404)
+      .json({ error: "Candidate not attached to interview" });
+
+  // If already has inviteUrl, return it as-is (no side effects)
+  if ((relation as any).inviteUrl && (relation as any).inviteToken) {
+    return res.json({ ok: true, inviteUrl: (relation as any).inviteUrl });
+  }
+
+  const token = crypto.randomUUID();
+  const incomingOrigin = String(req.headers.origin || req.headers.referer || "");
+  const derivedBase = incomingOrigin ? incomingOrigin.replace(/\/$/, "") : APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
+  const url = `${derivedBase}/candidate?token=${token}`;
+  const updated = await prisma.interviewCandidate.update({
+    where: { interviewId_candidateId: { interviewId: id, candidateId: cid } },
+    data: {
+      inviteToken: token,
+      inviteUrl: url,
+    },
+  });
+
+  res.json({ ok: true, inviteUrl: (updated as any).inviteUrl });
+};
+
 export const inviteBulk: RequestHandler = async (req, res) => {
   const adminId = (req as AuthRequest).userId!;
   const { id } = req.params as { id: string };
