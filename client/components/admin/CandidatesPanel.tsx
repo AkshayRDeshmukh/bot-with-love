@@ -617,24 +617,25 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
             onCopyInvite={async (c) => {
               try {
                 if (!interviewId) throw new Error("Missing interview id");
-                // Request server to generate an invite and return the candidate link (with token)
-                const res = await fetch(`/api/interviews/${interviewId}/candidates/${c.id}/invite`, {
-                  method: "POST",
-                  credentials: "include",
-                });
-                if (!res.ok) throw new Error(await res.text());
-                const data = await res.json();
-                const url = data?.inviteUrl || data?.url || c.inviteUrl;
-                if (url) {
-                  await navigator.clipboard.writeText(url);
-                  toast({ title: "Copied", description: "Invite link copied to clipboard." });
-                } else {
-                  throw new Error("No invite URL returned");
+                // Prefer existing inviteUrl without resending
+                let url = c.inviteUrl || "";
+                if (!url) {
+                  // Ensure a token/url exists WITHOUT sending email or incrementing counters
+                  const res = await fetch(`/api/interviews/${interviewId}/candidates/${c.id}/invite-url`, {
+                    method: "POST",
+                    credentials: "include",
+                  });
+                  if (!res.ok) throw new Error(await res.text());
+                  const data = await res.json();
+                  url = data?.inviteUrl || "";
                 }
-                // Refresh list to show invite metadata
+                if (!url) throw new Error("No invite URL available");
+                await navigator.clipboard.writeText(url);
+                toast({ title: "Copied", description: "Invite link copied to clipboard." });
+                // Optionally refresh to capture stored URL
                 await refresh();
               } catch (e) {
-                toast({ title: "Failed", description: "Unable to generate or copy invite link.", variant: "destructive" });
+                toast({ title: "Failed", description: "Unable to copy invite link.", variant: "destructive" });
               }
             }}
             onEdit={(c) => {
