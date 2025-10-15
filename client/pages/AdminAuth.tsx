@@ -13,13 +13,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const registerSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  company: z.string().optional(),
-  password: z.string().min(6),
-});
-
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -29,29 +22,9 @@ export default function AdminAuth() {
   const navigate = useNavigate();
   const [message, setMessage] = useState<string | null>(null);
 
-  const regForm = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
-  });
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
   });
-
-  const onRegister = async (values: z.infer<typeof registerSchema>) => {
-    setMessage(null);
-    const res = await fetch("/api/admin/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setMessage(data.error || "Registration failed");
-      return;
-    }
-    setMessage(
-      "Registration successful. Please check your email to verify and continue.",
-    );
-  };
 
   const onLogin = async (values: z.infer<typeof loginSchema>) => {
     setMessage(null);
