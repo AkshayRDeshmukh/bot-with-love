@@ -127,6 +127,11 @@ export function createServer() {
     requireAuth,
     inviteCandidate,
   );
+  app.post(
+    "/api/interviews/:id/candidates/:cid/invite-url",
+    requireAuth,
+    ensureInviteUrl as any,
+  );
   app.get(
     "/api/interviews/:id/candidates/:cid/resume",
     requireAuth,
