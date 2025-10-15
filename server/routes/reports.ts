@@ -797,9 +797,18 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
         const desc = (p?.description || "").replace(/\n+/g, " ").trim();
         lines.push(`- id=${p.id}; name=${p.name}; scale=[${min},${max}]; description=${desc}`);
       }
-      lines.push("Candidate answers (chronological):");
-      for (let i = 0; i < answers.length; i++) {
-        lines.push(`A${i + 1}: ${answers[i]}`);
+      // Provide Q/A pairs if available to judge correctness/completeness
+      if (Array.isArray(qaPairs) && qaPairs.length > 0) {
+        lines.push("Questions and paired candidate answers (Qn -> An):");
+        qaPairs.forEach((pair, i) => {
+          lines.push(`Q${i + 1}: ${pair.q}`);
+          lines.push(`A${i + 1}: ${pair.a ? pair.a : "<no answer>"}`);
+        });
+      } else {
+        lines.push("Candidate answers (chronological):");
+        for (let i = 0; i < answers.length; i++) {
+          lines.push(`A${i + 1}: ${answers[i]}`);
+        }
       }
 
       const missingPrompt = lines.join("\n");
