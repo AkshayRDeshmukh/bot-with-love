@@ -742,7 +742,7 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
       (res as any).__forced_parsed = { summary: "", parameters: [] };
     }
   } else {
-    prompt = buildCandidateReportPrompt({ template: { ...template, templateSummary: (tpl as any)?.templateSummary || null }, answers, cefrEnabled: Boolean(interview?.cefrEvaluation) });
+    prompt = buildCandidateReportPrompt({ template: { ...template, templateSummary: (tpl as any)?.templateSummary || null }, answers, qaPairs, cefrEnabled: Boolean(interview?.cefrEvaluation) });
   }
 
   let parsed: any = null;
