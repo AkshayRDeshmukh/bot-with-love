@@ -788,7 +788,7 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
       if (Boolean(interview?.cefrEvaluation)) {
         lines.push("Because this interview uses CEFR evaluation, include an additional field 'cefr' with one of: A1, A2, B1, B2, C1, C2 for each parameter. Ensure the numeric 'score' is consistent with the CEFR level and the parameter's scale.");
       }
-      lines.push("Use ONLY the candidate answers provided as evidence. If no evidence exists for a parameter, state that in comment and assign a conservative midpoint score within the parameter's scale.");
+      lines.push("Use ONLY the paired questions and candidate answers as evidence. If no answer exists or no evidence is found for a parameter, state that in comment and assign the MINIMUM (or 0% for percentage) within the parameter's scale.");
       lines.push("Return ONLY valid JSON (an array of objects). Do not include any prose outside the JSON.");
       lines.push("Parameters to evaluate:");
       for (const p of missing) {
