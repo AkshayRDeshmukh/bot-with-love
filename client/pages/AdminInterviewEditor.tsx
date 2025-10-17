@@ -108,6 +108,8 @@ export default function AdminInterviewEditor() {
           recordingEnabled: (data as any)?.recordingEnabled ?? true,
           maxAttempts: (data as any)?.maxAttempts ?? undefined,
           cefrEvaluation: (data as any)?.cefrEvaluation ?? false,
+          linkStartAt: (data as any)?.linkStartAt ?? undefined,
+          linkExpiryAt: (data as any)?.linkExpiryAt ?? undefined,
           ...(Array.isArray((data as any)?.inviteCcEmails) ? { inviteCcEmails: (data as any).inviteCcEmails } : {}),
         });
       } else {
