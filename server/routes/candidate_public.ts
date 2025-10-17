@@ -64,6 +64,8 @@ export const getCandidateSession: RequestHandler = async (req, res) => {
       speechProvider: (interview as any).speechProvider || "BROWSER",
       // Whether automatic recording/uploading is enabled for this interview
       recordingEnabled: (interview as any).recordingEnabled ?? true,
+      linkStartAt: (interview as any)?.linkStartAt ?? null,
+      linkExpiryAt: (interview as any)?.linkExpiryAt ?? null,
     },
     candidate: {
       id: candidate.id,
