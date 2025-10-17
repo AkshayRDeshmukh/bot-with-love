@@ -116,6 +116,8 @@ model Interview {
   // Access window for candidate links
   linkStartAt     DateTime?
   linkExpiryAt    DateTime?
+  // Passing threshold (percentage 0..100). If set, reports show PASS/FAIL based on overall >= threshold
+  passPercentage  Int?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
