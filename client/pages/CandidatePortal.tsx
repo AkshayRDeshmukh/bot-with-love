@@ -34,7 +34,7 @@ export default function CandidatePortal() {
   }>(null);
 
   // Flow control: welcome -> consent -> interview
-  const [stage, setStage] = useState<"welcome" | "consent" | "interview">(
+  const [stage, setStage] = useState<"welcome" | "consent" | "guide" | "interview">(
     "welcome",
   );
   const [declined, setDeclined] = useState(false);
