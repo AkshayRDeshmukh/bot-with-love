@@ -113,6 +113,9 @@ model Interview {
   maxAttempts     Int?
   // Optional CC emails to include on candidate invite emails
   inviteCcEmails  String[]
+  // Access window for candidate links
+  linkStartAt     DateTime?
+  linkExpiryAt    DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
