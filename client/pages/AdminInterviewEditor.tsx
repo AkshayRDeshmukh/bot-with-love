@@ -333,6 +333,26 @@ export default function AdminInterviewEditor() {
                             </div>
                           </div>
                           <div>
+                            <div className="text-xs text-muted-foreground">Link Active Window</div>
+                            <div className="mt-1">
+                              {((initial as any)?.linkStartAt || (initial as any)?.linkExpiryAt) ? (
+                                <div className="text-sm">
+                                  <div>
+                                    <span className="font-medium">Start: </span>
+                                    <span>{(initial as any)?.linkStartAt ? new Date((initial as any).linkStartAt as any).toLocaleString() : "—"}</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Expiry: </span>
+                                    <span>{(initial as any)?.linkExpiryAt ? new Date((initial as any).linkExpiryAt as any).toLocaleString() : "—"}</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-sm text-muted-foreground">No restrictions</div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
                             <div className="text-xs text-muted-foreground">
                               Description
                             </div>
