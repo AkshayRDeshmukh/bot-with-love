@@ -52,7 +52,7 @@ export default function AdminNewInterview() {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { interactionMode: "AUDIO", speechProvider: "BROWSER", maxAttempts: undefined, recordingEnabled: true },
+    defaultValues: { interactionMode: "AUDIO", speechProvider: "BROWSER", maxAttempts: undefined, recordingEnabled: true, linkStartAt: undefined as any, linkExpiryAt: undefined as any },
   });
 
 
