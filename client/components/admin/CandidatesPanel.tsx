@@ -1239,13 +1239,29 @@ export function CandidatesPanel({ interviewId }: { interviewId?: string }) {
                     return (
                       <div className="rounded-lg border bg-card shadow-sm p-4 flex items-center gap-5">
                         <Circle pct={overall} />
-                        <div>
-                          <div className="text-base font-semibold">
-                            Overall Weightage
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Weighted score across parameters
-                          </div>
+                        <div className="flex-1">
+                          <div className="text-base font-semibold">Overall Weightage</div>
+                          <div className="text-xs text-muted-foreground">Weighted score across parameters</div>
+                          {(() => {
+                            const struct: any = (reportData as any)?.structure || (reportData as any) || {};
+                            const thrRaw = Number(struct?.passPercentage ?? (reportInterview as any)?.passPercentage);
+                            const thr = Number.isFinite(thrRaw) ? Math.max(0, Math.min(100, Math.floor(thrRaw))) : null;
+                            const resRaw = String(struct?.result || "").toUpperCase();
+                            const res = resRaw === "PASS" || resRaw === "FAIL" ? resRaw : (thr != null ? (overall >= thr ? "PASS" : "FAIL") : null);
+                            if (thr == null && !res) return null;
+                            return (
+                              <div className="mt-2 flex items-center gap-2">
+                                {res && (
+                                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${res === "PASS" ? "bg-emerald-500/10 text-emerald-700 border-emerald-200" : "bg-red-500/10 text-red-700 border-red-200"}`}>
+                                    {res}
+                                  </span>
+                                )}
+                                {thr != null && (
+                                  <span className="text-xs text-muted-foreground">Threshold: {thr}%</span>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     );
