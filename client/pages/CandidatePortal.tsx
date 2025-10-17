@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import CandidateBotPreview from "./CandidateBotPreview";
+import UserGuideFlow from "@/components/InterviewBotUI/UserGuideFlow";
 
 export default function CandidatePortal() {
   const [search] = useSearchParams();
