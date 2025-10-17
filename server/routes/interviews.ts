@@ -112,6 +112,13 @@ export const createInterview: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Expiry must be after start" });
     }
 
+    // Parse pass percentage if provided
+    const passRaw = (req.body as any)?.passPercentage;
+    const passPercentage = typeof passRaw === "number" ? Math.floor(passRaw) : (typeof passRaw === "string" && passRaw.trim() !== "" ? Math.floor(Number(passRaw)) : null);
+    if (passPercentage != null && (!Number.isFinite(passPercentage) || passPercentage < 0 || passPercentage > 100)) {
+      return res.status(400).json({ error: "passPercentage must be 0..100" });
+    }
+
     const interview = await prisma.interview.create({
       data: {
         adminId,
@@ -138,6 +145,7 @@ export const createInterview: RequestHandler = async (req, res) => {
         inviteCcEmails: ccArr,
         linkStartAt: linkStartAt as any,
         linkExpiryAt: linkExpiryAt as any,
+        passPercentage: passPercentage as any,
       } as any,
     });
     res.status(201).json(interview);
@@ -259,6 +267,18 @@ export const updateInterview: RequestHandler = async (req, res) => {
       return res.status(400).json({ error: "Expiry must be after start" });
     }
 
+    // Parse passPercentage update
+    let passPercentage: number | null = (existing as any).passPercentage ?? null;
+    const passRaw = (req.body as any)?.passPercentage;
+    if (typeof passRaw !== "undefined") {
+      if (passRaw === null || passRaw === "") passPercentage = null;
+      else {
+        const v = Math.floor(Number(passRaw));
+        if (!Number.isFinite(v) || v < 0 || v > 100) return res.status(400).json({ error: "passPercentage must be 0..100" });
+        passPercentage = v;
+      }
+    }
+
     const updated = await prisma.interview.update({
       where: { id },
       data: {
@@ -300,6 +320,7 @@ export const updateInterview: RequestHandler = async (req, res) => {
         })(),
         linkStartAt: linkStartAt as any,
         linkExpiryAt: linkExpiryAt as any,
+        passPercentage: passPercentage as any,
       } as any,
     });
     res.json(updated);
