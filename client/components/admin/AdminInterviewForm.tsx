@@ -327,6 +327,33 @@ export function AdminInterviewForm({
       </div>
 
       <div className="grid gap-2">
+        <label className="text-sm">Link start date & time (optional)</label>
+        <input
+          type="datetime-local"
+          className="h-10 rounded-md border bg-background px-3"
+          {...form.register("linkStartAt")}
+        />
+        {form.formState.errors.linkStartAt && (
+          <p className="text-xs text-destructive">
+            {form.formState.errors.linkStartAt.message as string}
+          </p>
+        )}
+      </div>
+      <div className="grid gap-2">
+        <label className="text-sm">Link expiry date & time (optional)</label>
+        <input
+          type="datetime-local"
+          className="h-10 rounded-md border bg-background px-3"
+          {...form.register("linkExpiryAt")}
+        />
+        {form.formState.errors.linkExpiryAt && (
+          <p className="text-xs text-destructive">
+            {form.formState.errors.linkExpiryAt.message as string}
+          </p>
+        )}
+      </div>
+
+      <div className="grid gap-2">
         <label className="text-sm">CC emails for invites (optional)</label>
         <input
           className="h-10 rounded-md border bg-background px-3"
