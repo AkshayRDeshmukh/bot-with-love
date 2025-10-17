@@ -289,6 +289,9 @@ export default function CandidatePortal() {
             </div>
           )}
         </div>
+        {stage === "guide" && (
+          <UserGuideFlow open={true} onClose={() => setStage("interview")} />
+        )}
       </section>
     );
   }
