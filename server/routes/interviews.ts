@@ -101,6 +101,17 @@ export const createInterview: RequestHandler = async (req, res) => {
             .filter((s) => s)
         : [];
 
+    // Parse access window params (optional)
+    const startRaw = (req.body as any)?.linkStartAt;
+    const endRaw = (req.body as any)?.linkExpiryAt;
+    const linkStartAt = startRaw ? new Date(startRaw) : null;
+    const linkExpiryAt = endRaw ? new Date(endRaw) : null;
+    if (linkStartAt && isNaN(linkStartAt.getTime())) return res.status(400).json({ error: "Invalid linkStartAt" });
+    if (linkExpiryAt && isNaN(linkExpiryAt.getTime())) return res.status(400).json({ error: "Invalid linkExpiryAt" });
+    if (linkStartAt && linkExpiryAt && linkExpiryAt.getTime() <= linkStartAt.getTime()) {
+      return res.status(400).json({ error: "Expiry must be after start" });
+    }
+
     const interview = await prisma.interview.create({
       data: {
         adminId,
@@ -125,6 +136,8 @@ export const createInterview: RequestHandler = async (req, res) => {
             ? Math.max(1, Math.floor((req.body as any).maxAttempts))
             : null,
         inviteCcEmails: ccArr,
+        linkStartAt: linkStartAt as any,
+        linkExpiryAt: linkExpiryAt as any,
       } as any,
     });
     res.status(201).json(interview);
