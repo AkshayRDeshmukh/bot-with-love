@@ -260,10 +260,11 @@ export default function CandidatePortal() {
                                   }),
                                 });
                               } catch {}
-                              setStage("interview");
+                              // Require user guide before starting the interview
+                              setStage("guide");
                             }}
                           >
-                            I Agree, Start Interview
+                            I Agree, Continue to User Guide
                           </Button>
                           <Button
                             variant="secondary"
