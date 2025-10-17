@@ -1013,6 +1013,14 @@ export const getOrGenerateCandidateReport: RequestHandler = async (
       totalW += w;
     }
     parsed.overall = totalW > 0 ? Math.round(acc / totalW) : 0;
+    // Determine PASS/FAIL if threshold configured for interview
+    try {
+      const thr = Number((interview as any)?.passPercentage);
+      if (Number.isFinite(thr)) {
+        (parsed as any).passPercentage = Math.max(0, Math.min(100, Math.floor(thr)));
+        (parsed as any).result = parsed.overall >= (parsed as any).passPercentage ? "PASS" : "FAIL";
+      }
+    } catch {}
   } catch {}
 
   // Replace answer tokens like 'answer A3' or 'A3' in the generated summary with the actual answer text
