@@ -33,6 +33,12 @@ const schema = z
       .int()
       .min(1, { message: "Minimum 1 attempt" })
       .optional(),
+    passPercentage: z
+      .number({ invalid_type_error: "Pass percentage must be a number" })
+      .int()
+      .min(0, { message: "Minimum 0%" })
+      .max(100, { message: "Maximum 100%" })
+      .optional(),
   })
   .refine(
     (data) => {
@@ -52,7 +58,7 @@ export default function AdminNewInterview() {
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { interactionMode: "AUDIO", speechProvider: "BROWSER", maxAttempts: undefined, recordingEnabled: true, linkStartAt: undefined as any, linkExpiryAt: undefined as any },
+    defaultValues: { interactionMode: "AUDIO", speechProvider: "BROWSER", maxAttempts: undefined, passPercentage: undefined as any, recordingEnabled: true, linkStartAt: undefined as any, linkExpiryAt: undefined as any },
   });
 
 
@@ -256,6 +262,29 @@ export default function AdminNewInterview() {
                     {form.formState.errors.maxAttempts.message as string}
                   </p>
                 )}
+              </div>
+
+              <div className="grid gap-2">
+                <label className="text-sm">Pass percentage threshold (optional)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  className="h-10 rounded-md border bg-background px-3"
+                  placeholder="e.g., 60"
+                  {...form.register("passPercentage", {
+                    setValueAs: (v) =>
+                      v === "" || v === null || typeof v === "undefined"
+                        ? undefined
+                        : Number(v),
+                  })}
+                />
+                {form.formState.errors.passPercentage && (
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.passPercentage.message as string}
+                  </p>
+                )}
+                <div className="text-xs text-muted-foreground">Reports will display PASS if overall score ≥ this threshold; otherwise FAIL.</div>
               </div>
 
               <div className="grid gap-2">
