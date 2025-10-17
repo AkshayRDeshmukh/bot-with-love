@@ -298,6 +298,8 @@ export const updateInterview: RequestHandler = async (req, res) => {
           if (typeof raw === "string") return raw.split(/[,;\s]+/).map((s) => s.trim()).filter((s) => s);
           return (existing as any).inviteCcEmails || [];
         })(),
+        linkStartAt: linkStartAt as any,
+        linkExpiryAt: linkExpiryAt as any,
       } as any,
     });
     res.json(updated);
