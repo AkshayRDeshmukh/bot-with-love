@@ -244,6 +244,21 @@ export const updateInterview: RequestHandler = async (req, res) => {
       }
     }
 
+    // Parse and validate access window updates
+    const startRaw = (req.body as any)?.linkStartAt;
+    const endRaw = (req.body as any)?.linkExpiryAt;
+    const linkStartAt = typeof startRaw !== "undefined" && startRaw !== null && startRaw !== ""
+      ? new Date(startRaw)
+      : (existing as any).linkStartAt ?? null;
+    const linkExpiryAt = typeof endRaw !== "undefined" && endRaw !== null && endRaw !== ""
+      ? new Date(endRaw)
+      : (existing as any).linkExpiryAt ?? null;
+    if (linkStartAt && isNaN(new Date(linkStartAt).getTime())) return res.status(400).json({ error: "Invalid linkStartAt" });
+    if (linkExpiryAt && isNaN(new Date(linkExpiryAt).getTime())) return res.status(400).json({ error: "Invalid linkExpiryAt" });
+    if (linkStartAt && linkExpiryAt && new Date(linkExpiryAt).getTime() <= new Date(linkStartAt).getTime()) {
+      return res.status(400).json({ error: "Expiry must be after start" });
+    }
+
     const updated = await prisma.interview.update({
       where: { id },
       data: {
