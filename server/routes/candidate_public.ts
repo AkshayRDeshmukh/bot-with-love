@@ -17,6 +17,19 @@ export const getCandidateSession: RequestHandler = async (req, res) => {
   });
   if (!ic) return res.status(404).json({ error: "Invalid token" });
   const { interview, candidate } = ic;
+  // Enforce link access window if configured
+  try {
+    const now = new Date();
+    const startAt = (interview as any)?.linkStartAt ? new Date((interview as any).linkStartAt as any) : null;
+    const expiryAt = (interview as any)?.linkExpiryAt ? new Date((interview as any).linkExpiryAt as any) : null;
+    if (startAt && now.getTime() < startAt.getTime()) {
+      return res.status(403).json({ error: "Interview not started" });
+    }
+    if (expiryAt && now.getTime() > expiryAt.getTime()) {
+      return res.status(403).json({ error: "Interview link expired" });
+    }
+  } catch {}
+
   const allowed = Math.max(
     1,
     Number.isFinite((ic as any).maxAttempts as any) &&
