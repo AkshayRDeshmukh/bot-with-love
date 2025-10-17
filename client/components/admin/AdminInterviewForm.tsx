@@ -27,6 +27,12 @@ const schema = z
       .int()
       .min(1, { message: "Minimum 1 attempt" })
       .optional(),
+    passPercentage: z
+      .number({ invalid_type_error: "Pass percentage must be a number" })
+      .int()
+      .min(0, { message: "Minimum 0%" })
+      .max(100, { message: "Maximum 100%" })
+      .optional(),
     cefrEvaluation: z.boolean().optional(),
     recordingEnabled: z.boolean().optional(),
     speechProvider: z.enum(["BROWSER", "AZURE"]).optional(),
@@ -68,6 +74,7 @@ export function AdminInterviewForm({
       interactionMode: (initial as any)?.interactionMode || "AUDIO",
       speechProvider: (initial as any)?.speechProvider || "BROWSER",
       maxAttempts: (initial as any)?.maxAttempts ?? undefined,
+      passPercentage: (initial as any)?.passPercentage ?? undefined,
       cefrEvaluation: (initial as any)?.cefrEvaluation ?? false,
       recordingEnabled: (initial as any)?.recordingEnabled ?? true,
       inviteCc: Array.isArray((initial as any)?.inviteCcEmails)
@@ -89,6 +96,7 @@ export function AdminInterviewForm({
         interactionMode: (initial as any).interactionMode || "AUDIO",
         speechProvider: (initial as any).speechProvider || "BROWSER",
         maxAttempts: (initial as any).maxAttempts ?? undefined,
+        passPercentage: (initial as any).passPercentage ?? undefined,
         cefrEvaluation: (initial as any).cefrEvaluation ?? false,
         recordingEnabled: (initial as any).recordingEnabled ?? true,
         inviteCc: Array.isArray((initial as any)?.inviteCcEmails)
@@ -110,6 +118,7 @@ export function AdminInterviewForm({
         durationMinutes: (initial as any).durationMinutes ?? undefined,
         interactionMode: (initial as any).interactionMode || "AUDIO",
         maxAttempts: (initial as any).maxAttempts ?? undefined,
+        passPercentage: (initial as any).passPercentage ?? undefined,
         cefrEvaluation: (initial as any).cefrEvaluation ?? false,
         recordingEnabled: (initial as any).recordingEnabled ?? true,
         inviteCc: Array.isArray((initial as any)?.inviteCcEmails)
@@ -296,6 +305,29 @@ export function AdminInterviewForm({
             {form.formState.errors.maxAttempts.message as string}
           </p>
         )}
+      </div>
+
+      <div className="grid gap-2">
+        <label className="text-sm">Pass percentage threshold (optional)</label>
+        <input
+          type="number"
+          min={0}
+          max={100}
+          className="h-10 rounded-md border bg-background px-3"
+          placeholder="e.g., 60"
+          {...form.register("passPercentage", {
+            setValueAs: (v) =>
+              v === "" || v === null || typeof v === "undefined"
+                ? undefined
+                : Number(v),
+          })}
+        />
+        {form.formState.errors.passPercentage && (
+          <p className="text-xs text-destructive">
+            {form.formState.errors.passPercentage.message as string}
+          </p>
+        )}
+        <div className="text-xs text-muted-foreground">Reports will display PASS if overall score ≥ this threshold; otherwise FAIL.</div>
       </div>
 
       <div className="grid gap-2">
