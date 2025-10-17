@@ -84,6 +84,10 @@ export default function UserGuideFlow({ open = true, onClose }: { open?: boolean
                 <h3 className="text-lg font-semibold">Candidate interview preview</h3>
                 <p className="text-sm text-muted-foreground mt-2">This is the real interview UI (preview mode). It uses the same components as the live interview; for the guide we run in TEXT_ONLY mode to avoid camera/mic permissions.</p>
 
+                <div className="mt-4">
+                  <div className="text-center text-xl font-bold">Say something or type to start the conversation.</div>
+                </div>
+
                 <div className="mt-4 rounded-md border overflow-hidden">
                   <div className="p-4 bg-gradient-to-br from-violet-50 to-indigo-50">
                     <CandidateBotPreview remainingSeconds={remainingSeconds} />
