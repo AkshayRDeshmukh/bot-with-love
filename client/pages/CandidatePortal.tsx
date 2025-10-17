@@ -46,7 +46,20 @@ export default function CandidatePortal() {
         const res = await fetch(
           `/api/candidate/session?token=${encodeURIComponent(token)}`,
         );
-        if (!res.ok) throw new Error("Invalid link");
+        if (!res.ok) {
+          try {
+            const data = await res.json();
+            setError(data?.error || "Invalid link");
+          } catch {
+            try {
+              const txt = await res.text();
+              setError(txt || "Invalid link");
+            } catch {
+              setError("Invalid link");
+            }
+          }
+          return;
+        }
         const data = await res.json();
         setSession(data);
       } catch (e: any) {
