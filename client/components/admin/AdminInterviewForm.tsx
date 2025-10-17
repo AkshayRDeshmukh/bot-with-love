@@ -8,29 +8,42 @@ import { Mic, MessageSquareText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Controller } from "react-hook-form";
 
-const schema = z.object({
-  title: z.string().min(3),
-  description: z.string().min(10),
-  context: z.string().min(3),
-  contextDomain: z.string().optional(),
-  interviewerRole: z.string().min(2),
-  durationMinutes: z
-    .number({ invalid_type_error: "Duration must be a number" })
-    .int()
-    .min(5, { message: "Minimum 5 minutes" })
-    .max(180, { message: "Maximum 180 minutes" })
-    .optional(),
-  interactionMode: z.enum(["AUDIO", "TEXT_ONLY"]),
-  maxAttempts: z
-    .number({ invalid_type_error: "Max attempts must be a number" })
-    .int()
-    .min(1, { message: "Minimum 1 attempt" })
-    .optional(),
-  cefrEvaluation: z.boolean().optional(),
-  recordingEnabled: z.boolean().optional(),
-  speechProvider: z.enum(["BROWSER","AZURE"]).optional(),
-  inviteCc: z.string().optional(),
-});
+const schema = z
+  .object({
+    title: z.string().min(3),
+    description: z.string().min(10),
+    context: z.string().min(3),
+    contextDomain: z.string().optional(),
+    interviewerRole: z.string().min(2),
+    durationMinutes: z
+      .number({ invalid_type_error: "Duration must be a number" })
+      .int()
+      .min(5, { message: "Minimum 5 minutes" })
+      .max(180, { message: "Maximum 180 minutes" })
+      .optional(),
+    interactionMode: z.enum(["AUDIO", "TEXT_ONLY"]),
+    maxAttempts: z
+      .number({ invalid_type_error: "Max attempts must be a number" })
+      .int()
+      .min(1, { message: "Minimum 1 attempt" })
+      .optional(),
+    cefrEvaluation: z.boolean().optional(),
+    recordingEnabled: z.boolean().optional(),
+    speechProvider: z.enum(["BROWSER", "AZURE"]).optional(),
+    inviteCc: z.string().optional(),
+    linkStartAt: z.string().optional(),
+    linkExpiryAt: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.linkStartAt || !data.linkExpiryAt) return true;
+      const s = new Date(data.linkStartAt).getTime();
+      const e = new Date(data.linkExpiryAt).getTime();
+      if (isNaN(s) || isNaN(e)) return false;
+      return e > s;
+    },
+    { message: "Expiry must be after start", path: ["linkExpiryAt"] },
+  );
 
 export type InterviewInput = z.infer<typeof schema>;
 
