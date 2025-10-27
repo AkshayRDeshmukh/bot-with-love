@@ -841,7 +841,7 @@ export default function CandidateBotPreview(props?: {
 
     const finalizeIfNeeded = () => {
       // do not process finalization while bot is speaking
-      if (muted || botSpeakingRef.current) return;
+      if (mutedRef.current || botSpeakingRef.current) return;
       const pending = pendingFinalRef.current.trim();
       const interimNow = interim.trim();
       const finalText = `${pending} ${interimNow}`.trim();
@@ -860,7 +860,7 @@ export default function CandidateBotPreview(props?: {
 
     recog.onresult = (event: any) => {
       // do not process recognition results while bot is speaking
-      if (muted || botSpeakingRef.current) return;
+      if (mutedRef.current || botSpeakingRef.current) return;
       // reset silence timer on any result
       if (silenceTimerRef.current) window.clearTimeout(silenceTimerRef.current);
       let interimText = "";
@@ -909,7 +909,7 @@ export default function CandidateBotPreview(props?: {
     };
     recog.onend = () => {
       // do not finalize or restart recognition while bot is speaking
-      if (muted || botSpeakingRef.current) return;
+      if (mutedRef.current || botSpeakingRef.current) return;
       // finalize any pending final text into the buffer (do not auto-send)
       if (Date.now() - recentFinalizedAtRef.current > 250) {
         const pending = pendingFinalRef.current.trim();
@@ -1062,7 +1062,7 @@ export default function CandidateBotPreview(props?: {
         const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
 
         recognizer.recognizing = (s: any, e: any) => {
-          if (muted || botSpeakingRef.current) return;
+          if (mutedRef.current || botSpeakingRef.current) return;
           const interimText = e.result && e.result.text ? String(e.result.text) : "";
           try {
             setInterim(interimText);
@@ -1072,7 +1072,7 @@ export default function CandidateBotPreview(props?: {
 
         recognizer.recognized = (s: any, e: any) => {
           try {
-            if (muted || botSpeakingRef.current) return;
+            if (mutedRef.current || botSpeakingRef.current) return;
             if (e.result && e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
               const recognizedText = String(e.result.text || "").trim();
               if (recognizedText) {
