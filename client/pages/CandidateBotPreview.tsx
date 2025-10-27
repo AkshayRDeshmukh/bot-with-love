@@ -897,7 +897,7 @@ export default function CandidateBotPreview(props?: {
       lastEventAtRef.current = Date.now();
     };
     recog.onerror = () => {
-      if (!mutedRef.current || false) {
+      if (!mutedRef.current) {
         // only attempt restart when not muted and bot is not speaking
         if (mutedRef.current || botSpeakingRef.current) return;
         try { recog.stop(); } catch {}
