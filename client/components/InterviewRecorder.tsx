@@ -126,15 +126,17 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
           }
         }
 
-        // get mic stream too
+        // get mic stream too (only when not muted)
         let micStream: MediaStream | null = null;
-        try {
-          micStream = await getUserMediaSafe({ audio: true, video: false } as any);
-          micStreamRef.current = micStream;
-        } catch (e) {
-          // mic might be denied or not available
-          micStream = null;
-          micStreamRef.current = null;
+        if (!muted) {
+          try {
+            micStream = await getUserMediaSafe({ audio: true, video: false } as any);
+            micStreamRef.current = micStream;
+          } catch (e) {
+            // mic might be denied or not available
+            micStream = null;
+            micStreamRef.current = null;
+          }
         }
 
         // combine tracks
