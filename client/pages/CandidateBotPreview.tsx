@@ -378,6 +378,10 @@ export default function CandidateBotPreview(props?: {
     botSpeakingRef.current = botSpeaking;
   }, [botSpeaking]);
 
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
+
   const pauseTranscription = () => {
     try {
       // Mark that we paused due to bot playback
