@@ -1372,7 +1372,16 @@ export default function CandidateBotPreview(props?: {
                           const next = !v;
                           const tracks =
                             streamRef.current?.getAudioTracks() || [];
-                          tracks.forEach((t) => (t.enabled = !next));
+                          if (next) {
+                            // Muting: fully release mic by stopping and removing tracks
+                            tracks.forEach((t) => {
+                              try { t.stop(); } catch {}
+                              try { streamRef.current?.removeTrack(t); } catch {}
+                            });
+                          } else {
+                            // Unmuting: re-enable any existing tracks (if any)
+                            tracks.forEach((t) => (t.enabled = true));
+                          }
                           try {
                             if (next) {
                               try { recognitionRef.current?.stop(); } catch {}
