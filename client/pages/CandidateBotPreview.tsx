@@ -453,6 +453,7 @@ export default function CandidateBotPreview(props?: {
 
   const resumeTranscription = () => {
     if (muted) return; // don't resume if mic muted
+    if (botSpeakingRef.current) return; // don't resume while bot is speaking
     // resume if paused by bot; also start fallback if browser speech is unavailable
     const browserProvider = (props?.interview?.speechProvider || interviewCtx?.speechProvider) !== "AZURE";
     if (!transcriptionPausedByBotRef.current && !(browserProvider && typeof (window as any).SpeechRecognition === "undefined" && !recognitionRef.current)) return;
@@ -896,14 +897,13 @@ export default function CandidateBotPreview(props?: {
       lastEventAtRef.current = Date.now();
     };
     recog.onerror = () => {
-      if (!muted) {
-        try {
-          recog.stop();
-        } catch {}
+      if (!mutedRef.current || false) {
+        // only attempt restart when not muted and bot is not speaking
+        if (mutedRef.current || botSpeakingRef.current) return;
+        try { recog.stop(); } catch {}
         setTimeout(() => {
-          try {
-            recog.start();
-          } catch {}
+          if (mutedRef.current || botSpeakingRef.current) return;
+          try { recog.start(); } catch {}
         }, 150);
       }
     };
@@ -929,36 +929,30 @@ export default function CandidateBotPreview(props?: {
       }
     };
 
-    if (!muted) {
+    if (!mutedRef.current && !botSpeakingRef.current) {
       try {
         recog.start();
       } catch {
-        try { startMediaRecorderFromStream(); } catch {}
+        try { if (!botSpeakingRef.current) startMediaRecorderFromStream(); } catch {}
       }
     }
 
     const watchdog = window.setInterval(() => {
       const now = Date.now();
       const idle = now - lastEventAtRef.current;
-      if (!muted && idle > 8000) {
-        try {
-          recog.stop();
-        } catch {}
+      if (!mutedRef.current && !botSpeakingRef.current && idle > 8000) {
+        try { recog.stop(); } catch {}
         setTimeout(() => {
-          try {
-            recog.start();
-          } catch {}
+          if (mutedRef.current || botSpeakingRef.current) return;
+          try { recog.start(); } catch {}
         }, 80);
       }
       const run = now - recStartAtRef.current;
-      if (!muted && run > 50000) {
-        try {
-          recog.stop();
-        } catch {}
+      if (!mutedRef.current && !botSpeakingRef.current && run > 50000) {
+        try { recog.stop(); } catch {}
         setTimeout(() => {
-          try {
-            recog.start();
-          } catch {}
+          if (mutedRef.current || botSpeakingRef.current) return;
+          try { recog.start(); } catch {}
         }, 120);
       }
     }, 5000);
