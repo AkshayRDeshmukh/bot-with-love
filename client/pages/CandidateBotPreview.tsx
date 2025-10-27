@@ -423,7 +423,7 @@ export default function CandidateBotPreview(props?: {
       mr.ondataavailable = async (ev: BlobEvent) => {
         try {
           // do not transcribe when muted or during bot playback
-          if (muted || botSpeakingRef.current) return;
+          if (mutedRef.current || botSpeakingRef.current) return;
           const blob = ev.data;
           if (!blob || blob.size === 0) return;
           const fd = new FormData();
@@ -998,7 +998,7 @@ export default function CandidateBotPreview(props?: {
         mr.ondataavailable = async (ev: BlobEvent) => {
           try {
             // do not transcribe when muted or during bot playback
-            if (muted || botSpeakingRef.current) return;
+          if (mutedRef.current || botSpeakingRef.current) return;
             const blob = ev.data;
             if (!blob || blob.size === 0) return;
             const fd = new FormData();
