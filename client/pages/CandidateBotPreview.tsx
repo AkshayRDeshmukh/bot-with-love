@@ -64,6 +64,7 @@ export default function CandidateBotPreview(props?: {
   const [botSpeaking, setBotSpeaking] = useState(false);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const mutedRef = useRef<boolean>(false);
 
   // Camera stream
   const videoRef = useRef<HTMLVideoElement | null>(null);
