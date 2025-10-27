@@ -95,6 +95,13 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
             try {
               if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") mediaRecorderRef.current.stop();
             } catch {}
+            try {
+              // fully release microphone when muted
+              if (micStreamRef.current) {
+                micStreamRef.current.getTracks().forEach((t) => t.stop());
+                micStreamRef.current = null;
+              }
+            } catch {}
           }
         }
       } catch {}
@@ -141,6 +148,12 @@ export default function InterviewRecorder({ attemptId, interviewId, enabled = tr
         combinedStreamRef.current = combined;
         try { const m = await import("@/lib/media"); m.registerAppMediaStream(micStream); } catch {}
         try { const m = await import("@/lib/media"); m.registerAppMediaStream(combined); } catch {}
+
+        // If there are no tracks (e.g., mic muted and no screen capture), skip starting recorder
+        if (!combined || combined.getTracks().length === 0) {
+          try { console.info("InterviewRecorder: no media tracks to record; skipping start"); } catch {}
+          return;
+        }
 
         // create MediaRecorder for chunks ~17000ms
         const options: any = captureScreen ? { mimeType: "video/webm; codecs=vp8,opus" } : { mimeType: "audio/webm; codecs=opus" };
