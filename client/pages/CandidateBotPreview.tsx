@@ -514,15 +514,18 @@ export default function CandidateBotPreview(props?: {
       try {
         pauseTranscription();
       } catch {}
+      botSpeakingRef.current = true;
       setBotSpeaking(true);
     };
     utter.onend = () => {
+      botSpeakingRef.current = false;
       setBotSpeaking(false);
       try {
         resumeTranscription();
       } catch {}
     };
     utter.onerror = () => {
+      botSpeakingRef.current = false;
       setBotSpeaking(false);
       try {
         resumeTranscription();
@@ -533,6 +536,8 @@ export default function CandidateBotPreview(props?: {
     try {
       pauseTranscription();
     } catch {}
+    // proactively mark as speaking to prevent any fast restarts before onstart fires
+    botSpeakingRef.current = true;
     synthRef.current?.speak(utter);
   };
 
